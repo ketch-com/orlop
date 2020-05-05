@@ -1,0 +1,10 @@
+pre-commit:
+  parallel: true
+  commands:
+  scripts:
+    check_format:
+        runner: bash
+commit-msg:
+  scripts:
+    check_msg:
+      runner: bash

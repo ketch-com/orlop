@@ -1,0 +1,6 @@
+FILES=$(gofmt -l .)
+L=$(echo $FILES | wc -l)
+if [ "$L" -ne "1" ]; then
+  echo -e "Formatting required:\n$FILES"
+  exit 1
+fi
