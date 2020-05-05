@@ -4,15 +4,11 @@
 
 First off, thank you for considering contributing to Orlop.
 
-### Tell them why they should read your guidelines.
-
 Following these guidelines helps to communicate that you respect the time of the developers
 managing and developing this open source project. In return, they should reciprocate that
 respect in addressing your issue, assessing changes, and helping you finalize your pull requests.
 
-### Explain what kinds of contributions you are looking for.
-
-Orlop is an open source project and we love to receive contributions from our community — you! There are many ways to contribute, from writing tutorials or blog posts, improving the documentation, submitting bug reports and feature requests or writing code which can be incorporated into Elasticsearch itself. 
+Orlop is an open source project and we love to receive contributions from our community — you! There are many ways to contribute, from writing tutorials or blog posts, improving the documentation, submitting bug reports and feature requests or writing code which can be incorporated into Orlop itself. 
 
 ### Using the issue tracker
 
@@ -30,7 +26,7 @@ The issue tracker is the preferred channel for bug reports, features requests an
 ## Responsibilities
 * Ensure that code that goes into core meets all requirements in this checklist:
   * General
-    - [ ] Is this change useful kjust to me, or something that I think will benefit others greatly?
+    - [ ] Is this change useful just to me, or something that I think will benefit others greatly?
     - [ ] Check for overlap with other PRs
     - [ ] Think carefully about the long-term implications of the change. How will it affect existing projects that are dependent on this?
   * Quality
@@ -71,7 +67,7 @@ If a maintainer asks you to "rebase" your PR, they're saying that a lot of code 
     * Note the  Code of Conduct.
     * Send a pull request indicating that you have a CLA on file.
 
-### If you have a different process for small or "obvious" fixes, let them know.
+### For a small or "obvious" fix:
 
 Small contributions such as fixing spelling errors, where the content is small enough to not be considered intellectual property, can be submitted by a contributor as a patch, without a CLA.
 
@@ -86,13 +82,13 @@ As a rule of thumb, changes are obvious fixes if they do not introduce any new f
 
 ## How to report a bug
 
-If you find a security vulnerability, do NOT open an issue. Email [security@switchvbit.com](mailto:security@switchvbit.com) instead.
+If you find a security vulnerability, do NOT open an issue. Email [security@switchbit.com](mailto:security@switchbit.com) instead.
 
 In order to determine whether you are dealing with a security issue, ask yourself these two questions:
 * Can I access something that's not mine, or something I shouldn't have access to?
 * Can I disable something for other people?
 
- If the answer to either of those two questions are "yes", then you're probably dealing with a security issue. Note that even if you answer "no" to both questions, you may still be dealing with a security issue, so if you're unsure, just email us at [security@switchbit.com](mailto:security@switchbit.com.
+If the answer to either of those two questions are "yes", then you're probably dealing with a security issue. Note that even if you answer "no" to both questions, you may still be dealing with a security issue, so if you're unsure, just email us at [security@switchbit.com](mailto:security@switchbit.com).
 
  When filing an issue, make sure to answer these five questions:
 
