@@ -23,7 +23,6 @@ package orlop
 import (
 	"fmt"
 	"github.com/sirupsen/logrus"
-	"github.com/spf13/pflag"
 	"github.com/switch-bit/orlop/log"
 )
 
@@ -115,12 +114,4 @@ func GetCredentials(cfg HasCredentialsConfig, vault HasVaultConfig) (*Credential
 	}
 
 	return creds, nil
-}
-
-// AddCredentials adds credentials configuration parameters
-func AddCredentials(flags *pflag.FlagSet, prefix ...string) {
-	p := MakeCommandKeyPrefix(prefix)
-	flags.String(p("id"), "", "Vault path to retrieve credentials")
-	flags.String(p("username"), "", "static username")
-	flags.String(p("password"), "", "static password")
 }

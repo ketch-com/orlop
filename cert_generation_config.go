@@ -21,7 +21,6 @@
 package orlop
 
 import (
-	"github.com/spf13/pflag"
 	"time"
 )
 
@@ -37,9 +36,9 @@ type HasCertGenerationConfig interface {
 // CertGenerationConfig provides the certificate generation configuration
 type CertGenerationConfig struct {
 	Enabled    bool
-	Path       string
-	CommonName string
-	AltNames   string
+	Path       string `config:"path,default=/pki/issue/"`
+	CommonName string `config:"common-name"`
+	AltNames   string `config:"alt-names"`
 	TTL        time.Duration
 }
 
@@ -66,14 +65,4 @@ func (c CertGenerationConfig) GetAltNames() string {
 // GetTTL returns the time-to-live for the certificates
 func (c CertGenerationConfig) GetTTL() time.Duration {
 	return c.TTL
-}
-
-// AddCertGenerationConfig adds certificate generation configuration
-func AddCertGenerationConfig(flags *pflag.FlagSet, prefix ...string) {
-	p := MakeCommandKeyPrefix(prefix)
-	AddEnabled(flags, "certificate generation enabled", false, prefix...)
-	flags.String(p("path"), "/pki/issue/", "path to the issuer")
-	flags.String(p("common-name"), "", "common name for the certificate")
-	flags.String(p("alt-names"), "", "alt names for the certificate")
-	flags.Duration(p("ttl"), 0*time.Hour, "time-to-live for generated certificates")
 }
