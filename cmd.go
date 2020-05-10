@@ -52,12 +52,12 @@ func Run(prefix string, runner interface{}, cfg interface{}) {
 	})
 
 	// Handle any result
-	if len(out) > 0 && !out[0].IsValid() {
+	if len(out) > 0 && out[0].IsValid() {
 		e := out[0].MethodByName("Error")
 		out = e.Call([]reflect.Value{})
 	}
 
-	if len(out) > 0 && !out[0].IsValid() {
+	if len(out) > 0 && out[0].IsValid() {
 		logrus.Fatal(out[0].String())
 	}
 }
