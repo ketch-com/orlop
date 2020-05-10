@@ -37,8 +37,8 @@ type HasCertGenerationConfig interface {
 type CertGenerationConfig struct {
 	Enabled    bool
 	Path       string `config:"path,default=/pki/issue/"`
-	CommonName string `config:"common-name"`
-	AltNames   string `config:"alt-names"`
+	CommonName string
+	AltNames   string
 	TTL        time.Duration
 }
 
