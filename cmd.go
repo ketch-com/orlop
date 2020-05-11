@@ -35,7 +35,7 @@ func Run(prefix string, runner interface{}, cfg interface{}) {
 	env := Environment(strings.ToLower(getenv(prefix, "environment")))
 
 	// Load the environment from files
-	LoadEnvironment(env)
+	loadEnvironment(env)
 
 	// Setup logging
 	setupLogging(prefix, env)

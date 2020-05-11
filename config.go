@@ -66,7 +66,7 @@ func UnmarshalFromEnv(prefix string, vars []string, cfg interface{}) error {
 			return fmt.Errorf("%s required", name)
 		}
 
-		err := field.set(&field.v, value)
+		err := field.set(field.v, value)
 		if err != nil {
 			return err
 		}
@@ -136,11 +136,11 @@ func parseConfigTag(tag string) *configTag {
 	return t
 }
 
-type fieldSetter func(value *reflect.Value, input string) error
+type fieldSetter func(value reflect.Value, input string) error
 
 var knownSetters map[string]fieldSetter
 
-func RegisterConfigParser(typeName string, parser func(value *reflect.Value, input string) error) {
+func RegisterConfigParser(typeName string, parser func(value reflect.Value, input string) error) {
 	knownSetters[typeName] = parser
 }
 
@@ -175,14 +175,12 @@ func reflectStructValue(prefix []string, r map[string]*configField, v reflect.Va
 	for n := 0; n < t.NumField(); n++ {
 		f := v.Field(n)
 		ft := f.Type()
-		tag := parseConfigTag(t.Field(n).Tag.Get("config"))
+		fld := t.Field(n)
+		tag := parseConfigTag(fld.Tag.Get("config"))
 
-		if tag.Name == nil {
-			n := t.Field(n).Name
-			tag.Name = &n
-		} else if len(*tag.Name) == 0 && ft.Kind() != reflect.Struct {
-			n := t.Field(n).Name
-			tag.Name = &n
+		if tag.Name == nil || len(*tag.Name) == 0 && ft.Kind() != reflect.Struct {
+			nm := fld.Name
+			tag.Name = &nm
 		}
 
 		if *tag.Name == "-" {
@@ -192,22 +190,28 @@ func reflectStructValue(prefix []string, r map[string]*configField, v reflect.Va
 		replacer := strings.NewReplacer("-", "_", ".", "_")
 		key := strcase.ToScreamingSnake(replacer.Replace(strings.Join(append(prefix, *tag.Name), "_")))
 
-		setter := knownSetters[ft.String()]
-		if setter == nil {
-			m := f.Addr().MethodByName("UnmarshalText")
-			if m.IsValid() {
-				setter = unmarshalTextSetter
-			}
+		for ft.Kind() == reflect.Ptr {
+			ft = ft.Elem()
 		}
-		if setter == nil {
-			m := f.Addr().MethodByName("UnmarshalJSON")
-			if m.IsValid() {
-				setter = unmarshalJSONSetter
+
+		setter := knownSetters[ft.String()]
+		if f.CanAddr() {
+			if setter == nil {
+				m := f.Addr().MethodByName("UnmarshalText")
+				if m.IsValid() {
+					setter = unmarshalTextSetter
+				}
+			}
+			if setter == nil {
+				m := f.Addr().MethodByName("UnmarshalJSON")
+				if m.IsValid() {
+					setter = unmarshalJSONSetter
+				}
 			}
 		}
 
 		if setter == nil {
-			switch f.Kind() {
+			switch ft.Kind() {
 			case reflect.Bool:
 				setter = boolFieldSetter
 
@@ -248,13 +252,19 @@ func reflectStructValue(prefix []string, r map[string]*configField, v reflect.Va
 			case reflect.String:
 				setter = stringFieldSetter
 
+			case reflect.Func, reflect.Chan, reflect.UnsafePointer, reflect.Interface:
+
 			default:
-				panic(fmt.Sprintf("config: field kind not supported on field %s %s", t.Field(n).Name,
-					t.Field(n).Type.String()))
+				panic(fmt.Sprintf("config: field kind %v not supported on field %s %s",
+					ft.Kind(), fld.Name, fld.Type.String()))
 			}
 		}
 
 		if setter != nil {
+			if f.Type().Kind() == reflect.Ptr {
+				setter = pointerFieldSetter(setter)
+			}
+
 			r[key] = &configField{
 				tag: tag,
 				v:   f,
@@ -309,13 +319,13 @@ func GetVariablesFromConfig(prefix string, cfg interface{}) ([]string, error) {
 	return vars, nil
 }
 
-func unmarshalTextSetter(value *reflect.Value, input string) error {
+func unmarshalTextSetter(value reflect.Value, input string) error {
 	m := value.Addr().MethodByName("UnmarshalText")
 	m.Call([]reflect.Value{reflect.ValueOf([]byte(input))})
 	return nil
 }
 
-func unmarshalJSONSetter(value *reflect.Value, input string) error {
+func unmarshalJSONSetter(value reflect.Value, input string) error {
 	if len(input) > 0 {
 		m := value.Addr().MethodByName("UnmarshalJSON")
 		m.Call([]reflect.Value{reflect.ValueOf([]byte(input))})
@@ -323,12 +333,12 @@ func unmarshalJSONSetter(value *reflect.Value, input string) error {
 	return nil
 }
 
-func boolFieldSetter(value *reflect.Value, input string) error {
+func boolFieldSetter(value reflect.Value, input string) error {
 	value.SetBool(strings.ToLower(input) == "true")
 	return nil
 }
 
-func intFieldSetter(value *reflect.Value, input string) error {
+func intFieldSetter(value reflect.Value, input string) error {
 	if len(input) == 0 {
 		input = "0"
 	}
@@ -342,7 +352,7 @@ func intFieldSetter(value *reflect.Value, input string) error {
 	return nil
 }
 
-func uintFieldSetter(value *reflect.Value, input string) error {
+func uintFieldSetter(value reflect.Value, input string) error {
 	if len(input) == 0 {
 		input = "0"
 	}
@@ -356,7 +366,7 @@ func uintFieldSetter(value *reflect.Value, input string) error {
 	return nil
 }
 
-func floatFieldSetter(value *reflect.Value, input string) error {
+func floatFieldSetter(value reflect.Value, input string) error {
 	if len(input) == 0 {
 		input = "0"
 	}
@@ -370,7 +380,7 @@ func floatFieldSetter(value *reflect.Value, input string) error {
 	return nil
 }
 
-func mapFieldSetter(value *reflect.Value, input string) error {
+func mapFieldSetter(value reflect.Value, input string) error {
 	m := reflect.MakeMap(value.Type())
 
 	if len(input) > 0 {
@@ -397,7 +407,7 @@ func mapFieldSetter(value *reflect.Value, input string) error {
 	return nil
 }
 
-func base64ByteSliceFieldSetter(value *reflect.Value, input string) error {
+func base64ByteSliceFieldSetter(value reflect.Value, input string) error {
 	if len(input) > 0 {
 		b, err := base64.StdEncoding.DecodeString(input)
 		if err != nil {
@@ -409,7 +419,7 @@ func base64ByteSliceFieldSetter(value *reflect.Value, input string) error {
 	return nil
 }
 
-func hexByteSliceFieldSetter(value *reflect.Value, input string) error {
+func hexByteSliceFieldSetter(value reflect.Value, input string) error {
 	if len(input) > 0 {
 		b, err := hex.DecodeString(input)
 		if err != nil {
@@ -421,7 +431,7 @@ func hexByteSliceFieldSetter(value *reflect.Value, input string) error {
 	return nil
 }
 
-func sliceFieldSetter(value *reflect.Value, input string) error {
+func sliceFieldSetter(value reflect.Value, input string) error {
 	if len(input) > 0 {
 		input = strings.Trim(input, "[]")
 
@@ -443,12 +453,12 @@ func sliceFieldSetter(value *reflect.Value, input string) error {
 	return nil
 }
 
-func stringFieldSetter(value *reflect.Value, input string) error {
+func stringFieldSetter(value reflect.Value, input string) error {
 	value.SetString(input)
 	return nil
 }
 
-func timeDurationFieldSetter(value *reflect.Value, input string) error {
+func timeDurationFieldSetter(value reflect.Value, input string) error {
 	if len(input) > 0 {
 		d, err := time.ParseDuration(input)
 		if err != nil {
@@ -457,10 +467,33 @@ func timeDurationFieldSetter(value *reflect.Value, input string) error {
 
 		value.Set(reflect.ValueOf(d))
 	}
+
 	return nil
 }
 
-func LoadEnvironment(env Environment) {
+func pointerFieldSetter(x func (value reflect.Value, input string) error) func (value reflect.Value, input string) error {
+	return func(value reflect.Value, input string) error {
+		if value.Kind() != reflect.Ptr {
+			return x(value, input)
+		}
+
+		// Create a new instance of the specified type
+		v := reflect.New(value.Type().Elem())
+
+		// Set into that new instance
+		err := x(v.Elem(), input)
+		if err != nil {
+			return err
+		}
+
+		// Set that instance to the pointer
+		value.Set(v)
+
+		return nil
+	}
+}
+
+func loadEnvironment(env Environment) {
 	envFiles := []string{".env"}
 	if env.IsLocal() {
 		envFiles = append(envFiles, ".env.local")

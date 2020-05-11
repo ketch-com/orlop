@@ -105,30 +105,34 @@ func CloneTLSConfig(cfg HasTLSConfig) TLSConfig {
 }
 
 func init() {
-	RegisterConfigParser("tls.ClientAuthType", func(value *reflect.Value, input string) error {
+	RegisterConfigParser("tls.ClientAuthType", func(value reflect.Value, input string) error {
 		if len(input) == 0 {
 			return nil
 		}
 
+		var clientAuthType tls.ClientAuthType
+
 		switch input {
 		case "request":
-			value.Set(reflect.ValueOf(tls.RequestClientCert))
+			clientAuthType = tls.RequestClientCert
 
 		case "require":
-			value.Set(reflect.ValueOf(tls.RequireAnyClientCert))
+			clientAuthType = tls.RequireAnyClientCert
 
 		case "verify":
-			value.Set(reflect.ValueOf(tls.VerifyClientCertIfGiven))
+			clientAuthType = tls.VerifyClientCertIfGiven
 
 		case "require-and-verify":
-			value.Set(reflect.ValueOf(tls.RequireAndVerifyClientCert))
+			clientAuthType = tls.RequireAndVerifyClientCert
 
 		case "none":
-			value.Set(reflect.ValueOf(tls.NoClientCert))
+			clientAuthType = tls.NoClientCert
 
 		default:
 			return fmt.Errorf("config: '%s' is not a valid ClientAuth value", input)
 		}
+
+		value.Set(reflect.ValueOf(clientAuthType))
 
 		return nil
 	})

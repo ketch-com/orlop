@@ -40,6 +40,7 @@ type TestConfig struct {
 	Map           map[string]string
 	HexEncoded    []byte
 	Base64Encoded []byte `config:",encoding=base64"`
+	Ptr           *int32
 }
 
 func (e *TestConfig) UnmarshalText(text []byte) error {
@@ -71,6 +72,7 @@ func TestUnmarshal(t *testing.T) {
 		"WHEELHOUSE_MAP=[\"a=b\",\"c=d\"]",
 		"WHEELHOUSE_HEX_ENCODED=0102030405060708090A0B0C0D0E0F",
 		"WHEELHOUSE_BASE_64_ENCODED=AQIDBAUGBwgJCgsMDQ4P",
+		"WHEELHOUSE_PTR=123",
 	}, &c)
 	if err != nil {
 		t.Fatal(err)
@@ -103,6 +105,10 @@ func TestUnmarshal(t *testing.T) {
 	}
 
 	if !reflect.DeepEqual(c.HexEncoded, []byte{0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0A, 0x0B, 0x0C, 0x0D, 0x0E, 0x0F}) {
+		t.Fail()
+	}
+
+	if c.Ptr == nil || *c.Ptr != 123 {
 		t.Fail()
 	}
 }
