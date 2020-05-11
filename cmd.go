@@ -24,6 +24,7 @@ import (
 	"context"
 	"github.com/iancoleman/strcase"
 	"github.com/sirupsen/logrus"
+	"log"
 	"os"
 	"reflect"
 	"strings"
@@ -99,5 +100,5 @@ func setupLogging(prefix string, env Environment) {
 		logrus.SetFormatter(&logrus.JSONFormatter{})
 	}
 
-	logrus.SetOutput(logrus.New().Writer())
+	log.SetOutput(logrus.New().Writer())
 }
