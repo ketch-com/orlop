@@ -251,12 +251,6 @@ func reflectStructValue(prefix []string, r map[string]*configField, v reflect.Va
 
 			case reflect.String:
 				setter = stringFieldSetter
-
-			case reflect.Func, reflect.Chan, reflect.UnsafePointer, reflect.Interface:
-
-			default:
-				panic(fmt.Sprintf("config: field kind %v not supported on field %s %s",
-					ft.Kind(), fld.Name, fld.Type.String()))
 			}
 		}
 
