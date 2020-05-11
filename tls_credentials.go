@@ -52,7 +52,7 @@ func NewServerTLSConfig(cfg HasTLSConfig, vault HasVaultConfig) (*tls.Config, er
 
 	var err error
 	t := CloneTLSConfig(cfg)
-	t.Cert.Secret, t.Key.Secret, err = GenerateCertificates(t.Generate, vault)
+	err = GenerateCertificates(t.Generate, vault, &t.Cert.Secret, &t.Key.Secret)
 	if err != nil {
 		return nil, err
 	}
@@ -110,7 +110,7 @@ func NewClientTLSConfig(cfg HasTLSConfig, vault HasVaultConfig) (*tls.Config, er
 
 	var err error
 	t := CloneTLSConfig(cfg)
-	t.Cert.Secret, t.Key.Secret, err = GenerateCertificates(t.Generate, vault)
+	err = GenerateCertificates(t.Generate, vault, &t.Cert.Secret, &t.Key.Secret)
 	if err != nil {
 		return nil, err
 	}
@@ -177,7 +177,7 @@ func NewServerTLSCredentials(cfg HasTLSConfig, vault HasVaultConfig) (credential
 }
 
 // GenerateCertificates generates certificates by accessing the configured endpoint in vault
-func GenerateCertificates(g HasCertGenerationConfig, vault HasVaultConfig) (cert string, key string, err error) {
+func GenerateCertificates(g HasCertGenerationConfig, vault HasVaultConfig, cert *string, key *string) (err error) {
 	// If Vault not enabled or certificate generation not enabled, just return
 	if !vault.GetEnabled() || !g.GetEnabled() {
 		return
@@ -186,7 +186,7 @@ func GenerateCertificates(g HasCertGenerationConfig, vault HasVaultConfig) (cert
 	// Connect to Vault
 	client, err := NewVault(vault)
 	if err != nil {
-		return "", "", err
+		return err
 	}
 
 	params := map[string]interface{}{
@@ -203,12 +203,12 @@ func GenerateCertificates(g HasCertGenerationConfig, vault HasVaultConfig) (cert
 	// Write the params to the path to generate the certificate
 	secret, err := client.Write(g.GetPath(), params)
 	if err != nil {
-		return "", "", err
+		return err
 	}
 
 	// Set the generated certificate and private key as secrets
-	cert = decodeCertInfo(secret.Data, "certificate")
-	key = decodeCertInfo(secret.Data, "private_key")
+	*cert = decodeCertInfo(secret.Data, "certificate")
+	*key = decodeCertInfo(secret.Data, "private_key")
 
 	return
 }

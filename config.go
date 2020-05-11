@@ -128,7 +128,7 @@ func parseConfigTag(tag string) *configTag {
 				t.Encoding = &elemParts[1]
 
 			default:
-				panic("config: unsupported encoding " + elemParts[1])
+				panic("config: unsupported encoding in " + tag)
 			}
 		}
 	}
@@ -249,7 +249,8 @@ func reflectStructValue(prefix []string, r map[string]*configField, v reflect.Va
 				setter = stringFieldSetter
 
 			default:
-				panic("field kind not supported")
+				panic(fmt.Sprintf("config: field kind not supported on field %s %s", t.Field(n).Name,
+					t.Field(n).Type.String()))
 			}
 		}
 
