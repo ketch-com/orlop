@@ -34,7 +34,13 @@ import (
 	"strings"
 )
 
-type ServerOptions struct {
+// ServerOption provides an interface for utilizing custom server options
+type ServerOption interface {
+	apply(ctx context.Context, opts *serverOptions) error
+}
+
+// serverOptions contain
+type serverOptions struct {
 	log              *logrus.Entry
 	serviceName      string
 	addr             string
@@ -42,20 +48,14 @@ type ServerOptions struct {
 	handlers         map[string]http.Handler
 	tlsProvider      TLSProvider
 	authenticate     func(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error)
-	gatewayHandlers  []func(ctx context.Context, gwmux *runtime.ServeMux, conn *grpc.ClientConn) error
 }
 
-type ServerOption interface {
-	apply(ctx context.Context, opts *ServerOptions) error
-}
-
-
-
-type ServerConfigOption struct {
+// serverConfigOption provides the capability to override default server configuration including address, port and TLS
+type serverConfigOption struct {
 	config HasServerConfig
 }
 
-func (o ServerConfigOption) apply(ctx context.Context, opt *ServerOptions) error {
+func (o serverConfigOption) apply(ctx context.Context, opt *serverOptions) error {
 	opt.config = ServerConfig{
 		Bind:   o.config.GetBind(),
 		Listen: o.config.GetListen(),
@@ -68,52 +68,53 @@ func (o ServerConfigOption) apply(ctx context.Context, opt *ServerOptions) error
 	return nil
 }
 
+// WithServerConfig returns a new serverConfigOption
 func WithServerConfig(config HasServerConfig) ServerOption {
-	return &ServerConfigOption{
+	return &serverConfigOption{
 		config: config,
 	}
 }
 
-
-
-type AuthenticateServerOption struct {
+// authenticateServerOption is used to specify an authenticator function
+type authenticateServerOption struct {
 	authenticate func(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error)
 }
 
-func (o AuthenticateServerOption) apply(ctx context.Context, opt *ServerOptions) error {
+func (o authenticateServerOption) apply(ctx context.Context, opt *serverOptions) error {
 	opt.authenticate = o.authenticate
 	return nil
 }
 
+// WithAuthentication returns a new authenticateServerOption
 func WithAuthentication(authenticate func(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error)) ServerOption {
-	return &AuthenticateServerOption{
+	return &authenticateServerOption{
 		authenticate: authenticate,
 	}
 }
 
-
-type TLSServerOption struct {
+// tlsServerOption is used to specify TLS config
+type tlsServerOption struct {
 	tlsConfig TLSConfig
 }
 
-func (o TLSServerOption) apply(ctx context.Context, opt *ServerOptions) error {
+func (o tlsServerOption) apply(ctx context.Context, opt *serverOptions) error {
 	opt.config.TLS = o.tlsConfig
 	return nil
 }
 
+// WithTLS returns a new tlsServerOption
 func WithTLS(cfg TLSConfig) ServerOption {
-	return &TLSServerOption{
+	return &tlsServerOption{
 		tlsConfig: cfg,
 	}
 }
 
-
-
-type GRPCServerServerOption struct {
+// grpcServerServerOption is used to register a GRPC server
+type grpcServerServerOption struct {
 	registerServices func(ctx context.Context, grpcServer *grpc.Server) error
 }
 
-func (o GRPCServerServerOption) apply(ctx context.Context, opt *ServerOptions) error {
+func (o grpcServerServerOption) apply(ctx context.Context, opt *serverOptions) error {
 	var grpcServerOptions []grpc.ServerOption
 
 	// If certificate file and key file have been specified then setup a TLS server
@@ -161,18 +162,19 @@ func (o GRPCServerServerOption) apply(ctx context.Context, opt *ServerOptions) e
 	return nil
 }
 
+// WithGRPCServer returns a new grpcServerServerOption
 func WithGRPCServer(registerServices func(ctx context.Context, grpcServer *grpc.Server) error) ServerOption {
-	return &GRPCServerServerOption{
+	return &grpcServerServerOption{
 		registerServices: registerServices,
 	}
 }
 
-
-type GatewayServerOption struct {
+// gatewayServerOption is used to specify handlers for a JSON-GRPC gateway
+type gatewayServerOption struct {
 	gatewayHandlers []func(ctx context.Context, gwmux *runtime.ServeMux, conn *grpc.ClientConn) error
 }
 
-func (o GatewayServerOption) apply(ctx context.Context, opt *ServerOptions) error {
+func (o gatewayServerOption) apply(ctx context.Context, opt *serverOptions) error {
 	gwmux := runtime.NewServeMux(
 		runtime.WithIncomingHeaderMatcher(incomingHeaderMatcher),
 		runtime.WithForwardResponseOption(redirectFilter),
@@ -215,7 +217,7 @@ func (o GatewayServerOption) apply(ctx context.Context, opt *ServerOptions) erro
 	}
 
 	opt.log.Trace("registering gateway handlers")
-	for _, gatewayHandler := range opt.gatewayHandlers {
+	for _, gatewayHandler := range o.gatewayHandlers {
 		err = gatewayHandler(ctx, gwmux, conn)
 		if err != nil {
 			return err
@@ -252,49 +254,53 @@ func (o GatewayServerOption) apply(ctx context.Context, opt *ServerOptions) erro
 	return nil
 }
 
+// WithGateway returns a new gatewayServerOption
 func WithGateway(gatewayHandlers ...func(ctx context.Context, gwmux *runtime.ServeMux, conn *grpc.ClientConn) error) ServerOption {
-	return &GatewayServerOption{
+	return &gatewayServerOption{
 		gatewayHandlers: gatewayHandlers,
 	}
 }
 
-
-type TLSProviderServerOption struct {
+// tlsProviderServerOption is used to specify a TLS provider
+type tlsProviderServerOption struct {
 	tlsProvider TLSProvider
 }
 
-func (o TLSProviderServerOption) apply(ctx context.Context, opt *ServerOptions) error {
+func (o tlsProviderServerOption) apply(ctx context.Context, opt *serverOptions) error {
 	opt.tlsProvider = o.tlsProvider
 	return nil
 }
 
+// WithTLSProvider returns a new tlsProviderServerOption
 func WithTLSProvider(tlsProvider TLSProvider) ServerOption {
-	return &TLSProviderServerOption{
+	return &tlsProviderServerOption{
 		tlsProvider: tlsProvider,
 	}
 }
 
+// WithHealthCheck specifies a health checker function
 func WithHealthCheck(checker HealthChecker) ServerOption {
 	return WithHandler("/healthz", &HealthHandler{
 		checker: checker,
 	})
 }
 
+// WithMetrics specifies a metrics handler
 func WithMetrics(handler http.Handler) ServerOption {
 	return WithHandler("/metrics", handler)
 }
 
+// WithPrometheusMetrics specifies to use the Prometheus metrics handler
 func WithPrometheusMetrics() ServerOption {
 	return WithMetrics(promhttp.Handler())
 }
 
-
-
-type SwaggerHandlerServerOption struct {
+// swaggerHandlerServerOption specifies how to serve swagger
+type swaggerHandlerServerOption struct {
 	fs http.FileSystem
 }
 
-func (o SwaggerHandlerServerOption) apply(ctx context.Context, opt *ServerOptions) error {
+func (o swaggerHandlerServerOption) apply(ctx context.Context, opt *serverOptions) error {
 	err := mime.AddExtensionType(".svg", "image/svg+xml")
 	if err != nil {
 		return err
@@ -306,30 +312,29 @@ func (o SwaggerHandlerServerOption) apply(ctx context.Context, opt *ServerOption
 	return nil
 }
 
+// WithSwagger specifies a swagger handler based off the given file system
 func WithSwagger(fs http.FileSystem) ServerOption {
-	return &SwaggerHandlerServerOption{}
+	return &swaggerHandlerServerOption{}
 }
 
-
-
-type HandlerServerOption struct {
+// handlerServerOption specifies a custom HTTP handler
+type handlerServerOption struct {
 	pattern string
 	handler http.Handler
 }
 
-func (o HandlerServerOption) apply(ctx context.Context, opt *ServerOptions) error {
+func (o handlerServerOption) apply(ctx context.Context, opt *serverOptions) error {
 	opt.handlers[o.pattern] = o.handler
 	return nil
 }
 
+// WithHandler returns a handlerServerOption
 func WithHandler(pattern string, handler http.Handler) ServerOption {
-	return &HandlerServerOption{
+	return &handlerServerOption{
 		pattern: pattern,
 		handler: handler,
 	}
 }
-
-
 
 var (
 	headers = strings.Join([]string{"Content-Type", "Accept", "Authorization"}, ",")

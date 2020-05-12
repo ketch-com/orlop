@@ -21,20 +21,39 @@
 package orlop
 
 import (
+	"container/heap"
 	"context"
 	"crypto/tls"
+	"fmt"
 	"github.com/switch-bit/orlop/log"
 	syslog "log"
 	"net"
 	"net/http"
 )
 
+type PatternHeap []string
+
+func (h PatternHeap) Len() int           { return len(h) }
+func (h PatternHeap) Less(i, j int) bool { return len(h[i]) > len(h[j]) }
+func (h PatternHeap) Swap(i, j int)      { h[i], h[j] = h[j], h[i] }
+func (h *PatternHeap) Push(x interface{}) {
+	*h = append(*h, x.(string))
+}
+
+func (h *PatternHeap) Pop() interface{} {
+	old := *h
+	n := len(old)
+	x := old[n-1]
+	*h = old[0 : n-1]
+	return x
+}
+
 // Serve sets up the server and listens for requests
 func Serve(ctx context.Context, serviceName string, options ...ServerOption) error {
 	var err error
 
 	// Setup the server options
-	serverOptions := &ServerOptions{
+	serverOptions := &serverOptions{
 		serviceName: serviceName,
 		tlsProvider: NewSimpleTLSProvider(),
 		handlers:    make(map[string]http.Handler),
@@ -74,7 +93,16 @@ func Serve(ctx context.Context, serviceName string, options ...ServerOption) err
 	// Create the HTTP server
 	mux := http.NewServeMux()
 
-	for key, handler := range serverOptions.handlers {
+	patterns := &PatternHeap{}
+	heap.Init(patterns)
+	for pattern := range serverOptions.handlers {
+		heap.Push(patterns, pattern)
+	}
+
+	for patterns.Len() > 0 {
+		key := heap.Pop(patterns).(string)
+		fmt.Println(key)
+		handler := serverOptions.handlers[key]
 		mux.Handle(key, handler)
 	}
 
