@@ -20,8 +20,6 @@
 
 package orlop
 
-import "github.com/spf13/pflag"
-
 // HasClientConfig denotes that an object provides client configuration
 type HasClientConfig interface {
 	GetTLS() HasTLSConfig
@@ -55,13 +53,4 @@ func (c ClientConfig) GetTLS() HasTLSConfig {
 // GetHeaders returns static headers to add to requests
 func (c ClientConfig) GetHeaders() map[string]string {
 	return c.Headers
-}
-
-// AddClient adds the client-related parameters
-func AddClient(flags *pflag.FlagSet, prefix ...string) {
-	p := MakeCommandKeyPrefix(prefix)
-	AddTLS(flags, append(prefix, "tls")...)
-	AddToken(flags, p("token"))
-	flags.String(p("url"), "", "URL to connect to")
-	flags.StringToString(p("headers"), nil, "additional headers to send")
 }

@@ -23,83 +23,95 @@ package orlop
 import (
 	"context"
 	"fmt"
-	"github.com/spf13/cobra"
-	"github.com/switch-bit/orlop/log"
+	"github.com/iancoleman/strcase"
+	"github.com/sirupsen/logrus"
+	"log"
+	"os"
+	"reflect"
+	"strings"
 )
 
-// RootCommand represents the root command object
-type RootCommand struct {
-	c *cobra.Command
-}
-
-// Execute the command
-func (r RootCommand) Execute() {
-	r.c.SetHelpCommand(&cobra.Command{
-		Use:   "help [command]",
-		Short: "help about any command",
-		Long: `Help provides help for any command in the application.
-Simply type ` + r.c.Name() + ` help [path to command] for full details.`,
-
-		Run: func(c *cobra.Command, args []string) {
-			cmd, _, e := c.Root().Find(args)
-			if cmd == nil || e != nil {
-				c.Printf("Unknown help topic %#q\n", args)
-				c.Root().Usage()
-			} else {
-				cmd.InitDefaultHelpFlag() // make possible 'help' flag to be shown
-				cmd.Help()
+func Run(prefix string, runner interface{}, cfg interface{}) {
+	if len(os.Args) > 1 {
+		if os.Args[1] == "--init" {
+			vars, err := GetVariablesFromConfig(prefix, cfg)
+			if err != nil {
+				logrus.Fatal(err)
 			}
-		},
+
+			fmt.Println(strings.Join(vars, "\n"))
+			return
+		}
+	}
+
+	// First figure out the environment
+	env := Environment(strings.ToLower(getenv(prefix, "environment")))
+
+	// Load the environment from files
+	loadEnvironment(env)
+
+	// Setup logging
+	setupLogging(prefix, env)
+
+	// Unmarshal the configuration
+	err := Unmarshal(prefix, cfg)
+	if err != nil {
+		logrus.Fatal(err)
+	}
+
+	// Call the runner
+	out := reflect.ValueOf(runner).Call([]reflect.Value{
+		reflect.ValueOf(context.TODO()),
+		reflect.ValueOf(cfg),
 	})
 
-	r.c.PersistentFlags().String("config", fmt.Sprintf(".%s/config.yaml", r.c.Name()), "configuration file to use")
-	r.c.PersistentFlags().String("loglevel", "", "logging level")
+	// Handle any result
+	if len(out) > 0 && out[0].IsValid() {
+		e := out[0].MethodByName("Error")
+		out = e.Call([]reflect.Value{})
+	}
 
-	if err := r.c.Execute(); err != nil {
-		log.Fatal(err)
+	if len(out) > 0 && out[0].IsValid() {
+		logrus.Fatal(out[0].String())
 	}
 }
 
-// AddCommand adds a sub command
-func (r RootCommand) AddCommand(c *cobra.Command) {
-	r.c.AddCommand(c)
+func getenv(prefix string, key string) string {
+	return os.Getenv(strcase.ToScreamingSnake(strings.Join([]string{prefix, key}, "_")))
 }
 
-// NewRootCommand creates a new root command from the given basic configuration
-func NewRootCommand(c *cobra.Command) *RootCommand {
-	c.TraverseChildren = true
-	c.PersistentPreRunE = Setup(c.Name())
-	return &RootCommand{
-		c: c,
-	}
-}
+func setupLogging(prefix string, env Environment) {
+	switch strings.ToLower(getenv(prefix, "loglevel")) {
+	case "fatal":
+		logrus.SetLevel(logrus.FatalLevel)
 
-// Context wraps a function to take a context
-func Context(f func(ctx context.Context) error) func(c *cobra.Command, args []string) {
-	return func(c *cobra.Command, args []string) {
-		err := f(c.Context())
-		if err != nil {
-			log.Fatal(err)
+	case "error":
+		logrus.SetLevel(logrus.ErrorLevel)
+
+	case "info":
+		logrus.SetLevel(logrus.InfoLevel)
+
+	case "debug":
+		logrus.SetLevel(logrus.DebugLevel)
+
+	case "trace":
+		logrus.SetLevel(logrus.TraceLevel)
+
+	default:
+		if env.IsProduction() {
+			logrus.SetLevel(logrus.WarnLevel)
+		} else {
+			logrus.SetLevel(logrus.DebugLevel)
 		}
 	}
-}
 
-// ContextArgs wraps a function to take a context and arguments
-func ContextArgs(f func(ctx context.Context, args ...string) error) func(c *cobra.Command, args []string) {
-	return func(c *cobra.Command, args []string) {
-		err := f(c.Context(), args...)
-		if err != nil {
-			log.Fatal(err)
-		}
+	if env.IsLocal() {
+		logrus.SetFormatter(&logrus.TextFormatter{
+			ForceColors: true,
+		})
+	} else {
+		logrus.SetFormatter(&logrus.JSONFormatter{})
 	}
-}
 
-// CommandContextArgs wraps a function to take a command, context and arguments
-func CommandContextArgs(f func(ctx context.Context, c *cobra.Command, args ...string) error) func(c *cobra.Command, args []string) {
-	return func(c *cobra.Command, args []string) {
-		err := f(c.Context(), c, args...)
-		if err != nil {
-			log.Fatal(err)
-		}
-	}
+	log.SetOutput(logrus.New().Writer())
 }

@@ -21,7 +21,6 @@
 package orlop
 
 import (
-	"github.com/spf13/pflag"
 	"time"
 )
 
@@ -38,9 +37,9 @@ type HasTokenConfig interface {
 // TokenConfig is the configuration for managing tokens
 type TokenConfig struct {
 	Issuer     string
-	KeyMap     KeyConfig
-	PrivateKey KeyConfig
-	PublicKey  KeyConfig
+	KeyMap     KeyConfig `config:"keymap"`
+	PrivateKey KeyConfig `config:"privatekey"`
+	PublicKey  KeyConfig `config:"publickey"`
 	Shared     KeyConfig
 	TTL        time.Duration
 }
@@ -73,15 +72,4 @@ func (t TokenConfig) GetIssuer() string {
 // GetKeyMap returns a key map
 func (t TokenConfig) GetKeyMap() HasKeyConfig {
 	return t.KeyMap
-}
-
-// AddToken adds token parameters to the FlagSet
-func AddToken(flags *pflag.FlagSet, prefix ...string) {
-	p := MakeCommandKeyPrefix(prefix)
-	flags.Duration(p("ttl"), 24*time.Hour, "time-to-live for token")
-	flags.String(p("issuer"), "", "token issuer value")
-	AddKey(flags, append(prefix, "keymap")...)
-	AddKey(flags, append(prefix, "privatekey")...)
-	AddKey(flags, append(prefix, "publickey")...)
-	AddKey(flags, append(prefix, "shared")...)
 }

@@ -20,10 +20,6 @@
 
 package orlop
 
-import (
-	"github.com/spf13/pflag"
-)
-
 // HasServerConfig denotes an object provides server configuration
 type HasServerConfig interface {
 	GetBind() string
@@ -34,8 +30,8 @@ type HasServerConfig interface {
 
 // ServerConfig is standard configuration of most server commands
 type ServerConfig struct {
-	Bind    string
-	Listen  uint
+	Bind    string `config:"bind,default=0.0.0.0"`
+	Listen  uint   `config:"listen,default=5000"`
 	TLS     TLSConfig
 	Swagger Enabled
 }
@@ -58,25 +54,4 @@ func (c ServerConfig) GetTLS() HasTLSConfig {
 // GetSwagger returns Enabled for Swagger
 func (c ServerConfig) GetSwagger() HasEnabled {
 	return c.Swagger
-}
-
-// NewServerConfig returns a new, unmarshaled standard ServerConfig
-func NewServerConfig() (*ServerConfig, error) {
-	c := new(ServerConfig)
-
-	err := Unmarshal(c)
-	if err != nil {
-		return nil, err
-	}
-
-	return c, nil
-}
-
-// AddServer adds the server-related parameters
-func AddServer(flags *pflag.FlagSet, prefix ...string) {
-	p := MakeCommandKeyPrefix(prefix)
-	AddTLS(flags, append(prefix, "tls")...)
-	AddEnabled(flags, "enable Swagger", false, append(prefix, "swagger")...)
-	flags.String(p("bind"), "0.0.0.0", "address to bind to")
-	flags.Uint(p("listen"), 5000, "port to bind to")
 }

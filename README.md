@@ -5,10 +5,12 @@
 Orlop is the base deck in a ship where the cables are stowed.
 
 It is SwitchBit's standard (opinionated) library that all of our projects include.
-* Configuration - Viper/Cobra
-* Logging - Logrus
-* Metrics - Prometheus
+* Configuration
+* Logging (Logrus)
+* Metrics (Prometheus)
 * Server setup
 * TLS - leveraging Vault
 * Vault - secrets and certificates
 
+It supports gRPC clients and servers, Swagger and automatic certificate generation
+for mTLS.

@@ -20,10 +20,6 @@
 
 package orlop
 
-import (
-	"github.com/spf13/pflag"
-)
-
 // HasKeyConfig denotes that the object provides Key configuration
 type HasKeyConfig interface {
 	GetID() string
@@ -56,12 +52,4 @@ func (c KeyConfig) GetFile() string {
 // GetEnabled returns true if the key is enabled
 func (c KeyConfig) GetEnabled() bool {
 	return len(c.ID) > 0 || len(c.Secret) > 0 || len(c.File) > 0
-}
-
-// AddKey adds the key-related parameters
-func AddKey(flags *pflag.FlagSet, prefix ...string) {
-	p := MakeCommandKeyPrefix(prefix)
-	flags.String(p("id"), "", "key ID")
-	flags.String(p("secret"), "", "key secret")
-	AddFile(flags, "key pem file", prefix...)
 }

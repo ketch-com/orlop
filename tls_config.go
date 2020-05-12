@@ -22,7 +22,8 @@ package orlop
 
 import (
 	"crypto/tls"
-	"github.com/spf13/pflag"
+	"fmt"
+	"reflect"
 )
 
 // HasTLSConfig denotes that an object supports TLS configuration
@@ -39,13 +40,13 @@ type HasTLSConfig interface {
 
 // TLSConfig provides TLS configuration
 type TLSConfig struct {
-	ClientAuth tls.ClientAuthType
+	ClientAuth tls.ClientAuthType `config:"clientauth"`
 	Enabled    bool
 	Insecure   bool
 	Override   string
 	Cert       KeyConfig
 	Key        KeyConfig
-	RootCA     KeyConfig
+	RootCA     KeyConfig `config:"rootca"`
 	Generate   CertGenerationConfig
 }
 
@@ -103,15 +104,36 @@ func CloneTLSConfig(cfg HasTLSConfig) TLSConfig {
 	}
 }
 
-// AddTLS adds the TLS-related parameters
-func AddTLS(flags *pflag.FlagSet, prefix ...string) {
-	p := MakeCommandKeyPrefix(prefix)
-	AddEnabled(flags, "TLS enabled", true, prefix...)
-	AddCertGenerationConfig(flags, append(prefix, "generate")...)
-	AddKey(flags, append(prefix, "cert")...)
-	AddKey(flags, append(prefix, "key")...)
-	AddKey(flags, append(prefix, "rootca")...)
-	flags.String(p("override"), "", "server override")
-	flags.Bool(p("insecure"), false, "skip verifying insecure certificates")
-	flags.Var(newClientAuthValue(), p("clientauth"), "client authentication mode")
+func init() {
+	RegisterConfigParser("tls.ClientAuthType", func(value reflect.Value, input string) error {
+		if len(input) == 0 {
+			return nil
+		}
+
+		var clientAuthType tls.ClientAuthType
+
+		switch input {
+		case "request":
+			clientAuthType = tls.RequestClientCert
+
+		case "require":
+			clientAuthType = tls.RequireAnyClientCert
+
+		case "verify":
+			clientAuthType = tls.VerifyClientCertIfGiven
+
+		case "require-and-verify":
+			clientAuthType = tls.RequireAndVerifyClientCert
+
+		case "none":
+			clientAuthType = tls.NoClientCert
+
+		default:
+			return fmt.Errorf("config: '%s' is not a valid ClientAuth value", input)
+		}
+
+		value.Set(reflect.ValueOf(clientAuthType))
+
+		return nil
+	})
 }
