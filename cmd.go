@@ -22,6 +22,7 @@ package orlop
 
 import (
 	"context"
+	"fmt"
 	"github.com/iancoleman/strcase"
 	"github.com/sirupsen/logrus"
 	"log"
@@ -31,6 +32,18 @@ import (
 )
 
 func Run(prefix string, runner interface{}, cfg interface{}) {
+	if len(os.Args) > 1 {
+		if os.Args[1] == "--init" {
+			vars, err := GetVariablesFromConfig(prefix, cfg)
+			if err != nil {
+				logrus.Fatal(err)
+			}
+
+			fmt.Println(strings.Join(vars, "\n"))
+			return
+		}
+	}
+
 	// First figure out the environment
 	env := Environment(strings.ToLower(getenv(prefix, "environment")))
 
