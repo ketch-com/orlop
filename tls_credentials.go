@@ -23,10 +23,8 @@ package orlop
 import (
 	"crypto/tls"
 	"crypto/x509"
-	"encoding/base64"
 	"fmt"
 	"github.com/switch-bit/orlop/log"
-	"google.golang.org/grpc/credentials"
 )
 
 // NewServerTLSConfig returns a new tls.VaultConfig from the given configuration input
@@ -52,7 +50,10 @@ func NewServerTLSConfig(cfg HasTLSConfig, vault HasVaultConfig) (*tls.Config, er
 
 	var err error
 	t := CloneTLSConfig(cfg)
-	err = GenerateCertificates(t.Generate, vault, &t.Cert.Secret, &t.Key.Secret)
+
+	certGenerator := NewCertificateGenerator(cfg.GetGenerate(), vault)
+
+	err = certGenerator.GenerateCertificates(&t.Cert.Secret, &t.Key.Secret)
 	if err != nil {
 		return nil, err
 	}
@@ -110,7 +111,10 @@ func NewClientTLSConfig(cfg HasTLSConfig, vault HasVaultConfig) (*tls.Config, er
 
 	var err error
 	t := CloneTLSConfig(cfg)
-	err = GenerateCertificates(t.Generate, vault, &t.Cert.Secret, &t.Key.Secret)
+
+	certGenerator := NewCertificateGenerator(cfg.GetGenerate(), vault)
+
+	err = certGenerator.GenerateCertificates(&t.Cert.Secret, &t.Key.Secret)
 	if err != nil {
 		return nil, err
 	}
@@ -154,71 +158,4 @@ func NewClientTLSConfig(cfg HasTLSConfig, vault HasVaultConfig) (*tls.Config, er
 	}
 
 	return config, nil
-}
-
-// NewClientTLSCredentials returns new TLS credentials based on the provided configuration
-func NewClientTLSCredentials(cfg HasTLSConfig, vault HasVaultConfig) (credentials.TransportCredentials, error) {
-	t, err := NewClientTLSConfig(cfg, vault)
-	if err != nil {
-		return nil, err
-	}
-
-	return credentials.NewTLS(t), nil
-}
-
-// NewServerTLSCredentials returns new TLS credentials based on the provided configuration
-func NewServerTLSCredentials(cfg HasTLSConfig, vault HasVaultConfig) (credentials.TransportCredentials, error) {
-	t, err := NewServerTLSConfig(cfg, vault)
-	if err != nil {
-		return nil, err
-	}
-
-	return credentials.NewTLS(t), nil
-}
-
-// GenerateCertificates generates certificates by accessing the configured endpoint in vault
-func GenerateCertificates(g HasCertGenerationConfig, vault HasVaultConfig, cert *string, key *string) (err error) {
-	// If Vault not enabled or certificate generation not enabled, just return
-	if !vault.GetEnabled() || !g.GetEnabled() {
-		return
-	}
-
-	// Connect to Vault
-	client, err := NewVault(vault)
-	if err != nil {
-		return err
-	}
-
-	params := map[string]interface{}{
-		"common_name": g.GetCommonName(),
-		"format":      "pem_bundle",
-	}
-	if len(g.GetAltNames()) > 0 {
-		params["alt_names"] = g.GetAltNames()
-	}
-	if g.GetTTL().Seconds() > 60 {
-		params["ttl"] = g.GetTTL().String()
-	}
-
-	// Write the params to the path to generate the certificate
-	secret, err := client.Write(g.GetPath(), params)
-	if err != nil {
-		return err
-	}
-
-	// Set the generated certificate and private key as secrets
-	*cert = decodeCertInfo(secret.Data, "certificate")
-	*key = decodeCertInfo(secret.Data, "private_key")
-
-	return
-}
-
-func decodeCertInfo(data map[string]interface{}, key string) string {
-	if d, ok := data[key]; ok {
-		if s, ok := d.(string); ok {
-			return base64.StdEncoding.EncodeToString([]byte(s))
-		}
-	}
-
-	return ""
 }
