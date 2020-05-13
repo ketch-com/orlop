@@ -41,7 +41,7 @@ type TokenConfig struct {
 	PrivateKey KeyConfig `config:"privatekey"`
 	PublicKey  KeyConfig `config:"publickey"`
 	Shared     KeyConfig
-	TTL        time.Duration
+	TTL        time.Duration `config:"ttl,default=24h"`
 }
 
 // GetTTL returns the time-to-live for the token
