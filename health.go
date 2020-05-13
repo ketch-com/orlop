@@ -29,9 +29,7 @@ import (
 )
 
 // HealthChecker provides the capability to check the health
-type HealthChecker interface {
-	CheckHealth(ctx context.Context, check string) (proto.Message, error)
-}
+type HealthChecker func(ctx context.Context, check string) (proto.Message, error)
 
 // HealthHandler is a HTTP handler for checking health
 type HealthHandler struct {
@@ -47,7 +45,7 @@ func (h HealthHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			var b []byte
 			statusCode := 200
 
-			s, err := h.checker.CheckHealth(context.Background(), check)
+			s, err := h.checker(context.Background(), check)
 			if err != nil {
 				statusCode = 500
 

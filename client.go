@@ -24,6 +24,7 @@ import (
 	"fmt"
 	"github.com/switch-bit/orlop/log"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials"
 )
 
 // Connect creates a new client from configuration
@@ -39,12 +40,13 @@ func Connect(cfg HasClientConfig, vault HasVaultConfig) (*grpc.ClientConn, error
 
 	if cfg.GetTLS().GetEnabled() {
 		l.Trace("tls enabled")
-		creds, err := NewClientTLSCredentials(cfg.GetTLS(), vault)
+
+		t, err := NewClientTLSConfig(cfg.GetTLS(), vault)
 		if err != nil {
 			return nil, err
 		}
 
-		opts = append(opts, grpc.WithTransportCredentials(creds))
+		opts = append(opts, grpc.WithTransportCredentials(credentials.NewTLS(t)))
 	} else {
 		l.Trace("tls disabled")
 		opts = append(opts, grpc.WithInsecure())

@@ -32,26 +32,6 @@ import (
 	"io/ioutil"
 )
 
-// LoadPrivateKeyFromVault loads public key material from vault
-func LoadPrivateKeyFromVault(cfg HasKeyConfig, vault HasVaultConfig) (*rsa.PrivateKey, error) {
-	key, err := LoadKey(cfg, vault, "private")
-	if err != nil {
-		return nil, err
-	}
-
-	return LoadPrivateKey(key)
-}
-
-// LoadPublicKeysFromVault loads public key material from vault
-func LoadPublicKeysFromVault(cfg HasKeyConfig, vault HasVaultConfig) ([]*rsa.PublicKey, error) {
-	key, err := LoadKey(cfg, vault, "public")
-	if err != nil {
-		return nil, err
-	}
-
-	return LoadPublicKeys(key)
-}
-
 // LoadKey loads the key material based on the config
 func LoadKey(cfg HasKeyConfig, vault HasVaultConfig, which string) ([]byte, error) {
 	secret := cfg.GetSecret()

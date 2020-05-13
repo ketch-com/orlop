@@ -54,7 +54,7 @@ func (BinaryMarshaler) Marshal(v interface{}) ([]byte, error) {
 func (BinaryMarshaler) Unmarshal(data []byte, v interface{}) error {
 	rv := reflect.ValueOf(v)
 
-	for rv.Kind() != reflect.Ptr {
+	if rv.Kind() != reflect.Ptr {
 		panic("binary: v must be a pointer")
 	}
 
@@ -72,7 +72,7 @@ func (BinaryMarshaler) NewDecoder(r io.Reader) runtime.Decoder {
 	return runtime.DecoderFunc(func(v interface{}) error {
 		rv := reflect.ValueOf(v)
 
-		for rv.Kind() != reflect.Ptr {
+		if rv.Kind() != reflect.Ptr {
 			panic("binary: v must be a pointer")
 		}
 

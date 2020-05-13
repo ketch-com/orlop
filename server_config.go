@@ -25,7 +25,6 @@ type HasServerConfig interface {
 	GetBind() string
 	GetListen() uint
 	GetTLS() HasTLSConfig
-	GetSwagger() HasEnabled
 }
 
 // ServerConfig is standard configuration of most server commands
@@ -33,7 +32,6 @@ type ServerConfig struct {
 	Bind    string `config:"bind,default=0.0.0.0"`
 	Listen  uint   `config:"listen,default=5000"`
 	TLS     TLSConfig
-	Swagger Enabled
 }
 
 // GetBind returns the address to bind to
@@ -49,9 +47,4 @@ func (c ServerConfig) GetListen() uint {
 // GetTLS returns TLS configuration
 func (c ServerConfig) GetTLS() HasTLSConfig {
 	return c.TLS
-}
-
-// GetSwagger returns Enabled for Swagger
-func (c ServerConfig) GetSwagger() HasEnabled {
-	return c.Swagger
 }
