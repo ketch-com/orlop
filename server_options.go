@@ -50,12 +50,12 @@ type mux interface {
 }
 
 type serverOptions struct {
-	log              *logrus.Entry
-	serviceName      string
-	addr             string
-	config           ServerConfig
-	tlsProvider      TLSProvider
-	authenticate     func(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error)
+	log          *logrus.Entry
+	serviceName  string
+	addr         string
+	config       ServerConfig
+	vault        HasVaultConfig
+	authenticate func(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error)
 }
 
 // serverConfigOption provides the capability to override default server configuration including address, port and TLS
@@ -78,6 +78,27 @@ func (o serverConfigOption) apply(ctx context.Context, opt *serverOptions) error
 
 func (o serverConfigOption) addHandler(ctx context.Context, opt *serverOptions, mux mux) error {
 	return nil
+}
+
+// loggerServerOption provides capability to provide custom logger
+type loggerServerOption struct {
+	log *logrus.Entry
+}
+
+func (o loggerServerOption) apply(ctx context.Context, opt *serverOptions) error {
+	opt.log = o.log
+	return nil
+}
+
+func (o loggerServerOption) addHandler(ctx context.Context, opt *serverOptions, mux mux) error {
+	return nil
+}
+
+// WithLogger returns a new loggerServerOption
+func WithLogger(log *logrus.Entry) ServerOption {
+	return &loggerServerOption{
+		log: log,
+	}
 }
 
 // WithServerConfig returns a new serverConfigOption
@@ -145,7 +166,7 @@ func (o grpcServicesServerOption) addHandler(ctx context.Context, opt *serverOpt
 	if opt.config.TLS.GetEnabled() {
 		opt.log.Trace("tls enabled")
 
-		t, err := opt.tlsProvider.NewServerTLSConfig(opt.config.GetTLS())
+		t, err := NewServerTLSConfig(opt.config.GetTLS(), opt.vault)
 		if err != nil {
 			return err
 		}
@@ -226,7 +247,7 @@ func (o gatewayServerOption) addHandler(ctx context.Context, opt *serverOptions,
 
 	// Dial the server
 	opt.log.Trace("loading client credentials for loopback")
-	t, err := opt.tlsProvider.NewClientTLSConfig(opt.config.GetTLS())
+	t, err := NewClientTLSConfig(opt.config.GetTLS(), opt.vault)
 	if err != nil {
 		return err
 	}
@@ -286,24 +307,24 @@ func WithGateway(gatewayHandlers ...func(ctx context.Context, gwmux *runtime.Ser
 	}
 }
 
-// tlsProviderServerOption is used to specify a TLS provider
-type tlsProviderServerOption struct {
-	tlsProvider TLSProvider
+// vaultServerOption is used to specify Vault configuration
+type vaultServerOption struct {
+	vault HasVaultConfig
 }
 
-func (o tlsProviderServerOption) apply(ctx context.Context, opt *serverOptions) error {
-	opt.tlsProvider = o.tlsProvider
+func (o vaultServerOption) apply(ctx context.Context, opt *serverOptions) error {
+	opt.vault = o.vault
 	return nil
 }
 
-func (o tlsProviderServerOption) addHandler(ctx context.Context, opt *serverOptions, mux mux) error {
+func (o vaultServerOption) addHandler(ctx context.Context, opt *serverOptions, mux mux) error {
 	return nil
 }
 
-// WithTLSProvider returns a new tlsProviderServerOption
-func WithTLSProvider(tlsProvider TLSProvider) ServerOption {
-	return &tlsProviderServerOption{
-		tlsProvider: tlsProvider,
+// WithVault returns a new vaultServerOption
+func WithVault(vault HasVaultConfig) ServerOption {
+	return &vaultServerOption{
+		vault: vault,
 	}
 }
 

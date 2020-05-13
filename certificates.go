@@ -22,59 +22,33 @@ package orlop
 
 import "encoding/base64"
 
-// CertificateGenerator defines an object that (might) generate certificates
-type CertificateGenerator interface {
-	GenerateCertificates(cert *string, key *string) error
-}
-
-// NewCertificateGenerator returns an appropriate implementation to generate certificates
-func NewCertificateGenerator(cfg HasCertGenerationConfig, vault HasVaultConfig) CertificateGenerator {
+// GenerateCertificates calls Vault to generate a certificate
+func GenerateCertificates(vault HasVaultConfig, cfg HasCertGenerationConfig,
+	cert *string, key *string) error {
 	// If Vault not enabled or certificate generation not enabled, just return
 	if !vault.GetEnabled() || !cfg.GetEnabled() {
-		return &NullCertificateGenerator{}
+		return nil
 	}
 
-	return &VaultCertificateGenerator{
-		cfg:   cfg,
-		vault: vault,
-	}
-}
-
-// NullCertificateGenerator does not generate certificates
-type NullCertificateGenerator struct {}
-
-// GenerateCertificates in this case does not generate any certificates
-func (v *NullCertificateGenerator) GenerateCertificates(cert *string, key *string) error {
-	return nil
-}
-
-// VaultCertificateGenerator generates certificates using Vault
-type VaultCertificateGenerator struct {
-	cfg   HasCertGenerationConfig
-	vault HasVaultConfig
-}
-
-// GenerateCertificates calls Vault to generate a certificate
-func (v *VaultCertificateGenerator) GenerateCertificates(cert *string, key *string) error {
 	// Connect to Vault
-	client, err := NewVault(v.vault)
+	client, err := NewVault(vault)
 	if err != nil {
 		return err
 	}
 
 	params := map[string]interface{}{
-		"common_name": v.cfg.GetCommonName(),
+		"common_name": cfg.GetCommonName(),
 		"format":      "pem_bundle",
 	}
-	if len(v.cfg.GetAltNames()) > 0 {
-		params["alt_names"] = v.cfg.GetAltNames()
+	if len(cfg.GetAltNames()) > 0 {
+		params["alt_names"] = cfg.GetAltNames()
 	}
-	if v.cfg.GetTTL().Seconds() > 60 {
-		params["ttl"] = v.cfg.GetTTL().String()
+	if cfg.GetTTL().Seconds() > 60 {
+		params["ttl"] = cfg.GetTTL().String()
 	}
 
 	// Write the params to the path to generate the certificate
-	secret, err := client.Write(v.cfg.GetPath(), params)
+	secret, err := client.Write(cfg.GetPath(), params)
 	if err != nil {
 		return err
 	}

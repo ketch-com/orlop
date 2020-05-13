@@ -51,9 +51,7 @@ func NewServerTLSConfig(cfg HasTLSConfig, vault HasVaultConfig) (*tls.Config, er
 	var err error
 	t := CloneTLSConfig(cfg)
 
-	certGenerator := NewCertificateGenerator(cfg.GetGenerate(), vault)
-
-	err = certGenerator.GenerateCertificates(&t.Cert.Secret, &t.Key.Secret)
+	err = GenerateCertificates(vault, cfg.GetGenerate(), &t.Cert.Secret, &t.Key.Secret)
 	if err != nil {
 		return nil, err
 	}
@@ -112,9 +110,7 @@ func NewClientTLSConfig(cfg HasTLSConfig, vault HasVaultConfig) (*tls.Config, er
 	var err error
 	t := CloneTLSConfig(cfg)
 
-	certGenerator := NewCertificateGenerator(cfg.GetGenerate(), vault)
-
-	err = certGenerator.GenerateCertificates(&t.Cert.Secret, &t.Key.Secret)
+	err = GenerateCertificates(vault, cfg.GetGenerate(), &t.Cert.Secret, &t.Key.Secret)
 	if err != nil {
 		return nil, err
 	}
