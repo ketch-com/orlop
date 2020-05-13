@@ -30,18 +30,18 @@ import (
 	"net/http"
 )
 
-type HandlerHeap []*handlerPair
+type handlerHeap []*handlerPair
 
-func (h *HandlerHeap) Handle(pattern string, handler http.Handler) {
+func (h *handlerHeap) Handle(pattern string, handler http.Handler) {
 	heap.Push(h, &handlerPair{
 		pattern: pattern,
 		handler: handler,
 	})
 }
-func (h HandlerHeap) Len() int           { return len(h) }
-func (h HandlerHeap) Less(i, j int) bool { return len(h[i].pattern) > len(h[j].pattern) }
-func (h HandlerHeap) Swap(i, j int)      { h[i], h[j] = h[j], h[i] }
-func (h *HandlerHeap) Push(x interface{}) {
+func (h handlerHeap) Len() int           { return len(h) }
+func (h handlerHeap) Less(i, j int) bool { return len(h[i].pattern) > len(h[j].pattern) }
+func (h handlerHeap) Swap(i, j int)      { h[i], h[j] = h[j], h[i] }
+func (h *handlerHeap) Push(x interface{}) {
 	p := x.(*handlerPair)
 	*h = append(*h, &handlerPair{
 		pattern: p.pattern,
@@ -49,7 +49,7 @@ func (h *HandlerHeap) Push(x interface{}) {
 	})
 }
 
-func (h *HandlerHeap) Pop() interface{} {
+func (h *handlerHeap) Pop() interface{} {
 	old := *h
 	n := len(old)
 	x := old[n-1]
@@ -98,7 +98,7 @@ func Serve(ctx context.Context, serviceName string, options ...ServerOption) err
 		}
 	}
 
-	handlers := &HandlerHeap{}
+	handlers := &handlerHeap{}
 	heap.Init(handlers)
 
 	for _, option := range options {
