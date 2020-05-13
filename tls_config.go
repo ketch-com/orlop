@@ -41,7 +41,7 @@ type HasTLSConfig interface {
 // TLSConfig provides TLS configuration
 type TLSConfig struct {
 	ClientAuth tls.ClientAuthType `config:"clientauth"`
-	Enabled    bool
+	Enabled    bool               `config:"enabled,default=true"`
 	Insecure   bool
 	Override   string
 	Cert       KeyConfig
