@@ -68,27 +68,15 @@ func Serve(ctx context.Context, serviceName string, options ...ServerOption) err
 		log:         log.WithField("service", serviceName),
 	}
 
-	// Set default server config
-	err = WithServerConfig(ServerConfig{
-		Bind:   "0.0.0.0",
-		Listen: 5000,
-		TLS:    TLSConfig{},
-	}).apply(ctx, serverOptions)
-	if err != nil {
-		return err
-	}
-
-	// Add default health check
-	err = WithHealthCheck(nil).apply(ctx, serverOptions)
-	if err != nil {
-		return err
-	}
-
-	// Add default metrics handler
-	err = WithPrometheusMetrics().apply(ctx, serverOptions)
-	if err != nil {
-		return err
-	}
+	options = append([]ServerOption{
+		WithServerConfig(ServerConfig{
+			Bind:   "0.0.0.0",
+			Listen: 5000,
+			TLS:    TLSConfig{},
+		}),
+		WithHealthCheck(nil),
+		WithPrometheusMetrics(),
+	}, options...)
 
 	// Process all server options (which may override any of the above)
 	for _, option := range options {
@@ -113,6 +101,7 @@ func Serve(ctx context.Context, serviceName string, options ...ServerOption) err
 
 	for handlers.Len() > 0 {
 		pair := heap.Pop(handlers).(*handlerPair)
+		serverOptions.log.WithField("endpoint", pair.pattern).Info("adding handler")
 		mux.Handle(pair.pattern, pair.handler)
 	}
 
