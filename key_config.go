@@ -23,14 +23,14 @@ package orlop
 // HasKeyConfig denotes that the object provides Key configuration
 type HasKeyConfig interface {
 	GetID() string
-	GetSecret() string
+	GetSecret() []byte
 	GetFile() string
 }
 
 // KeyConfig provides key-related configurations
 type KeyConfig struct {
 	ID     string
-	Secret string
+	Secret []byte `config:"secret,encoding=base64"`
 	File   string
 }
 
@@ -40,7 +40,7 @@ func (c KeyConfig) GetID() string {
 }
 
 // GetSecret returns the secret (most likely from an environment variable)
-func (c KeyConfig) GetSecret() string {
+func (c KeyConfig) GetSecret() []byte {
 	return c.Secret
 }
 
