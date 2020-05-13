@@ -20,11 +20,9 @@
 
 package orlop
 
-import "encoding/base64"
-
 // GenerateCertificates calls Vault to generate a certificate
 func GenerateCertificates(vault HasVaultConfig, cfg HasCertGenerationConfig,
-	cert *string, key *string) error {
+	cert *[]byte, key *[]byte) error {
 	// If Vault not enabled or certificate generation not enabled, just return
 	if !vault.GetEnabled() || !cfg.GetEnabled() {
 		return nil
@@ -53,19 +51,20 @@ func GenerateCertificates(vault HasVaultConfig, cfg HasCertGenerationConfig,
 		return err
 	}
 
-	// Set the generated certificate and private key as secrets
-	*cert = decodeCertInfo(secret.Data, "certificate")
-	*key = decodeCertInfo(secret.Data, "private_key")
-
-	return nil
-}
-
-func decodeCertInfo(data map[string]interface{}, key string) string {
-	if d, ok := data[key]; ok {
+	// Set the generated certificate and private key
+	if d, ok := secret.Data["certificate"]; ok {
 		if s, ok := d.(string); ok {
-			return base64.StdEncoding.EncodeToString([]byte(s))
+			*cert = []byte(s)
+			return nil
 		}
 	}
 
-	return ""
+	if d, ok := secret.Data["private_key"]; ok {
+		if s, ok := d.(string); ok {
+			*key = []byte(s)
+			return nil
+		}
+	}
+
+	return nil
 }
