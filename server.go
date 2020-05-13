@@ -24,23 +24,32 @@ import (
 	"container/heap"
 	"context"
 	"crypto/tls"
-	"fmt"
 	"github.com/switch-bit/orlop/log"
 	syslog "log"
 	"net"
 	"net/http"
 )
 
-type PatternHeap []string
+type HandlerHeap []*handlerPair
 
-func (h PatternHeap) Len() int           { return len(h) }
-func (h PatternHeap) Less(i, j int) bool { return len(h[i]) > len(h[j]) }
-func (h PatternHeap) Swap(i, j int)      { h[i], h[j] = h[j], h[i] }
-func (h *PatternHeap) Push(x interface{}) {
-	*h = append(*h, x.(string))
+func (h *HandlerHeap) Handle(pattern string, handler http.Handler) {
+	heap.Push(h, &handlerPair{
+		pattern: pattern,
+		handler: handler,
+	})
+}
+func (h HandlerHeap) Len() int           { return len(h) }
+func (h HandlerHeap) Less(i, j int) bool { return len(h[i].pattern) > len(h[j].pattern) }
+func (h HandlerHeap) Swap(i, j int)      { h[i], h[j] = h[j], h[i] }
+func (h *HandlerHeap) Push(x interface{}) {
+	p := x.(*handlerPair)
+	*h = append(*h, &handlerPair{
+		pattern: p.pattern,
+		handler: p.handler,
+	})
 }
 
-func (h *PatternHeap) Pop() interface{} {
+func (h *HandlerHeap) Pop() interface{} {
 	old := *h
 	n := len(old)
 	x := old[n-1]
@@ -56,7 +65,6 @@ func Serve(ctx context.Context, serviceName string, options ...ServerOption) err
 	serverOptions := &serverOptions{
 		serviceName: serviceName,
 		tlsProvider: NewSimpleTLSProvider(),
-		handlers:    make(map[string]http.Handler),
 		log:         log.WithField("service", serviceName),
 	}
 
@@ -90,20 +98,22 @@ func Serve(ctx context.Context, serviceName string, options ...ServerOption) err
 		}
 	}
 
+	handlers := &HandlerHeap{}
+	heap.Init(handlers)
+
+	for _, option := range options {
+		err = option.addHandler(ctx, serverOptions, handlers)
+		if err != nil {
+			return err
+		}
+	}
+
 	// Create the HTTP server
 	mux := http.NewServeMux()
 
-	patterns := &PatternHeap{}
-	heap.Init(patterns)
-	for pattern := range serverOptions.handlers {
-		heap.Push(patterns, pattern)
-	}
-
-	for patterns.Len() > 0 {
-		key := heap.Pop(patterns).(string)
-		fmt.Println(key)
-		handler := serverOptions.handlers[key]
-		mux.Handle(key, handler)
+	for handlers.Len() > 0 {
+		pair := heap.Pop(handlers).(*handlerPair)
+		mux.Handle(pair.pattern, pair.handler)
 	}
 
 	w := log.Writer()
