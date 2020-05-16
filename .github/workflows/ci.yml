@@ -1,0 +1,29 @@
+name: Build
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    container: switchbitcom/winch:golang
+    env:
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    steps:
+    - name: Check out code
+      uses: actions/checkout@v2
+
+    - name: Cache Go modules
+      uses: actions/cache@v1
+      with:
+        path: /go/pkg/mod
+        key: v1-go-mod-${{ hashFiles('go.sum') }}
+        restore-keys: v1-go-mod-
+
+    - name: Turn the handle
+      run: winch ci
