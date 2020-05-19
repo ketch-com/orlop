@@ -15,15 +15,10 @@ jobs:
     env:
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     steps:
-    - name: Check out code
-      uses: actions/checkout@v2
-
-    - name: Cache Go modules
-      uses: actions/cache@v1
+    - uses: actions/checkout@v2
+    - uses: actions/cache@v1
       with:
         path: /go/pkg/mod
         key: v1-go-mod-${{ hashFiles('go.sum') }}
         restore-keys: v1-go-mod-
-
-    - name: Turn the handle
-      run: winch ci
+    - run: winch ci
