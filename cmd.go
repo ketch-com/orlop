@@ -71,7 +71,7 @@ func Run(prefix string, runner interface{}, cfg interface{}) {
 		out = e.Call([]reflect.Value{})
 	}
 
-	if len(out) > 0 && out[0].IsValid() && !out[0].IsNil() {
+	if len(out) > 0 && out[0].IsValid() {
 		logrus.Fatal(out[0].String())
 	}
 }
