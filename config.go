@@ -39,7 +39,7 @@ func Unmarshal(prefix string, cfg interface{}) error {
 }
 
 func UnmarshalFromEnv(prefix string, vars []string, cfg interface{}) error {
-	prefix = strings.ToUpper(prefix)
+	prefix = strcase.ToScreamingSnake(prefix)
 
 	env := make(map[string]string)
 	for _, v := range vars {
