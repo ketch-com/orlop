@@ -11,14 +11,13 @@ jobs:
   build:
     name: Build
     runs-on: ubuntu-latest
-    container: winchci/golang
     env:
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     steps:
     - uses: actions/checkout@v2
     - uses: actions/cache@v1
       with:
-        path: /go/pkg/mod
+        path: /home/runner/go
         key: v1-go-mod-${{ hashFiles('go.sum') }}
         restore-keys: v1-go-mod-
-    - run: winch ci
+    - uses: winchci/actions-golang@v1
