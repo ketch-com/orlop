@@ -23,7 +23,6 @@ package orlop
 import (
 	"crypto/rsa"
 	"crypto/x509"
-	"encoding/base64"
 	"encoding/pem"
 	"fmt"
 	"github.com/dgrijalva/jwt-go"
@@ -34,22 +33,18 @@ import (
 
 // LoadKey loads the key material based on the config
 func LoadKey(cfg HasKeyConfig, vault HasVaultConfig, which string) ([]byte, error) {
-	secret := cfg.GetSecret()
-	if len(secret) > 0 {
-		secret = "***********"
-	}
 	l := log.WithFields(logrus.Fields{
 		"key":           which,
 		"key.id":        cfg.GetID(),
 		"key.file":      cfg.GetFile(),
-		"key.secret":    secret,
+		"key.secret":    "*********",
 		"vault.enabled": vault != nil && vault.GetEnabled(),
 	})
 	l.Debug("loading key")
 
 	if len(cfg.GetSecret()) > 0 {
 		l.WithField("method", "secret").Trace("key provided as secret")
-		return base64.StdEncoding.DecodeString(cfg.GetSecret())
+		return cfg.GetSecret(), nil
 	}
 
 	if len(cfg.GetID()) > 0 && vault != nil && vault.GetEnabled() {
