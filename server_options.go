@@ -368,7 +368,7 @@ func (o swaggerHandlerServerOption) addHandler(ctx context.Context, opt *serverO
 
 // WithSwagger specifies a swagger handler based off the given file system
 func WithSwagger(fs http.FileSystem) ServerOption {
-	return &swaggerHandlerServerOption{}
+	return &swaggerHandlerServerOption{fs: fs}
 }
 
 // handlerServerOption specifies a custom HTTP handler
