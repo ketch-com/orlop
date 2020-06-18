@@ -17,12 +17,10 @@ require (
 	github.com/joho/godotenv v1.3.0
 	github.com/mitchellh/mapstructure v1.3.0 // indirect
 	github.com/pierrec/lz4 v2.5.2+incompatible // indirect
-	github.com/prometheus/client_golang v1.6.0
-	github.com/prometheus/common v0.10.0 // indirect
+	github.com/prometheus/client_golang v1.7.0
 	github.com/sirupsen/logrus v1.6.0
 	golang.org/x/crypto v0.0.0-20200510223506-06a226fb4e37 // indirect
 	golang.org/x/net v0.0.0-20200513185701-a91f0712d120 // indirect
-	golang.org/x/sys v0.0.0-20200515095857-1151b9dac4a9 // indirect
 	golang.org/x/text v0.3.2 // indirect
 	golang.org/x/time v0.0.0-20200416051211-89c76fbcd5d1 // indirect
 	google.golang.org/genproto v0.0.0-20200515170657-fc4c6c6a6587 // indirect
