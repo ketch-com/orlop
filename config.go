@@ -495,7 +495,7 @@ func loadEnvironment(env Environment) {
 		envFiles = append(envFiles, ".env."+env.String())
 	}
 
-	_ = godotenv.Overload(envFiles...)
+	_ = godotenv.Load(envFiles...)
 }
 
 func init() {
