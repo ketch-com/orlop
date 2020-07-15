@@ -65,9 +65,22 @@ type serverConfigOption struct {
 
 func (o serverConfigOption) apply(ctx context.Context, opt *serverOptions) error {
 	opt.config = ServerConfig{
-		Bind:   o.config.GetBind(),
-		Listen: o.config.GetListen(),
-		TLS:    CloneTLSConfig(o.config.GetTLS()),
+		Bind:     o.config.GetBind(),
+		Listen:   o.config.GetListen(),
+		TLS:      CloneTLSConfig(o.config.GetTLS()),
+		Loopback: ClientConfig{
+			Headers:               o.config.GetLoopback().GetHeaders(),
+			WriteBufferSize:       o.config.GetLoopback().GetWriteBufferSize(),
+			ReadBufferSize:        o.config.GetLoopback().GetReadBufferSize(),
+			InitialWindowSize:     o.config.GetLoopback().GetInitialWindowSize(),
+			InitialConnWindowSize: o.config.GetLoopback().GetInitialConnWindowSize(),
+			MaxCallRecvMsgSize:    o.config.GetLoopback().GetMaxCallRecvMsgSize(),
+			MaxCallSendMsgSize:    o.config.GetLoopback().GetMaxCallSendMsgSize(),
+			MinConnectTimeout:     o.config.GetLoopback().GetMinConnectTimeout(),
+			Block:                 o.config.GetLoopback().GetBlock(),
+			ConnTimeout:           o.config.GetLoopback().GetConnTimeout(),
+			UserAgent:             o.config.GetLoopback().GetUserAgent(),
+		},
 	}
 
 	opt.addr = fmt.Sprintf("%s:%d", opt.config.GetBind(), opt.config.GetListen())
