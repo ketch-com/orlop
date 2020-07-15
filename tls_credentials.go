@@ -57,39 +57,38 @@ func NewServerTLSConfig(cfg HasTLSConfig, vault HasVaultConfig) (*tls.Config, er
 	}
 
 	certPEMBlock, err := LoadKey(t.GetCert(), vault, "certificate")
-	if err == nil {
-		log.Trace("certificate loaded")
+	if err != nil {
+		log.WithError(err).Error("error loading certificate")
+		return nil, err
+	}
 
-		keyPEMBlock, err := LoadKey(t.GetKey(), vault, "private_key")
-		if err != nil {
-			log.WithError(err).Error("error loading private key")
-			return nil, err
-		}
+	log.Trace("certificate loaded")
 
-		if t.GetRootCA().GetEnabled() {
-			rootcaPEMBlock, err := LoadKey(t.GetRootCA(), vault, "issuing_ca")
-			if err == nil {
-				config.ClientCAs = x509.NewCertPool()
+	keyPEMBlock, err := LoadKey(t.GetKey(), vault, "private_key")
+	if err != nil {
+		log.WithError(err).Error("error loading private key")
+		return nil, err
+	}
 
-				if !config.ClientCAs.AppendCertsFromPEM(rootcaPEMBlock) {
-					log.WithError(err).Error("failed to append client CA certificates")
-					return nil, fmt.Errorf("tls: failed to append client CA certificates")
-				}
-			} else {
-				log.WithError(err).Error("error loading CA")
+	if t.GetRootCA().GetEnabled() {
+		rootcaPEMBlock, err := LoadKey(t.GetRootCA(), vault, "issuing_ca")
+		if err == nil {
+			config.ClientCAs = x509.NewCertPool()
+
+			if !config.ClientCAs.AppendCertsFromPEM(rootcaPEMBlock) {
+				log.WithError(err).Error("failed to append client CA certificates")
+				return nil, fmt.Errorf("tls: failed to append client CA certificates")
 			}
 		}
-
-		c, err := tls.X509KeyPair(certPEMBlock, keyPEMBlock)
-		if err != nil {
-			log.WithError(err).Error("error creating key pair")
-			return nil, err
-		}
-
-		config.Certificates = append(config.Certificates, c)
-	} else {
-		log.WithError(err).Error("error loading certificate")
 	}
+
+	c, err := tls.X509KeyPair(certPEMBlock, keyPEMBlock)
+	if err != nil {
+		log.WithError(err).Error("error creating key pair")
+		return nil, err
+	}
+
+	config.Certificates = append(config.Certificates, c)
 
 	return config, nil
 }
