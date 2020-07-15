@@ -21,6 +21,7 @@
 package orlop
 
 import (
+	"context"
 	"fmt"
 	"github.com/switch-bit/orlop/log"
 	"google.golang.org/grpc"
@@ -29,6 +30,7 @@ import (
 
 // Connect creates a new client from configuration
 func Connect(cfg HasClientConfig, vault HasVaultConfig) (*grpc.ClientConn, error) {
+	ctx := context.Background()
 	var opts []grpc.DialOption
 
 	l := log.WithField("url", cfg.GetURL())
@@ -70,8 +72,46 @@ func Connect(cfg HasClientConfig, vault HasVaultConfig) (*grpc.ClientConn, error
 		opts = append(opts, grpc.WithPerRPCCredentials(ContextCredentials{}))
 	}
 
+	if cfg.GetWriteBufferSize() > 0 {
+		opts = append(opts, grpc.WithWriteBufferSize(cfg.GetWriteBufferSize()))
+	}
+
+	if cfg.GetReadBufferSize() > 0 {
+		opts = append(opts, grpc.WithReadBufferSize(cfg.GetReadBufferSize()))
+	}
+
+	if cfg.GetInitialWindowSize() > 0 {
+		opts = append(opts, grpc.WithInitialWindowSize(cfg.GetInitialWindowSize()))
+	}
+
+	if cfg.GetInitialConnWindowSize() > 0 {
+		opts = append(opts, grpc.WithInitialConnWindowSize(cfg.GetInitialConnWindowSize()))
+	}
+
+	if cfg.GetMaxCallRecvMsgSize() > 0 {
+		opts = append(opts, grpc.WithDefaultCallOptions(grpc.MaxCallRecvMsgSize(cfg.GetMaxCallRecvMsgSize())))
+	}
+
+	if cfg.GetMinConnectTimeout() > 0 {
+		opts = append(opts, grpc.WithConnectParams(grpc.ConnectParams{
+			MinConnectTimeout: cfg.GetMinConnectTimeout(),
+		}))
+	}
+
+	if cfg.GetBlock() {
+		opts = append(opts, grpc.WithBlock())
+	}
+
+	if cfg.GetConnTimeout() > 0 {
+		ctx, _ = context.WithTimeout(ctx, cfg.GetConnTimeout())
+	}
+
+	if len(cfg.GetUserAgent()) > 0 {
+		opts = append(opts, grpc.WithUserAgent(cfg.GetUserAgent()))
+	}
+
 	l.Trace("dialling")
-	conn, err := grpc.Dial(cfg.GetURL(), opts...)
+	conn, err := grpc.DialContext(ctx, cfg.GetURL(), opts...)
 	if err != nil {
 		l.WithError(err).Error("failed dialling")
 		return nil, err
