@@ -251,7 +251,7 @@ func (o gatewayServerOption) addHandler(ctx context.Context, opt *serverOptions,
 
 	// Dial the server
 	opt.log.Trace("dialling gateway loopback grpc")
-	conn, err := Connect(cc, opt.vault)
+	conn, err := ConnectContext(ctx, cc, opt.vault)
 	if err != nil {
 		return err
 	}
