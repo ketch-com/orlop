@@ -151,5 +151,5 @@ func Warnln(args ...interface{}) {
 func init() {
 	logrus.SetOutput(os.Stdout)
 	logrus.SetLevel(logrus.InfoLevel)
-	logrus.SetFormatter(&logrus.TextFormatter{})
+	logrus.SetFormatter(&logrus.JSONFormatter{})
 }
