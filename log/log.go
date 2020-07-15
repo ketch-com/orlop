@@ -28,9 +28,38 @@ import (
 	"time"
 )
 
+var loggerValue = struct{}{}
+
+// ToContext adds a logger to the specified context, returning the new context
+func ToContext(ctx context.Context, logger *logrus.Entry) context.Context {
+	return context.WithValue(ctx, loggerValue, logger)
+}
+
+// FromContext retrieves the logger for the provided context
+func FromContext(ctx context.Context) *logrus.Entry {
+	l := ctx.Value(loggerValue)
+	if l != nil {
+		if logger, ok := l.(*logrus.Entry); ok {
+			return logger
+		}
+	}
+
+	return WithContext(ctx)
+}
+
 // Writer returns a new PipeWriter
 func Writer() *io.PipeWriter {
-	return logrus.New().WriterLevel(logrus.GetLevel())
+	return WriterLevel(logrus.GetLevel())
+}
+
+// WriterLevel returns a new PipeWriter
+func WriterLevel(level logrus.Level) *io.PipeWriter {
+	return logrus.StandardLogger().WriterLevel(level)
+}
+
+// New returns a new log Entry
+func New() *logrus.Entry {
+	return logrus.NewEntry(logrus.StandardLogger())
 }
 
 // WithField returns a log Entry with the given Field

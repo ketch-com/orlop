@@ -31,7 +31,11 @@ import (
 
 // Connect creates a new client from configuration
 func Connect(cfg HasClientConfig, vault HasVaultConfig) (*grpc.ClientConn, error) {
-	ctx := context.Background()
+	return ConnectContext(context.Background(), cfg, vault)
+}
+
+// ConnectContext creates a new client from configuration
+func ConnectContext(ctx context.Context, cfg HasClientConfig, vault HasVaultConfig) (*grpc.ClientConn, error) {
 	var opts []grpc.DialOption
 
 	l := log.WithContext(ctx)
