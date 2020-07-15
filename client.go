@@ -92,6 +92,10 @@ func Connect(cfg HasClientConfig, vault HasVaultConfig) (*grpc.ClientConn, error
 		opts = append(opts, grpc.WithDefaultCallOptions(grpc.MaxCallRecvMsgSize(cfg.GetMaxCallRecvMsgSize())))
 	}
 
+	if cfg.GetMaxCallSendMsgSize() > 0 {
+		opts = append(opts, grpc.WithDefaultCallOptions(grpc.MaxCallSendMsgSize(cfg.GetMaxCallSendMsgSize())))
+	}
+
 	if cfg.GetMinConnectTimeout() > 0 {
 		opts = append(opts, grpc.WithConnectParams(grpc.ConnectParams{
 			MinConnectTimeout: cfg.GetMinConnectTimeout(),

@@ -33,6 +33,7 @@ type HasClientConfig interface {
 	GetInitialWindowSize() int32
 	GetInitialConnWindowSize() int32
 	GetMaxCallRecvMsgSize() int
+	GetMaxCallSendMsgSize() int
 	GetMinConnectTimeout() time.Duration
 	GetBlock() bool
 	GetConnTimeout() time.Duration
@@ -50,6 +51,7 @@ type ClientConfig struct {
 	InitialWindowSize     int32
 	InitialConnWindowSize int32
 	MaxCallRecvMsgSize    int
+	MaxCallSendMsgSize    int
 	MinConnectTimeout     time.Duration
 	Block                 bool
 	ConnTimeout           time.Duration
@@ -94,6 +96,10 @@ func (c ClientConfig) GetInitialConnWindowSize() int32 {
 
 func (c ClientConfig) GetMaxCallRecvMsgSize() int {
 	return c.MaxCallRecvMsgSize
+}
+
+func (c ClientConfig) GetMaxCallSendMsgSize() int {
+	return c.MaxCallSendMsgSize
 }
 
 func (c ClientConfig) GetMinConnectTimeout() time.Duration {
