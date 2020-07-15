@@ -24,6 +24,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/switch-bit/orlop/log"
+	"github.com/switch-bit/orlop/version"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 )
@@ -112,6 +113,8 @@ func Connect(cfg HasClientConfig, vault HasVaultConfig) (*grpc.ClientConn, error
 
 	if len(cfg.GetUserAgent()) > 0 {
 		opts = append(opts, grpc.WithUserAgent(cfg.GetUserAgent()))
+	} else {
+		opts = append(opts, grpc.WithUserAgent(fmt.Sprintf("%s/%s", version.Name, version.Version)))
 	}
 
 	l.Trace("dialling")
