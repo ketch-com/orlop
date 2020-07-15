@@ -24,6 +24,7 @@ import (
 	"container/heap"
 	"context"
 	"crypto/tls"
+	"github.com/sirupsen/logrus"
 	"github.com/switch-bit/orlop/log"
 	syslog "log"
 	"net"
@@ -112,9 +113,6 @@ func Serve(ctx context.Context, serviceName string, options ...ServerOption) err
 		mux.Handle(pair.pattern, pair.handler)
 	}
 
-	w := log.Writer()
-	defer w.Close()
-
 	// Start listening
 	serverOptions.log.Info("listening")
 	ln, err := net.Listen("tcp", serverOptions.addr)
@@ -138,6 +136,10 @@ func Serve(ctx context.Context, serviceName string, options ...ServerOption) err
 	defer ln.Close()
 
 	serverOptions.log.Info("serving")
+
+	w := log.WriterLevel(logrus.WarnLevel)
+	defer w.Close()
+
 	srv := &http.Server{
 		Addr:     serverOptions.addr,
 		Handler:  mux,

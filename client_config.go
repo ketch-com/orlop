@@ -20,19 +20,42 @@
 
 package orlop
 
+import "time"
+
 // HasClientConfig denotes that an object provides client configuration
 type HasClientConfig interface {
 	GetTLS() HasTLSConfig
 	GetToken() HasTokenConfig
 	GetURL() string
+	GetHeaders() map[string]string
+	GetWriteBufferSize() int
+	GetReadBufferSize() int
+	GetInitialWindowSize() int32
+	GetInitialConnWindowSize() int32
+	GetMaxCallRecvMsgSize() int
+	GetMaxCallSendMsgSize() int
+	GetMinConnectTimeout() time.Duration
+	GetBlock() bool
+	GetConnTimeout() time.Duration
+	GetUserAgent() string
 }
 
 // ClientConfig is standard configuration of most client commands
 type ClientConfig struct {
-	URL     string
-	Token   TokenConfig
-	TLS     TLSConfig
-	Headers map[string]string
+	URL                   string
+	Token                 TokenConfig
+	TLS                   TLSConfig
+	Headers               map[string]string
+	WriteBufferSize       int
+	ReadBufferSize        int
+	InitialWindowSize     int32
+	InitialConnWindowSize int32
+	MaxCallRecvMsgSize    int
+	MaxCallSendMsgSize    int
+	MinConnectTimeout     time.Duration
+	Block                 bool
+	ConnTimeout           time.Duration
+	UserAgent             string
 }
 
 // GetURL returns the URL to contact the server
@@ -53,4 +76,44 @@ func (c ClientConfig) GetTLS() HasTLSConfig {
 // GetHeaders returns static headers to add to requests
 func (c ClientConfig) GetHeaders() map[string]string {
 	return c.Headers
+}
+
+func (c ClientConfig) GetWriteBufferSize() int {
+	return c.WriteBufferSize
+}
+
+func (c ClientConfig) GetReadBufferSize() int {
+	return c.ReadBufferSize
+}
+
+func (c ClientConfig) GetInitialWindowSize() int32 {
+	return c.InitialWindowSize
+}
+
+func (c ClientConfig) GetInitialConnWindowSize() int32 {
+	return c.InitialConnWindowSize
+}
+
+func (c ClientConfig) GetMaxCallRecvMsgSize() int {
+	return c.MaxCallRecvMsgSize
+}
+
+func (c ClientConfig) GetMaxCallSendMsgSize() int {
+	return c.MaxCallSendMsgSize
+}
+
+func (c ClientConfig) GetMinConnectTimeout() time.Duration {
+	return c.MinConnectTimeout
+}
+
+func (c ClientConfig) GetBlock() bool {
+	return c.Block
+}
+
+func (c ClientConfig) GetConnTimeout() time.Duration {
+	return c.ConnTimeout
+}
+
+func (c ClientConfig) GetUserAgent() string {
+	return c.UserAgent
 }

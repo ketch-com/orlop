@@ -106,10 +106,11 @@ func setupLogging(prefix string, env Environment) {
 
 	if env.IsLocal() {
 		logrus.SetFormatter(&logrus.TextFormatter{
-			ForceColors: true,
+			ForceColors:            true,
+			DisableTimestamp:       true,
+			DisableLevelTruncation: true,
+			PadLevelText:           true,
 		})
-	} else {
-		logrus.SetFormatter(&logrus.JSONFormatter{})
 	}
 
 	log.SetOutput(logrus.New().Writer())

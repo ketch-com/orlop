@@ -21,22 +21,31 @@
 package orlop
 
 import (
+	"context"
 	"fmt"
 	"github.com/switch-bit/orlop/log"
+	"github.com/switch-bit/orlop/version"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 )
 
 // Connect creates a new client from configuration
 func Connect(cfg HasClientConfig, vault HasVaultConfig) (*grpc.ClientConn, error) {
+	return ConnectContext(context.Background(), cfg, vault)
+}
+
+// ConnectContext creates a new client from configuration
+func ConnectContext(ctx context.Context, cfg HasClientConfig, vault HasVaultConfig) (*grpc.ClientConn, error) {
 	var opts []grpc.DialOption
 
-	l := log.WithField("url", cfg.GetURL())
+	l := log.WithContext(ctx)
 
 	if len(cfg.GetURL()) == 0 {
 		l.Errorf("client: url required")
 		return nil, fmt.Errorf("client: url required")
 	}
+
+	l = l.WithField("url", cfg.GetURL())
 
 	if cfg.GetTLS().GetEnabled() {
 		l.Trace("tls enabled")
@@ -70,8 +79,62 @@ func Connect(cfg HasClientConfig, vault HasVaultConfig) (*grpc.ClientConn, error
 		opts = append(opts, grpc.WithPerRPCCredentials(ContextCredentials{}))
 	}
 
+	if cfg.GetWriteBufferSize() > 0 {
+		l.Tracef("WriteBufferSize=%d", cfg.GetWriteBufferSize())
+		opts = append(opts, grpc.WithWriteBufferSize(cfg.GetWriteBufferSize()))
+	}
+
+	if cfg.GetReadBufferSize() > 0 {
+		l.Tracef("ReadBufferSize=%d", cfg.GetReadBufferSize())
+		opts = append(opts, grpc.WithReadBufferSize(cfg.GetReadBufferSize()))
+	}
+
+	if cfg.GetInitialWindowSize() > 0 {
+		l.Tracef("InitialWindowSize=%d", cfg.GetInitialWindowSize())
+		opts = append(opts, grpc.WithInitialWindowSize(cfg.GetInitialWindowSize()))
+	}
+
+	if cfg.GetInitialConnWindowSize() > 0 {
+		l.Tracef("InitialConnWindowSize=%d", cfg.GetInitialConnWindowSize())
+		opts = append(opts, grpc.WithInitialConnWindowSize(cfg.GetInitialConnWindowSize()))
+	}
+
+	if cfg.GetMaxCallRecvMsgSize() > 0 {
+		l.Tracef("MaxCallRecvMsgSize=%d", cfg.GetMaxCallRecvMsgSize())
+		opts = append(opts, grpc.WithDefaultCallOptions(grpc.MaxCallRecvMsgSize(cfg.GetMaxCallRecvMsgSize())))
+	}
+
+	if cfg.GetMaxCallSendMsgSize() > 0 {
+		l.Tracef("MaxCallSendMsgSize=%d", cfg.GetMaxCallSendMsgSize())
+		opts = append(opts, grpc.WithDefaultCallOptions(grpc.MaxCallSendMsgSize(cfg.GetMaxCallSendMsgSize())))
+	}
+
+	if cfg.GetMinConnectTimeout() > 0 {
+		l.Tracef("MinConnectTimeout=%d", cfg.GetMinConnectTimeout())
+		opts = append(opts, grpc.WithConnectParams(grpc.ConnectParams{
+			MinConnectTimeout: cfg.GetMinConnectTimeout(),
+		}))
+	}
+
+	if cfg.GetBlock() {
+		l.Tracef("Block=%v", cfg.GetBlock())
+		opts = append(opts, grpc.WithBlock())
+	}
+
+	if cfg.GetConnTimeout() > 0 {
+		l.Tracef("ConnTimeout=%d", cfg.GetConnTimeout())
+		ctx, _ = context.WithTimeout(ctx, cfg.GetConnTimeout())
+	}
+
+	ua := fmt.Sprintf("%s/%s", version.Name, version.Version)
+	if len(cfg.GetUserAgent()) > 0 {
+		ua = cfg.GetUserAgent()
+	}
+	opts = append(opts, grpc.WithUserAgent(ua))
+	l.Tracef("UserAgent=%s", ua)
+
 	l.Trace("dialling")
-	conn, err := grpc.Dial(cfg.GetURL(), opts...)
+	conn, err := grpc.DialContext(ctx, cfg.GetURL(), opts...)
 	if err != nil {
 		l.WithError(err).Error("failed dialling")
 		return nil, err

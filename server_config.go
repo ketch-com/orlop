@@ -25,13 +25,15 @@ type HasServerConfig interface {
 	GetBind() string
 	GetListen() uint
 	GetTLS() HasTLSConfig
+	GetLoopback() HasClientConfig
 }
 
 // ServerConfig is standard configuration of most server commands
 type ServerConfig struct {
-	Bind    string `config:"bind,default=0.0.0.0"`
-	Listen  uint   `config:"listen,default=5000"`
-	TLS     TLSConfig
+	Bind     string `config:"bind,default=0.0.0.0"`
+	Listen   uint   `config:"listen,default=5000"`
+	TLS      TLSConfig
+	Loopback ClientConfig
 }
 
 // GetBind returns the address to bind to
@@ -47,4 +49,9 @@ func (c ServerConfig) GetListen() uint {
 // GetTLS returns TLS configuration
 func (c ServerConfig) GetTLS() HasTLSConfig {
 	return c.TLS
+}
+
+// GetLoopback returns GRPC gateway loopback client configuration
+func (c ServerConfig) GetLoopback() HasClientConfig {
+	return c.Loopback
 }

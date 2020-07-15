@@ -245,19 +245,13 @@ func (o gatewayServerOption) addHandler(ctx context.Context, opt *serverOptions,
 		}),
 	)
 
+	cc := opt.config.Loopback
+	cc.URL = opt.addr
+	cc.TLS = opt.config.TLS
+
 	// Dial the server
-	opt.log.Trace("loading client credentials for loopback")
-	t, err := NewClientTLSConfig(opt.config.GetTLS(), opt.vault)
-	if err != nil {
-		return err
-	}
-
-	dialOptions := []grpc.DialOption{
-		grpc.WithTransportCredentials(credentials.NewTLS(t)),
-	}
-
-	opt.log.Trace("dialling grpc")
-	conn, err := grpc.Dial(opt.addr, dialOptions...)
+	opt.log.Trace("dialling gateway loopback grpc")
+	conn, err := ConnectContext(ctx, cc, opt.vault)
 	if err != nil {
 		return err
 	}

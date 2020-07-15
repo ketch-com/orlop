@@ -299,7 +299,7 @@ func GetVariablesFromConfig(prefix string, cfg interface{}) ([]string, error) {
 				value = "# [k=v, k=v, k=v]"
 
 			case reflect.Slice:
-				value = "# [v1, v2, v3"
+				value = "# [v1, v2, v3]"
 
 			case reflect.String:
 				value = "# string"
