@@ -181,6 +181,14 @@ func (o grpcServicesServerOption) addHandler(ctx context.Context, opt *serverOpt
 		grpcServerOptions = append(grpcServerOptions, grpc.UnaryInterceptor(opt.authenticate))
 	}
 
+	if opt.config.Loopback.MaxCallRecvMsgSize > 0 {
+		grpcServerOptions = append(grpcServerOptions, grpc.MaxRecvMsgSize(opt.config.Loopback.MaxCallRecvMsgSize))
+	}
+
+	if opt.config.Loopback.MaxCallSendMsgSize > 0 {
+		grpcServerOptions = append(grpcServerOptions, grpc.MaxSendMsgSize(opt.config.Loopback.MaxCallSendMsgSize))
+	}
+
 	// Setup the gRPC server
 	grpcServer := grpc.NewServer(grpcServerOptions...)
 
