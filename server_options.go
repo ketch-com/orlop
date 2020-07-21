@@ -31,6 +31,7 @@ import (
 	"google.golang.org/grpc/credentials"
 	"mime"
 	"net/http"
+	"net/http/pprof"
 	"strings"
 )
 
@@ -358,6 +359,33 @@ func WithMetrics(handler http.Handler) ServerOption {
 // WithPrometheusMetrics specifies to use the Prometheus metrics handler
 func WithPrometheusMetrics() ServerOption {
 	return WithMetrics(promhttp.Handler())
+}
+
+// profileServerOption specifies how to add profiler endpoints
+type profileServerOption struct {
+}
+
+func (o profileServerOption) apply(ctx context.Context, opt *serverOptions) error {
+	return nil
+}
+
+func (o profileServerOption) addHandler(ctx context.Context, opt *serverOptions, mux mux) error {
+	mux.Handle("/debug/pprof/", http.HandlerFunc(pprof.Index))
+	mux.Handle("/debug/pprof/cmdline", http.HandlerFunc(pprof.Cmdline))
+	mux.Handle("/debug/pprof/profile", http.HandlerFunc(pprof.Profile))
+	mux.Handle("/debug/pprof/symbol", http.HandlerFunc(pprof.Symbol))
+	mux.Handle("/debug/pprof/trace", http.HandlerFunc(pprof.Trace))
+
+	for _, handler := range []string{"allocs", "block", "goroutine", "heap", "mutex", "threadcreate"} {
+		mux.Handle(fmt.Sprintf("/debug/pprof/%s", handler), pprof.Handler(handler))
+	}
+
+	return nil
+}
+
+// WithProfiler specifies a profiler handler to provide profiling information to go tool pprof
+func WithProfiler() ServerOption {
+	return &profileServerOption{}
 }
 
 // swaggerHandlerServerOption specifies how to serve swagger
