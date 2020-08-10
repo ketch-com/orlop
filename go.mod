@@ -7,7 +7,7 @@ require (
 	github.com/felixge/httpsnoop v1.0.1
 	github.com/frankban/quicktest v1.7.2 // indirect
 	github.com/gogo/protobuf v1.3.1
-	github.com/golang/mock v1.4.3
+	github.com/golang/mock v1.4.4
 	github.com/golang/protobuf v1.4.2
 	github.com/grpc-ecosystem/grpc-gateway v1.14.6
 	github.com/hashicorp/go-multierror v1.1.0 // indirect
