@@ -63,15 +63,18 @@ func ConnectContext(ctx context.Context, cfg HasClientConfig, vault HasVaultConf
 
 	shared := cfg.GetToken().GetShared()
 	if len(shared.GetID()) > 0 || len(shared.GetFile()) > 0 || len(shared.GetSecret()) > 0 {
-		l.Trace("loading token from configuration")
-
-		s, err := LoadKey(shared, vault, "secret")
-		if err != nil {
-			return nil, err
-		}
-
 		opts = append(opts, grpc.WithPerRPCCredentials(SharedContextCredentials{
-			token: string(s),
+			tokenProvider: func(ctx context.Context) string {
+				l.Trace("loading token from configuration")
+
+				s, err := LoadKey(shared, vault, "secret")
+				if err != nil {
+					log.WithError(err).Error("could not load secret key")
+					return ""
+				}
+
+				return string(s)
+			},
 		}))
 	} else {
 		l.Trace("using context credentials")

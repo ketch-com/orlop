@@ -27,12 +27,12 @@ import (
 
 // SharedContextCredentials provides context-based or token-based credentials to the client
 type SharedContextCredentials struct {
-	token string
+	tokenProvider func(ctx context.Context) string
 }
 
 // GetRequestMetadata returns authorization metadata
 func (j SharedContextCredentials) GetRequestMetadata(ctx context.Context, uri ...string) (map[string]string, error) {
-	token := j.token
+	token := j.tokenProvider(ctx)
 
 	if md, ok := metadata.FromIncomingContext(ctx); ok && len(md.Get("Authorization")) > 0 {
 		token = md.Get("Authorization")[0]
