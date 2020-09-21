@@ -136,13 +136,14 @@ func NewClientTLSConfig(cfg HasTLSConfig, vault HasVaultConfig) (*tls.Config, er
 
 		if t.GetRootCA().GetEnabled() {
 			rootcaPEMBlock, err := LoadKey(t.GetRootCA(), vault, "issuing_ca")
-			if err == nil {
-				if !config.RootCAs.AppendCertsFromPEM(rootcaPEMBlock) {
-					log.WithError(err).Error("failed to append root certificates")
-					return nil, fmt.Errorf("tls: failed to append root certificates")
-				}
-			} else {
+			if err != nil {
 				log.WithError(err).Error("error loading CA")
+				return nil, err
+			}
+
+			if !config.RootCAs.AppendCertsFromPEM(rootcaPEMBlock) {
+				log.WithError(err).Error("failed to append root certificates")
+				return nil, fmt.Errorf("tls: failed to append root certificates")
 			}
 		}
 
