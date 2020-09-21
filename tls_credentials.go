@@ -114,8 +114,13 @@ func NewClientTLSConfig(cfg HasTLSConfig, vault HasVaultConfig) (*tls.Config, er
 		return nil, err
 	}
 
-	certPEMBlock, err := LoadKey(t.GetCert(), vault, "certificate")
-	if err == nil {
+	if t.GetCert().GetEnabled() && t.GetKey().GetEnabled() {
+		certPEMBlock, err := LoadKey(t.GetCert(), vault, "certificate")
+		if err != nil {
+			log.WithError(err).Error("error loading certificate")
+			return nil, err
+		}
+
 		keyPEMBlock, err := LoadKey(t.GetKey(), vault, "private_key")
 		if err != nil {
 			log.WithError(err).Error("error loading private key")
@@ -131,13 +136,14 @@ func NewClientTLSConfig(cfg HasTLSConfig, vault HasVaultConfig) (*tls.Config, er
 
 		if t.GetRootCA().GetEnabled() {
 			rootcaPEMBlock, err := LoadKey(t.GetRootCA(), vault, "issuing_ca")
-			if err == nil {
-				if !config.RootCAs.AppendCertsFromPEM(rootcaPEMBlock) {
-					log.WithError(err).Error("failed to append root certificates")
-					return nil, fmt.Errorf("tls: failed to append root certificates")
-				}
-			} else {
+			if err != nil {
 				log.WithError(err).Error("error loading CA")
+				return nil, err
+			}
+
+			if !config.RootCAs.AppendCertsFromPEM(rootcaPEMBlock) {
+				log.WithError(err).Error("failed to append root certificates")
+				return nil, fmt.Errorf("tls: failed to append root certificates")
 			}
 		}
 
@@ -148,8 +154,6 @@ func NewClientTLSConfig(cfg HasTLSConfig, vault HasVaultConfig) (*tls.Config, er
 		}
 
 		config.Certificates = append(config.Certificates, c)
-	} else {
-		log.WithError(err).Error("error loading certificate")
 	}
 
 	return config, nil
