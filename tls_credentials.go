@@ -114,8 +114,13 @@ func NewClientTLSConfig(cfg HasTLSConfig, vault HasVaultConfig) (*tls.Config, er
 		return nil, err
 	}
 
-	certPEMBlock, err := LoadKey(t.GetCert(), vault, "certificate")
-	if err == nil {
+	if t.GetCert().GetEnabled() && t.GetKey().GetEnabled() {
+		certPEMBlock, err := LoadKey(t.GetCert(), vault, "certificate")
+		if err != nil {
+			log.WithError(err).Error("error loading certificate")
+			return nil, err
+		}
+
 		keyPEMBlock, err := LoadKey(t.GetKey(), vault, "private_key")
 		if err != nil {
 			log.WithError(err).Error("error loading private key")
@@ -148,8 +153,6 @@ func NewClientTLSConfig(cfg HasTLSConfig, vault HasVaultConfig) (*tls.Config, er
 		}
 
 		config.Certificates = append(config.Certificates, c)
-	} else {
-		log.WithError(err).Error("error loading certificate")
 	}
 
 	return config, nil
