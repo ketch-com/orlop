@@ -23,6 +23,7 @@ package orlop
 import (
 	"context"
 	"crypto/tls"
+	"encoding/json"
 	"github.com/julienschmidt/httprouter"
 	"github.com/sirupsen/logrus"
 	"github.com/switch-bit/orlop/log"
@@ -61,6 +62,17 @@ func Serve(ctx context.Context, serviceName string, options ...ServerOption) err
 
 	// Create the HTTP server
 	mux := httprouter.New()
+	mux.HandleOPTIONS = false
+	mux.PanicHandler = func(w http.ResponseWriter, r *http.Request, i interface{}) {
+		serverOptions.log.Error()
+		w.WriteHeader(http.StatusInternalServerError)
+		b, _ := json.Marshal(ErrorMessage{
+			Code:    http.StatusInternalServerError,
+			Error:   "panic",
+			Message: "Internal Server Error",
+		})
+		w.Write(b)
+	}
 
 	for _, option := range options {
 		err = option.addHandler(ctx, serverOptions, mux)
