@@ -110,7 +110,7 @@ func URLParamFromRequest(r *http.Request, key string) string {
 	return chi.URLParam(r, key)
 }
 
-// URLParamFromCtx returns the url parameter from a http.Request Context.
-func URLParamFromCtx(ctx context.Context, key string) string {
+// URLParamFromContext returns the url parameter from a context.Context object.
+func URLParamFromContext(ctx context.Context, key string) string {
 	return chi.URLParamFromCtx(ctx, key)
 }
