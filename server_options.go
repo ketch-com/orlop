@@ -41,13 +41,8 @@ type ServerOption interface {
 	addHandler(ctx context.Context, opt *serverOptions, mux mux) error
 }
 
-type handlerPair struct {
-	pattern string
-	handler http.Handler
-}
-
 type mux interface {
-	Handle(pattern string, handler http.Handler)
+	Handler(method string, pattern string, handler http.Handler)
 }
 
 type serverOptions struct {
@@ -225,7 +220,7 @@ func (o grpcServicesServerOption) addHandler(ctx context.Context, opt *serverOpt
 	opt.log.Trace("registering GRPC services")
 	o.registerServices(ctx, grpcServer)
 
-	mux.Handle("/", grpcHandler)
+	mux.Handler(http.MethodPost, "/", grpcHandler) // TODO - just POST?
 	return nil
 }
 
@@ -314,7 +309,11 @@ func (o gatewayServerOption) addHandler(ctx context.Context, opt *serverOptions,
 		return err
 	}
 
-	mux.Handle(fmt.Sprintf("/%s/", opt.serviceName), gatewayHandler)
+	mux.Handler(http.MethodGet, fmt.Sprintf("/%s/", opt.serviceName), gatewayHandler)
+	mux.Handler(http.MethodPut, fmt.Sprintf("/%s/", opt.serviceName), gatewayHandler)
+	mux.Handler(http.MethodPost, fmt.Sprintf("/%s/", opt.serviceName), gatewayHandler)
+	mux.Handler(http.MethodDelete, fmt.Sprintf("/%s/", opt.serviceName), gatewayHandler)
+	mux.Handler(http.MethodOptions, fmt.Sprintf("/%s/", opt.serviceName), gatewayHandler)
 
 	return nil
 }
@@ -349,14 +348,14 @@ func WithVault(vault HasVaultConfig) ServerOption {
 
 // WithHealthCheck specifies a health checker function
 func WithHealthCheck(checker HealthChecker) ServerOption {
-	return WithHandler("/healthz", &HealthHandler{
+	return WithHandler(http.MethodGet, "/healthz", &HealthHandler{
 		checker: checker,
 	})
 }
 
 // WithMetrics specifies a metrics handler
 func WithMetrics(handler http.Handler) ServerOption {
-	return WithHandler("/metrics", handler)
+	return WithHandler(http.MethodGet, "/metrics", handler)
 }
 
 // WithPrometheusMetrics specifies to use the Prometheus metrics handler
@@ -373,14 +372,14 @@ func (o profileServerOption) apply(ctx context.Context, opt *serverOptions) erro
 }
 
 func (o profileServerOption) addHandler(ctx context.Context, opt *serverOptions, mux mux) error {
-	mux.Handle("/debug/pprof/", http.HandlerFunc(pprof.Index))
-	mux.Handle("/debug/pprof/cmdline", http.HandlerFunc(pprof.Cmdline))
-	mux.Handle("/debug/pprof/profile", http.HandlerFunc(pprof.Profile))
-	mux.Handle("/debug/pprof/symbol", http.HandlerFunc(pprof.Symbol))
-	mux.Handle("/debug/pprof/trace", http.HandlerFunc(pprof.Trace))
+	mux.Handler(http.MethodGet, "/debug/pprof/", http.HandlerFunc(pprof.Index))
+	mux.Handler(http.MethodGet, "/debug/pprof/cmdline", http.HandlerFunc(pprof.Cmdline))
+	mux.Handler(http.MethodGet, "/debug/pprof/profile", http.HandlerFunc(pprof.Profile))
+	mux.Handler(http.MethodGet, "/debug/pprof/symbol", http.HandlerFunc(pprof.Symbol))
+	mux.Handler(http.MethodGet, "/debug/pprof/trace", http.HandlerFunc(pprof.Trace))
 
 	for _, handler := range []string{"allocs", "block", "goroutine", "heap", "mutex", "threadcreate"} {
-		mux.Handle(fmt.Sprintf("/debug/pprof/%s", handler), pprof.Handler(handler))
+		mux.Handler(http.MethodGet, fmt.Sprintf("/debug/pprof/%s", handler), pprof.Handler(handler))
 	}
 
 	return nil
@@ -407,7 +406,7 @@ func (o swaggerHandlerServerOption) addHandler(ctx context.Context, opt *serverO
 	}
 
 	handler := http.StripPrefix(fmt.Sprintf("/%s/swagger", opt.serviceName), http.FileServer(o.fs))
-	mux.Handle(fmt.Sprintf("/%s/swagger/", opt.serviceName), handler)
+	mux.Handler(http.MethodGet, fmt.Sprintf("/%s/swagger/", opt.serviceName), handler)
 
 	return nil
 }
@@ -419,6 +418,7 @@ func WithSwagger(fs http.FileSystem) ServerOption {
 
 // handlerServerOption specifies a custom HTTP handler
 type handlerServerOption struct {
+	method  string
 	pattern string
 	handler http.Handler
 }
@@ -428,13 +428,14 @@ func (o handlerServerOption) apply(ctx context.Context, opt *serverOptions) erro
 }
 
 func (o handlerServerOption) addHandler(ctx context.Context, opt *serverOptions, mux mux) error {
-	mux.Handle(o.pattern, o.handler)
+	mux.Handler(o.method, o.pattern, o.handler)
 	return nil
 }
 
 // WithHandler returns a handlerServerOption
-func WithHandler(pattern string, handler http.Handler) ServerOption {
+func WithHandler(method string, pattern string, handler http.Handler) ServerOption {
 	return &handlerServerOption{
+		method:  method,
 		pattern: pattern,
 		handler: handler,
 	}

@@ -21,50 +21,15 @@
 package orlop
 
 import (
-	"container/heap"
 	"context"
 	"crypto/tls"
+	"github.com/julienschmidt/httprouter"
 	"github.com/sirupsen/logrus"
 	"github.com/switch-bit/orlop/log"
 	syslog "log"
 	"net"
 	"net/http"
 )
-
-type handlerHeap []*handlerPair
-
-func (h *handlerHeap) Handle(pattern string, handler http.Handler) {
-	for n, pair := range *h {
-		if pair.pattern == pattern {
-			pair.handler = handler
-			heap.Fix(h, n)
-			return
-		}
-	}
-
-	heap.Push(h, &handlerPair{
-		pattern: pattern,
-		handler: handler,
-	})
-}
-
-func (h handlerHeap) Len() int           { return len(h) }
-func (h handlerHeap) Less(i, j int) bool { return len(h[i].pattern) > len(h[j].pattern) }
-func (h handlerHeap) Swap(i, j int)      { h[i], h[j] = h[j], h[i] }
-func (h *handlerHeap) Push(x interface{}) {
-	p := x.(*handlerPair)
-	*h = append(*h, &handlerPair{
-		pattern: p.pattern,
-		handler: p.handler,
-	})
-}
-func (h *handlerHeap) Pop() interface{} {
-	old := *h
-	n := len(old)
-	x := old[n-1]
-	*h = old[0 : n-1]
-	return x
-}
 
 // Serve sets up the server and listens for requests
 func Serve(ctx context.Context, serviceName string, options ...ServerOption) error {
@@ -94,23 +59,14 @@ func Serve(ctx context.Context, serviceName string, options ...ServerOption) err
 		}
 	}
 
-	handlers := &handlerHeap{}
-	heap.Init(handlers)
+	// Create the HTTP server
+	mux := httprouter.New()
 
 	for _, option := range options {
-		err = option.addHandler(ctx, serverOptions, handlers)
+		err = option.addHandler(ctx, serverOptions, mux)
 		if err != nil {
 			return err
 		}
-	}
-
-	// Create the HTTP server
-	mux := http.NewServeMux()
-
-	for handlers.Len() > 0 {
-		pair := heap.Pop(handlers).(*handlerPair)
-		serverOptions.log.WithField("endpoint", pair.pattern).Info("adding handler")
-		mux.Handle(pair.pattern, pair.handler)
 	}
 
 	// Start listening
