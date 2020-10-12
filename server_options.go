@@ -54,6 +54,7 @@ type serverOptions struct {
 	log          *logrus.Entry
 	serviceName  string
 	addr         string
+	notFound     http.Handler
 	config       ServerConfig
 	vault        HasVaultConfig
 	authenticate func(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error)
@@ -210,6 +211,8 @@ func (o grpcServicesServerOption) addHandler(ctx context.Context, opt *serverOpt
 	grpcHandler, err := NewInstrumentedMetricHandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.ProtoMajor == 2 && strings.Contains(r.Header.Get("Content-Type"), "application/grpc") {
 			grpcServer.ServeHTTP(w, r)
+		} else if opt.notFound != nil {
+			opt.notFound.ServeHTTP(w, r)
 		} else {
 			http.NotFound(w, r)
 		}
@@ -433,6 +436,27 @@ func (o handlerServerOption) addHandler(ctx context.Context, opt *serverOptions,
 func WithHandler(pattern string, handler http.Handler) ServerOption {
 	return &handlerServerOption{
 		pattern: pattern,
+		handler: handler,
+	}
+}
+
+// notFoundHandlerServerOption specifies the handler to invoke when the route is not found
+type notFoundHandlerServerOption struct {
+	handler http.Handler
+}
+
+func (o notFoundHandlerServerOption) apply(ctx context.Context, opt *serverOptions) error {
+	opt.notFound = o.handler
+	return nil
+}
+
+func (o notFoundHandlerServerOption) addHandler(ctx context.Context, opt *serverOptions, mux mux) error {
+	return nil
+}
+
+// WithNotFoundHandler returns a notFoundHandlerServerOption
+func WithNotFoundHandler(handler http.Handler) ServerOption {
+	return &notFoundHandlerServerOption{
 		handler: handler,
 	}
 }
