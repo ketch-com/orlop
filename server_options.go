@@ -62,9 +62,9 @@ type serverConfigOption struct {
 
 func (o serverConfigOption) apply(ctx context.Context, opt *serverOptions) error {
 	opt.config = ServerConfig{
-		Bind:     o.config.GetBind(),
-		Listen:   o.config.GetListen(),
-		TLS:      CloneTLSConfig(o.config.GetTLS()),
+		Bind:   o.config.GetBind(),
+		Listen: o.config.GetListen(),
+		TLS:    CloneTLSConfig(o.config.GetTLS()),
 		Loopback: ClientConfig{
 			Headers:               o.config.GetLoopback().GetHeaders(),
 			WriteBufferSize:       o.config.GetLoopback().GetWriteBufferSize(),
