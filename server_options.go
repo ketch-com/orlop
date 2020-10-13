@@ -52,6 +52,7 @@ type serverOptions struct {
 	notFound     http.Handler
 	config       ServerConfig
 	vault        HasVaultConfig
+	middlewares  []func(http.Handler) http.Handler
 	authenticate func(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error)
 }
 
@@ -453,6 +454,27 @@ func (o notFoundHandlerServerOption) addHandler(ctx context.Context, opt *server
 func WithNotFoundHandler(handler http.Handler) ServerOption {
 	return &notFoundHandlerServerOption{
 		handler: handler,
+	}
+}
+
+// middlewareServerOption specifies a list of middlewares to add to the router
+type middlewareServerOption struct {
+	middlewares []func(http.Handler) http.Handler
+}
+
+func (o middlewareServerOption) apply(ctx context.Context, opt *serverOptions) error {
+	opt.middlewares = append(opt.middlewares, o.middlewares...)
+	return nil
+}
+
+func (o middlewareServerOption) addHandler(ctx context.Context, opt *serverOptions, mux mux) error {
+	return nil
+}
+
+// WithMiddleware returns a middlewareServerOption
+func WithMiddleware(middlewares ...func(http.Handler) http.Handler) ServerOption {
+	return &middlewareServerOption{
+		middlewares: middlewares,
 	}
 }
 
