@@ -61,6 +61,9 @@ func Serve(ctx context.Context, serviceName string, options ...ServerOption) err
 
 	// Create the HTTP server
 	mux := chi.NewMux()
+	if serverOptions.notFound != nil {
+		mux.NotFound(serverOptions.notFound.ServeHTTP)
+	}
 
 	for _, option := range options {
 		err = option.addHandler(ctx, serverOptions, mux)

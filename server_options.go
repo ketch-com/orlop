@@ -220,7 +220,7 @@ func (o grpcServicesServerOption) addHandler(ctx context.Context, opt *serverOpt
 	opt.log.Trace("registering GRPC services")
 	o.registerServices(ctx, grpcServer)
 
-	mux.Handle("/", grpcHandler)
+	mux.Handle(fmt.Sprintf("/%s.{service}/*", opt.serviceName), grpcHandler)
 	return nil
 }
 
@@ -309,7 +309,7 @@ func (o gatewayServerOption) addHandler(ctx context.Context, opt *serverOptions,
 		return err
 	}
 
-	mux.Handle(fmt.Sprintf("/%s/", opt.serviceName), gatewayHandler)
+	mux.Handle(fmt.Sprintf("/%s/*", opt.serviceName), gatewayHandler)
 
 	return nil
 }
