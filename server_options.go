@@ -41,11 +41,6 @@ type ServerOption interface {
 	addHandler(ctx context.Context, opt *serverOptions, mux mux) error
 }
 
-type handlerPair struct {
-	pattern string
-	handler http.Handler
-}
-
 type mux interface {
 	Handle(pattern string, handler http.Handler)
 }
@@ -67,9 +62,9 @@ type serverConfigOption struct {
 
 func (o serverConfigOption) apply(ctx context.Context, opt *serverOptions) error {
 	opt.config = ServerConfig{
-		Bind:     o.config.GetBind(),
-		Listen:   o.config.GetListen(),
-		TLS:      CloneTLSConfig(o.config.GetTLS()),
+		Bind:   o.config.GetBind(),
+		Listen: o.config.GetListen(),
+		TLS:    CloneTLSConfig(o.config.GetTLS()),
 		Loopback: ClientConfig{
 			Headers:               o.config.GetLoopback().GetHeaders(),
 			WriteBufferSize:       o.config.GetLoopback().GetWriteBufferSize(),
@@ -225,7 +220,7 @@ func (o grpcServicesServerOption) addHandler(ctx context.Context, opt *serverOpt
 	opt.log.Trace("registering GRPC services")
 	o.registerServices(ctx, grpcServer)
 
-	mux.Handle("/", grpcHandler)
+	mux.Handle(fmt.Sprintf("/%s.{service}/*", opt.serviceName), grpcHandler)
 	return nil
 }
 
@@ -314,7 +309,7 @@ func (o gatewayServerOption) addHandler(ctx context.Context, opt *serverOptions,
 		return err
 	}
 
-	mux.Handle(fmt.Sprintf("/%s/", opt.serviceName), gatewayHandler)
+	mux.Handle(fmt.Sprintf("/%s/*", opt.serviceName), gatewayHandler)
 
 	return nil
 }

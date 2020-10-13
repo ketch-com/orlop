@@ -465,7 +465,7 @@ func timeDurationFieldSetter(value reflect.Value, input string) error {
 	return nil
 }
 
-func pointerFieldSetter(x func (value reflect.Value, input string) error) func (value reflect.Value, input string) error {
+func pointerFieldSetter(x func(value reflect.Value, input string) error) func(value reflect.Value, input string) error {
 	return func(value reflect.Value, input string) error {
 		if value.Kind() != reflect.Ptr {
 			return x(value, input)
