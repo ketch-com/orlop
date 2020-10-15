@@ -65,6 +65,10 @@ func Serve(ctx context.Context, serviceName string, options ...ServerOption) err
 		mux.NotFound(serverOptions.notFound.ServeHTTP)
 	}
 
+	// Add standard middleware
+	mux.Use(Metrics)
+	mux.Use(CORS)
+
 	// Add any middlewares registered
 	if len(serverOptions.middlewares) > 0 {
 		mux.Use(serverOptions.middlewares...)

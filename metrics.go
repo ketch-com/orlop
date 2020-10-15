@@ -27,17 +27,22 @@ import (
 	"strconv"
 )
 
-type InstrumentedMetricHandler struct {
+var (
 	requestDuration  *prometheus.HistogramVec
 	inflightRequests *prometheus.GaugeVec
-	next             http.Handler
+)
+
+func Metrics(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		inflightRequests.WithLabelValues(r.Method, r.URL.Path).Inc()
+		defer inflightRequests.WithLabelValues(r.Method, r.URL.Path).Dec()
+
+		m := httpsnoop.CaptureMetrics(next, w, r)
+		requestDuration.WithLabelValues(r.Method, r.URL.Path, strconv.Itoa(m.Code)).Observe(m.Duration.Seconds())
+	})
 }
 
-func NewInstrumentedMetricHandlerFunc(next http.HandlerFunc) (*InstrumentedMetricHandler, error) {
-	return NewInstrumentedMetricHandler(next)
-}
-
-func NewInstrumentedMetricHandler(next http.Handler) (*InstrumentedMetricHandler, error) {
+func init() {
 	reg := prometheus.DefaultRegisterer
 
 	inflightRequests := prometheus.NewGaugeVec(prometheus.GaugeOpts{
@@ -48,7 +53,7 @@ func NewInstrumentedMetricHandler(next http.Handler) (*InstrumentedMetricHandler
 		if are, ok := err.(prometheus.AlreadyRegisteredError); ok {
 			inflightRequests = are.ExistingCollector.(*prometheus.GaugeVec)
 		} else {
-			return nil, err
+			panic(err)
 		}
 	}
 
@@ -61,21 +66,7 @@ func NewInstrumentedMetricHandler(next http.Handler) (*InstrumentedMetricHandler
 		if are, ok := err.(prometheus.AlreadyRegisteredError); ok {
 			requestDuration = are.ExistingCollector.(*prometheus.HistogramVec)
 		} else {
-			return nil, err
+			panic(err)
 		}
 	}
-
-	return &InstrumentedMetricHandler{
-		requestDuration:  requestDuration,
-		inflightRequests: inflightRequests,
-		next:             next,
-	}, nil
-}
-
-func (h InstrumentedMetricHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	h.inflightRequests.WithLabelValues(r.Method, r.URL.Path).Inc()
-	defer h.inflightRequests.WithLabelValues(r.Method, r.URL.Path).Dec()
-
-	m := httpsnoop.CaptureMetrics(h.next, w, r)
-	h.requestDuration.WithLabelValues(r.Method, r.URL.Path, strconv.Itoa(m.Code)).Observe(m.Duration.Seconds())
 }
