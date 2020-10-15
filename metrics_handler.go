@@ -33,11 +33,7 @@ type InstrumentedMetricHandler struct {
 	next             http.Handler
 }
 
-func NewInstrumentedMetricHandlerFunc(next http.HandlerFunc) (*InstrumentedMetricHandler, error) {
-	return NewInstrumentedMetricHandler(next)
-}
-
-func NewInstrumentedMetricHandler(next http.Handler) (*InstrumentedMetricHandler, error) {
+func Metrics(next http.Handler) http.Handler {
 	reg := prometheus.DefaultRegisterer
 
 	inflightRequests := prometheus.NewGaugeVec(prometheus.GaugeOpts{
@@ -48,7 +44,7 @@ func NewInstrumentedMetricHandler(next http.Handler) (*InstrumentedMetricHandler
 		if are, ok := err.(prometheus.AlreadyRegisteredError); ok {
 			inflightRequests = are.ExistingCollector.(*prometheus.GaugeVec)
 		} else {
-			return nil, err
+			return nil
 		}
 	}
 
@@ -61,7 +57,7 @@ func NewInstrumentedMetricHandler(next http.Handler) (*InstrumentedMetricHandler
 		if are, ok := err.(prometheus.AlreadyRegisteredError); ok {
 			requestDuration = are.ExistingCollector.(*prometheus.HistogramVec)
 		} else {
-			return nil, err
+			return nil
 		}
 	}
 
@@ -69,7 +65,7 @@ func NewInstrumentedMetricHandler(next http.Handler) (*InstrumentedMetricHandler
 		requestDuration:  requestDuration,
 		inflightRequests: inflightRequests,
 		next:             next,
-	}, nil
+	}
 }
 
 func (h InstrumentedMetricHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {

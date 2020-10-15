@@ -203,8 +203,12 @@ func (o grpcServicesServerOption) addHandler(ctx context.Context, opt *serverOpt
 	// Setup the gRPC server
 	grpcServer := grpc.NewServer(grpcServerOptions...)
 
+	// Register all the services
+	opt.log.Trace("registering GRPC services")
+	o.registerServices(ctx, grpcServer)
+
 	// Finally, add the GRPC handler at the root
-	grpcHandler, err := NewInstrumentedMetricHandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	grpcHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.ProtoMajor == 2 && strings.Contains(r.Header.Get("Content-Type"), "application/grpc") {
 			grpcServer.ServeHTTP(w, r)
 		} else if opt.notFound != nil {
@@ -213,13 +217,6 @@ func (o grpcServicesServerOption) addHandler(ctx context.Context, opt *serverOpt
 			http.NotFound(w, r)
 		}
 	})
-	if err != nil {
-		return err
-	}
-
-	// Register all the services
-	opt.log.Trace("registering GRPC services")
-	o.registerServices(ctx, grpcServer)
 
 	mux.Handle(fmt.Sprintf("/%s.{service}/*", opt.serviceName), grpcHandler)
 	return nil
@@ -285,32 +282,7 @@ func (o gatewayServerOption) addHandler(ctx context.Context, opt *serverOptions,
 		}
 	}
 
-	// Add the JSON gateway
-	gatewayHandler, err := NewInstrumentedMetricHandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if r.TLS != nil {
-			// Only on TLS per https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Strict-Transport-Security
-			w.Header().Add("Strict-Transport-Security", "max-age=63072000; includeSubDomains; preload")
-		}
-
-		w.Header().Set("Vary", "Origin")
-		w.Header().Set("Access-Control-Allow-Credentials", "true")
-
-		if origin := r.Header.Get("Origin"); origin != "" {
-			w.Header().Set("Access-Control-Allow-Origin", origin)
-			if r.Method == "OPTIONS" && r.Header.Get("Access-Control-Request-Method") != "" {
-				w.Header().Set("Access-Control-Allow-Headers", headers)
-				w.Header().Set("Access-Control-Allow-Methods", methods)
-				return
-			}
-		}
-
-		gwmux.ServeHTTP(w, r)
-	})
-	if err != nil {
-		return err
-	}
-
-	mux.Handle(fmt.Sprintf("/%s/*", opt.serviceName), gatewayHandler)
+	mux.Handle(fmt.Sprintf("/%s/*", opt.serviceName), gwmux)
 
 	return nil
 }
@@ -345,14 +317,14 @@ func WithVault(vault HasVaultConfig) ServerOption {
 
 // WithHealthCheck specifies a health checker function
 func WithHealthCheck(checker HealthChecker) ServerOption {
-	return WithHandler("/healthz", &HealthHandler{
+	return WithGET("/healthz", &HealthHandler{
 		checker: checker,
 	})
 }
 
 // WithMetrics specifies a metrics handler
 func WithMetrics(handler http.Handler) ServerOption {
-	return WithHandler("/metrics", handler)
+	return WithGET("/metrics", handler)
 }
 
 // WithPrometheusMetrics specifies to use the Prometheus metrics handler
@@ -415,6 +387,7 @@ func WithSwagger(fs http.FileSystem) ServerOption {
 
 // handlerServerOption specifies a custom HTTP handler
 type handlerServerOption struct {
+	method string
 	pattern string
 	handler http.Handler
 }
@@ -431,6 +404,61 @@ func (o handlerServerOption) addHandler(ctx context.Context, opt *serverOptions,
 // WithHandler returns a handlerServerOption
 func WithHandler(pattern string, handler http.Handler) ServerOption {
 	return &handlerServerOption{
+		method:  "*",
+		pattern: pattern,
+		handler: handler,
+	}
+}
+
+// WithGET returns a handlerServerOption
+func WithGET(pattern string, handler http.Handler) ServerOption {
+	return &handlerServerOption{
+		method:  http.MethodGet,
+		pattern: pattern,
+		handler: handler,
+	}
+}
+
+// WithPUT returns a handlerServerOption
+func WithPUT(pattern string, handler http.Handler) ServerOption {
+	return &handlerServerOption{
+		method:  http.MethodPut,
+		pattern: pattern,
+		handler: handler,
+	}
+}
+
+// WithPOST returns a handlerServerOption
+func WithPOST(pattern string, handler http.Handler) ServerOption {
+	return &handlerServerOption{
+		method:  http.MethodPost,
+		pattern: pattern,
+		handler: handler,
+	}
+}
+
+// WithDELETE returns a handlerServerOption
+func WithDELETE(pattern string, handler http.Handler) ServerOption {
+	return &handlerServerOption{
+		method:  http.MethodDelete,
+		pattern: pattern,
+		handler: handler,
+	}
+}
+
+// WithOPTIONS returns a handlerServerOption
+func WithOPTIONS(pattern string, handler http.Handler) ServerOption {
+	return &handlerServerOption{
+		method:  http.MethodOptions,
+		pattern: pattern,
+		handler: handler,
+	}
+}
+
+// WithPATCH returns a handlerServerOption
+func WithPATCH(pattern string, handler http.Handler) ServerOption {
+	return &handlerServerOption{
+		method:  http.MethodPatch,
 		pattern: pattern,
 		handler: handler,
 	}
