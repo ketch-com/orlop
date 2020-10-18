@@ -28,6 +28,7 @@ import (
 	"log"
 	"os"
 	"reflect"
+	"sort"
 	"strings"
 )
 
@@ -39,6 +40,7 @@ func Run(prefix string, runner interface{}, cfg interface{}) {
 				logrus.Fatal(err)
 			}
 
+			sort.Strings(vars)
 			fmt.Println(strings.Join(vars, "\n"))
 			return
 		}
