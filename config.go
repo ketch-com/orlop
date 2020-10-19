@@ -426,9 +426,9 @@ func hexByteSliceFieldSetter(value reflect.Value, input string) error {
 }
 
 func sliceFieldSetter(value reflect.Value, input string) error {
-	if len(input) > 0 {
-		input = strings.Trim(input, "[]")
+	input = strings.Trim(input, "[]")
 
+	if len(input) > 0 {
 		r := csv.NewReader(strings.NewReader(input))
 		ss, err := r.Read()
 		if err != nil {
