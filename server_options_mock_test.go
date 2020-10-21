@@ -85,14 +85,14 @@ func (m *Mockmux) EXPECT() *MockmuxMockRecorder {
 	return m.recorder
 }
 
-// Handle mocks base method
+// Method mocks base method
 func (m *Mockmux) Handle(pattern string, handler http.Handler) {
 	m.ctrl.T.Helper()
-	m.ctrl.Call(m, "Handle", pattern, handler)
+	m.ctrl.Call(m, "Method", pattern, handler)
 }
 
-// Handle indicates an expected call of Handle
+// Method indicates an expected call of Method
 func (mr *MockmuxMockRecorder) Handle(pattern, handler interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Handle", reflect.TypeOf((*Mockmux)(nil).Handle), pattern, handler)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Method", reflect.TypeOf((*Mockmux)(nil).Handle), pattern, handler)
 }
