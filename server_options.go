@@ -387,7 +387,7 @@ func WithSwagger(fs http.FileSystem) ServerOption {
 
 // handlerServerOption specifies a custom HTTP handler
 type handlerServerOption struct {
-	method string
+	method  string
 	pattern string
 	handler http.Handler
 }

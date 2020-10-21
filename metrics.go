@@ -27,22 +27,7 @@ import (
 	"strconv"
 )
 
-var (
-	requestDuration  *prometheus.HistogramVec
-	inflightRequests *prometheus.GaugeVec
-)
-
 func Metrics(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		inflightRequests.WithLabelValues(r.Method, r.URL.Path).Inc()
-		defer inflightRequests.WithLabelValues(r.Method, r.URL.Path).Dec()
-
-		m := httpsnoop.CaptureMetrics(next, w, r)
-		requestDuration.WithLabelValues(r.Method, r.URL.Path, strconv.Itoa(m.Code)).Observe(m.Duration.Seconds())
-	})
-}
-
-func init() {
 	reg := prometheus.DefaultRegisterer
 
 	inflightRequests := prometheus.NewGaugeVec(prometheus.GaugeOpts{
@@ -69,4 +54,12 @@ func init() {
 			panic(err)
 		}
 	}
+
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		inflightRequests.WithLabelValues(r.Method, r.URL.Path).Inc()
+		defer inflightRequests.WithLabelValues(r.Method, r.URL.Path).Dec()
+
+		m := httpsnoop.CaptureMetrics(next, w, r)
+		requestDuration.WithLabelValues(r.Method, r.URL.Path, strconv.Itoa(m.Code)).Observe(m.Duration.Seconds())
+	})
 }

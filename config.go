@@ -287,19 +287,23 @@ func GetVariablesFromConfig(prefix string, cfg interface{}) ([]string, error) {
 		if len(value) == 0 {
 			switch field.v.Kind() {
 			case reflect.Bool:
-				value = "# bool"
+				value = "false # bool"
 
 			case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64, reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
-				value = "# int"
+				value = "0 # int"
 
 			case reflect.Float32, reflect.Float64:
-				value = "# float"
+				value = "0.0 # float"
 
 			case reflect.Map:
 				value = "# [k=v, k=v, k=v]"
 
 			case reflect.Slice:
-				value = "# [v1, v2, v3]"
+				if field.v.Type().Elem().Kind() == reflect.Int8 {
+					value = "# bytes"
+				} else {
+					value = "# [v1, v2, v3]"
+				}
 
 			case reflect.String:
 				value = "# string"

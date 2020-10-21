@@ -41,7 +41,13 @@ func Run(prefix string, runner interface{}, cfg interface{}) {
 			}
 
 			sort.Strings(vars)
-			fmt.Println(strings.Join(vars, "\n"))
+			for _, v := range vars {
+				if strings.Contains(v, "=#") {
+					fmt.Println("#" + v)
+				} else {
+					fmt.Println(v)
+				}
+			}
 			return
 		}
 	}
