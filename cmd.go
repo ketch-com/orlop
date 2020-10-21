@@ -73,7 +73,7 @@ func Run(prefix string, runner interface{}, cfg interface{}) {
 		reflect.ValueOf(cfg),
 	})
 
-	// Method any result
+	// Handle any result
 	if len(out) > 0 && out[0].IsValid() && !out[0].IsNil() {
 		e := out[0].MethodByName("Error")
 		out = e.Call([]reflect.Value{})
