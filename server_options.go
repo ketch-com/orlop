@@ -43,6 +43,10 @@ type ServerOption interface {
 
 type mux interface {
 	Handle(pattern string, handler http.Handler)
+	HandleFunc(pattern string, handler http.HandlerFunc)
+
+	Method(method, pattern string, handler http.Handler)
+	MethodFunc(method, pattern string, handler http.HandlerFunc)
 }
 
 type serverOptions struct {
@@ -341,14 +345,14 @@ func (o profileServerOption) apply(ctx context.Context, opt *serverOptions) erro
 }
 
 func (o profileServerOption) addHandler(ctx context.Context, opt *serverOptions, mux mux) error {
-	mux.Handle("/debug/pprof/", http.HandlerFunc(pprof.Index))
-	mux.Handle("/debug/pprof/cmdline", http.HandlerFunc(pprof.Cmdline))
-	mux.Handle("/debug/pprof/profile", http.HandlerFunc(pprof.Profile))
-	mux.Handle("/debug/pprof/symbol", http.HandlerFunc(pprof.Symbol))
-	mux.Handle("/debug/pprof/trace", http.HandlerFunc(pprof.Trace))
+	mux.MethodFunc(http.MethodGet, "/debug/pprof/", pprof.Index)
+	mux.MethodFunc(http.MethodGet, "/debug/pprof/cmdline", pprof.Cmdline)
+	mux.MethodFunc(http.MethodGet, "/debug/pprof/profile", pprof.Profile)
+	mux.MethodFunc(http.MethodGet, "/debug/pprof/symbol", pprof.Symbol)
+	mux.MethodFunc(http.MethodGet, "/debug/pprof/trace", pprof.Trace)
 
 	for _, handler := range []string{"allocs", "block", "goroutine", "heap", "mutex", "threadcreate"} {
-		mux.Handle(fmt.Sprintf("/debug/pprof/%s", handler), pprof.Handler(handler))
+		mux.Method(http.MethodGet, fmt.Sprintf("/debug/pprof/%s", handler), pprof.Handler(handler))
 	}
 
 	return nil
@@ -375,7 +379,7 @@ func (o swaggerHandlerServerOption) addHandler(ctx context.Context, opt *serverO
 	}
 
 	handler := http.StripPrefix(fmt.Sprintf("/%s/swagger", opt.serviceName), http.FileServer(o.fs))
-	mux.Handle(fmt.Sprintf("/%s/swagger/", opt.serviceName), handler)
+	mux.Method(http.MethodGet, fmt.Sprintf("/%s/swagger/", opt.serviceName), handler)
 
 	return nil
 }
@@ -387,9 +391,10 @@ func WithSwagger(fs http.FileSystem) ServerOption {
 
 // handlerServerOption specifies a custom HTTP handler
 type handlerServerOption struct {
-	method  string
-	pattern string
-	handler http.Handler
+	method      string
+	pattern     string
+	handler     http.Handler
+	handlerFunc http.HandlerFunc
 }
 
 func (o handlerServerOption) apply(ctx context.Context, opt *serverOptions) error {
@@ -397,16 +402,36 @@ func (o handlerServerOption) apply(ctx context.Context, opt *serverOptions) erro
 }
 
 func (o handlerServerOption) addHandler(ctx context.Context, opt *serverOptions, mux mux) error {
-	mux.Handle(o.pattern, o.handler)
+	if len(o.method) > 0 {
+		if o.handler != nil {
+			mux.Method(o.method, o.pattern, o.handler)
+		} else {
+			mux.MethodFunc(o.method, o.pattern, o.handlerFunc)
+		}
+	} else {
+		if o.handler != nil {
+			mux.Handle(o.pattern, o.handler)
+		} else {
+			mux.HandleFunc(o.pattern, o.handlerFunc)
+		}
+	}
+
 	return nil
 }
 
 // WithHandler returns a handlerServerOption
 func WithHandler(pattern string, handler http.Handler) ServerOption {
 	return &handlerServerOption{
-		method:  "*",
 		pattern: pattern,
 		handler: handler,
+	}
+}
+
+// WithHandlerFunc returns a handlerServerOption
+func WithHandlerFunc(pattern string, handler http.HandlerFunc) ServerOption {
+	return &handlerServerOption{
+		pattern:     pattern,
+		handlerFunc: handler,
 	}
 }
 
