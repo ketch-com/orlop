@@ -320,10 +320,8 @@ func WithVault(vault HasVaultConfig) ServerOption {
 }
 
 // WithHealthCheck specifies a health checker function
-func WithHealthCheck(checker HealthChecker) ServerOption {
-	return WithGET("/healthz", &HealthHandler{
-		checker: checker,
-	})
+func WithHealthCheck(check string, checker http.Handler) ServerOption {
+	return WithGET("/healthz/" + check, checker)
 }
 
 // WithMetrics specifies a metrics handler
