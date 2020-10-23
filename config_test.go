@@ -48,6 +48,7 @@ func (e *CustomConfig) UnmarshalJSON(text []byte) error {
 
 type LargerConfig struct {
 	CustomConfig CustomConfig
+	L0Base       int32
 }
 
 type TestConfig struct {
@@ -68,8 +69,11 @@ func (e *TestConfig) UnmarshalText(text []byte) error {
 	return nil
 }
 
-func TestX(t *testing.T) {
-	Unmarshal("wheelhouse", &LargerConfig{})
+func TestUnmarshalStruct(t *testing.T) {
+	err := Unmarshal("wheelhouse", &LargerConfig{})
+	if err != nil {
+		t.Fatal(err)
+	}
 }
 
 func TestVars(t *testing.T) {
