@@ -47,7 +47,7 @@ func Serve(ctx context.Context, serviceName string, options ...ServerOption) err
 			Listen: 5000,
 			TLS:    TLSConfig{},
 		}),
-		WithGET("/healthz", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})),
+		WithHandler("/healthz", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})),
 		WithPrometheusMetrics(),
 	}, options...)
 
