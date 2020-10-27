@@ -54,20 +54,16 @@ func UnmarshalFromEnv(prefix string, vars []string, cfg interface{}) error {
 	}
 
 	for name, field := range fields {
-		var value string
-		if field.tag.DefaultValue != nil {
-			value = *field.tag.DefaultValue
-		}
-
 		if v, ok := env[name]; ok {
-			value = v
+			if err := field.set(field.v, v); err != nil {
+				return err
+			}
+		} else if field.tag.DefaultValue != nil {
+			if err := field.set(field.v, *field.tag.DefaultValue); err != nil {
+				return err
+			}
 		} else if field.tag.Required {
 			return fmt.Errorf("%s required", name)
-		}
-
-		err := field.set(field.v, value)
-		if err != nil {
-			return err
 		}
 	}
 
