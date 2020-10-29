@@ -8,10 +8,9 @@ require (
 	github.com/frankban/quicktest v1.7.2 // indirect
 	github.com/go-chi/chi v4.1.2+incompatible
 	github.com/gogo/protobuf v1.3.1
-	github.com/golang/mock v1.4.4
 	github.com/golang/protobuf v1.4.3
 	github.com/golang/snappy v0.0.2 // indirect
-	github.com/grpc-ecosystem/grpc-gateway v1.15.2
+	github.com/grpc-ecosystem/grpc-gateway v1.16.0
 	github.com/hashicorp/errwrap v1.1.0 // indirect
 	github.com/hashicorp/go-multierror v1.1.0 // indirect
 	github.com/hashicorp/go-retryablehttp v0.6.7 // indirect
