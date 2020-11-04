@@ -496,7 +496,11 @@ func loadEnvironment(env Environment, files ...string) {
 	}
 	envFiles = append(envFiles, ".env")
 
-	_ = godotenv.Load(envFiles...)
+	for _, file := range envFiles {
+		if _, err := os.Stat(file); err == nil {
+			_ = godotenv.Load(file)
+		}
+	}
 }
 
 func toScreamingDelimited(s string, delimiter uint8, ignore uint8, screaming bool) string {
