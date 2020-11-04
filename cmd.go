@@ -25,6 +25,7 @@ import (
 	"fmt"
 	"github.com/iancoleman/strcase"
 	"github.com/sirupsen/logrus"
+	"github.com/spf13/pflag"
 	"log"
 	"os"
 	"reflect"
@@ -33,33 +34,41 @@ import (
 )
 
 func Run(prefix string, runner interface{}, cfg interface{}) {
-	if len(os.Args) > 1 {
-		if os.Args[1] == "--init" {
-			vars, err := GetVariablesFromConfig(prefix, cfg)
-			if err != nil {
-				logrus.Fatal(err)
-			}
+	var configFiles []string
+	var initFlag bool
+	var envFlag string
+	var loglevelFlag string
+	pflag.BoolVar(&initFlag,"init", false, "outputs the config environment variables and exits")
+	pflag.StringVar(&envFlag, "env", strings.ToLower(getenv(prefix, "environment")), "specifies the environment")
+	pflag.StringVar(&loglevelFlag, "loglevel", strings.ToLower(getenv(prefix, "loglevel")), "specifies the log level")
+	pflag.StringSliceVar(&configFiles, "config", nil, "specifies a .env configuration file to load")
+	pflag.Parse()
 
-			sort.Strings(vars)
-			for _, v := range vars {
-				if strings.Contains(v, "=#") {
-					fmt.Println("#" + v)
-				} else {
-					fmt.Println(v)
-				}
-			}
-			return
+	if initFlag {
+		vars, err := GetVariablesFromConfig(prefix, cfg)
+		if err != nil {
+			logrus.Fatal(err)
 		}
+
+		sort.Strings(vars)
+		for _, v := range vars {
+			if strings.Contains(v, "=#") {
+				fmt.Println("#" + v)
+			} else {
+				fmt.Println(v)
+			}
+		}
+		return
 	}
 
 	// First figure out the environment
-	env := Environment(strings.ToLower(getenv(prefix, "environment")))
+	env := Environment(envFlag)
 
 	// Load the environment from files
-	loadEnvironment(env)
+	loadEnvironment(env, configFiles...)
 
 	// Setup logging
-	setupLogging(prefix, env)
+	setupLogging(env, loglevelFlag)
 
 	// Unmarshal the configuration
 	err := Unmarshal(prefix, cfg)
@@ -87,8 +96,8 @@ func getenv(prefix string, key string) string {
 	return os.Getenv(strcase.ToScreamingSnake(strings.Join([]string{prefix, key}, "_")))
 }
 
-func setupLogging(prefix string, env Environment) {
-	switch strings.ToLower(getenv(prefix, "loglevel")) {
+func setupLogging(env Environment, loglevel string) {
+	switch loglevel {
 	case "fatal":
 		logrus.SetLevel(logrus.FatalLevel)
 

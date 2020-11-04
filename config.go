@@ -486,13 +486,15 @@ func pointerFieldSetter(x func(value reflect.Value, input string) error) func(va
 	}
 }
 
-func loadEnvironment(env Environment) {
-	envFiles := []string{".env"}
+func loadEnvironment(env Environment, files ...string) {
+	var envFiles []string
+	envFiles = append(envFiles, files...)
 	if env.IsLocal() {
 		envFiles = append(envFiles, ".env.local")
 	} else {
 		envFiles = append(envFiles, ".env."+env.String())
 	}
+	envFiles = append(envFiles, ".env")
 
 	_ = godotenv.Load(envFiles...)
 }
