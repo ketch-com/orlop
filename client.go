@@ -76,7 +76,7 @@ func ConnectContext(ctx context.Context, cfg HasClientConfig, vault HasVaultConf
 				ctx, span := tracer.Start(ctx, "TokenProvider")
 				defer span.End()
 
-				s, err := LoadKey(ctx, shared, vault, "secret")
+				s, err := LoadKeyContext(ctx, shared, vault, "secret")
 				if err != nil {
 					span.RecordError(ctx, err)
 					logger.WithError(err).Error("client: could not load secret key")

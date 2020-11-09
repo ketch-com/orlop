@@ -36,7 +36,14 @@ type VaultClient struct {
 }
 
 // NewVault connects to Vault given the configuration
-func NewVault(ctx context.Context, cfg HasVaultConfig) (*VaultClient, error) {
+//
+// deprecated: use NewVaultContext instead
+func NewVault(cfg HasVaultConfig) (*VaultClient, error) {
+	return NewVaultContext(context.TODO(), cfg)
+}
+
+// NewVaultContext connects to Vault given the configuration
+func NewVaultContext(ctx context.Context, cfg HasVaultConfig) (*VaultClient, error) {
 	var err error
 
 	// First check if Vault is enabled in config, returning if not
@@ -82,7 +89,14 @@ func NewVault(ctx context.Context, cfg HasVaultConfig) (*VaultClient, error) {
 }
 
 // Reads a secret at the given path
-func (c VaultClient) Read(ctx context.Context, p string) (*vault.Secret, error) {
+//
+// deprecated: use ReadContext instead
+func (c VaultClient) Read(p string) (*vault.Secret, error) {
+	return c.ReadContext(context.TODO(), p)
+}
+
+// ReadContext returns a secret at the given path
+func (c VaultClient) ReadContext(ctx context.Context, p string) (*vault.Secret, error) {
 	ctx, span := tracer.Start(ctx, "Read")
 	defer span.End()
 
@@ -106,7 +120,14 @@ func (c VaultClient) Read(ctx context.Context, p string) (*vault.Secret, error) 
 }
 
 // Writes secret data at the given path
-func (c VaultClient) Write(ctx context.Context, p string, data map[string]interface{}) (*vault.Secret, error) {
+//
+// deprecated: use WriteContext instead
+func (c VaultClient) Write(p string, data map[string]interface{}) (*vault.Secret, error) {
+	return c.WriteContext(context.TODO(), p, data)
+}
+
+// WriteContext secret data at the given path
+func (c VaultClient) WriteContext(ctx context.Context, p string, data map[string]interface{}) (*vault.Secret, error) {
 	ctx, span := tracer.Start(ctx, "Write")
 	defer span.End()
 
@@ -129,7 +150,12 @@ func (c VaultClient) Write(ctx context.Context, p string, data map[string]interf
 }
 
 // Delete deletes a secret at the given path
-func (c VaultClient) Delete(ctx context.Context, p string) error {
+func (c VaultClient) Delete(p string) error {
+	return c.DeleteContext(context.TODO(), p)
+}
+
+// DeleteContext deletes a secret at the given path
+func (c VaultClient) DeleteContext(ctx context.Context, p string) error {
 	ctx, span := tracer.Start(ctx, "Delete")
 	defer span.End()
 

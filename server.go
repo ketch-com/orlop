@@ -39,12 +39,10 @@ func Serve(ctx context.Context, serviceName string, options ...ServerOption) err
 	ctx, span := tracer.Start(ctx, "Serve")
 	defer span.End()
 
-	logger := log.FromContext(ctx)
-
 	// Setup the server options
 	serverOptions := &serverOptions{
 		serviceName: serviceName,
-		logger:      logger.WithField("service", serviceName),
+		logger:      log.FromContext(ctx).WithField("service", serviceName),
 	}
 
 	options = append([]ServerOption{
@@ -102,7 +100,7 @@ func Serve(ctx context.Context, serviceName string, options ...ServerOption) err
 
 	// Serve requests
 	if serverOptions.config.GetTLS().GetEnabled() {
-		config, err := NewServerTLSConfig(ctx, serverOptions.config.GetTLS(), serverOptions.vault)
+		config, err := NewServerTLSConfigContext(ctx, serverOptions.config.GetTLS(), serverOptions.vault)
 		if err != nil {
 			ln.Close()
 

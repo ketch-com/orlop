@@ -34,7 +34,14 @@ import (
 )
 
 // LoadKey loads the key material based on the config
-func LoadKey(ctx context.Context, cfg HasKeyConfig, vault HasVaultConfig, which string) ([]byte, error) {
+//
+// deprecated: use LoadKeyContext
+func LoadKey(cfg HasKeyConfig, vault HasVaultConfig, which string) ([]byte, error) {
+	return LoadKeyContext(context.TODO(), cfg, vault, which)
+}
+
+// LoadKeyContext loads the key material based on the config
+func LoadKeyContext(ctx context.Context, cfg HasKeyConfig, vault HasVaultConfig, which string) ([]byte, error) {
 	ctx, span := tracer.Start(ctx, "LoadKey")
 	defer span.End()
 
@@ -75,14 +82,14 @@ func LoadKey(ctx context.Context, cfg HasKeyConfig, vault HasVaultConfig, which 
 		return cfg.GetSecret(), nil
 
 	case "id":
-		client, err := NewVault(ctx, vault)
+		client, err := NewVaultContext(ctx, vault)
 		if err != nil {
 			err = errors.Wrap(err, "key: could not connect to Vault")
 			span.RecordError(ctx, err)
 			return nil, err
 		}
 
-		s, err := client.Read(ctx, cfg.GetID())
+		s, err := client.ReadContext(ctx, cfg.GetID())
 		if err != nil {
 			err = errors.Wrap(err, "key: not found")
 			span.RecordError(ctx, err)

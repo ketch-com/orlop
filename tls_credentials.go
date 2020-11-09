@@ -35,7 +35,14 @@ const (
 )
 
 // NewServerTLSConfig returns a new tls.VaultConfig from the given configuration input
-func NewServerTLSConfig(ctx context.Context, cfg HasTLSConfig, vault HasVaultConfig) (*tls.Config, error) {
+//
+// deprecated: use NewServerTLSConfigContext instead
+func NewServerTLSConfig(cfg HasTLSConfig, vault HasVaultConfig) (*tls.Config, error) {
+	return NewServerTLSConfigContext(context.TODO(), cfg, vault)
+}
+
+// NewServerTLSConfigContext returns a new tls.VaultConfig from the given configuration input
+func NewServerTLSConfigContext(ctx context.Context, cfg HasTLSConfig, vault HasVaultConfig) (*tls.Config, error) {
 	var err error
 
 	ctx, span := tracer.Start(ctx, "NewServerTLSConfig")
@@ -63,14 +70,14 @@ func NewServerTLSConfig(ctx context.Context, cfg HasTLSConfig, vault HasVaultCon
 
 	t := CloneTLSConfig(cfg)
 
-	err = GenerateCertificates(ctx, vault, cfg.GetGenerate(), &t.Cert.Secret, &t.Key.Secret)
+	err = GenerateCertificatesContext(ctx, vault, cfg.GetGenerate(), &t.Cert.Secret, &t.Key.Secret)
 	if err != nil {
 		err = errors.Wrap(err, "tls: failed to generate certificates")
 		span.RecordError(ctx, err)
 		return nil, err
 	}
 
-	certPEMBlock, err := LoadKey(ctx, t.GetCert(), vault, TLSCertificateKey)
+	certPEMBlock, err := LoadKeyContext(ctx, t.GetCert(), vault, TLSCertificateKey)
 	if err != nil {
 		err = errors.Wrap(err, "tls: failed to load certificate")
 		span.RecordError(ctx, err)
@@ -79,7 +86,7 @@ func NewServerTLSConfig(ctx context.Context, cfg HasTLSConfig, vault HasVaultCon
 
 	log.Trace("certificate loaded")
 
-	keyPEMBlock, err := LoadKey(ctx, t.GetKey(), vault, TLSPrivateKey)
+	keyPEMBlock, err := LoadKeyContext(ctx, t.GetKey(), vault, TLSPrivateKey)
 	if err != nil {
 		err = errors.Wrap(err, "tls: failed to load private key")
 		span.RecordError(ctx, err)
@@ -87,7 +94,7 @@ func NewServerTLSConfig(ctx context.Context, cfg HasTLSConfig, vault HasVaultCon
 	}
 
 	if t.GetRootCA().GetEnabled() {
-		rootcaPEMBlock, err := LoadKey(ctx, t.GetRootCA(), vault, TLSRootCAKey)
+		rootcaPEMBlock, err := LoadKeyContext(ctx, t.GetRootCA(), vault, TLSRootCAKey)
 		if err == nil {
 			config.ClientCAs = x509.NewCertPool()
 
@@ -112,7 +119,14 @@ func NewServerTLSConfig(ctx context.Context, cfg HasTLSConfig, vault HasVaultCon
 }
 
 // NewClientTLSConfig returns a new tls.VaultConfig from the given configuration input
+//
+// deprecated: use NewClientTLSConfigContext instead
 func NewClientTLSConfig(ctx context.Context, cfg HasTLSConfig, vault HasVaultConfig) (*tls.Config, error) {
+	return NewClientTLSConfigContext(ctx, cfg, vault)
+}
+
+// NewClientTLSConfigContext returns a new tls.VaultConfig from the given configuration input
+func NewClientTLSConfigContext(ctx context.Context, cfg HasTLSConfig, vault HasVaultConfig) (*tls.Config, error) {
 	ctx, span := tracer.Start(ctx, "NewClientTLSConfig")
 	defer span.End()
 
@@ -130,7 +144,7 @@ func NewClientTLSConfig(ctx context.Context, cfg HasTLSConfig, vault HasVaultCon
 	var err error
 	t := CloneTLSConfig(cfg)
 
-	err = GenerateCertificates(ctx, vault, cfg.GetGenerate(), &t.Cert.Secret, &t.Key.Secret)
+	err = GenerateCertificatesContext(ctx, vault, cfg.GetGenerate(), &t.Cert.Secret, &t.Key.Secret)
 	if err != nil {
 		err = errors.Wrap(err, "tls: failed to generate certificates")
 		span.RecordError(ctx, err)
@@ -138,14 +152,14 @@ func NewClientTLSConfig(ctx context.Context, cfg HasTLSConfig, vault HasVaultCon
 	}
 
 	if t.GetCert().GetEnabled() && t.GetKey().GetEnabled() {
-		certPEMBlock, err := LoadKey(ctx, t.GetCert(), vault, TLSCertificateKey)
+		certPEMBlock, err := LoadKeyContext(ctx, t.GetCert(), vault, TLSCertificateKey)
 		if err != nil {
 			err = errors.Wrap(err, "tls: failed to load certificate")
 			span.RecordError(ctx, err)
 			return nil, err
 		}
 
-		keyPEMBlock, err := LoadKey(ctx, t.GetKey(), vault, TLSPrivateKey)
+		keyPEMBlock, err := LoadKeyContext(ctx, t.GetKey(), vault, TLSPrivateKey)
 		if err != nil {
 			err = errors.Wrap(err, "tls: failed to load private key")
 			span.RecordError(ctx, err)
@@ -161,7 +175,7 @@ func NewClientTLSConfig(ctx context.Context, cfg HasTLSConfig, vault HasVaultCon
 		}
 
 		if t.GetRootCA().GetEnabled() {
-			rootcaPEMBlock, err := LoadKey(ctx, t.GetRootCA(), vault, TLSRootCAKey)
+			rootcaPEMBlock, err := LoadKeyContext(ctx, t.GetRootCA(), vault, TLSRootCAKey)
 			if err != nil {
 				err = errors.Wrap(err, "tls: failed to load RootCA certificates")
 				span.RecordError(ctx, err)

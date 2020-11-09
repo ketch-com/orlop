@@ -180,7 +180,7 @@ func (o grpcServicesServerOption) addHandler(ctx context.Context, opt *serverOpt
 
 	// If certificate file and key file have been specified then setup a TLS server
 	if opt.config.TLS.GetEnabled() {
-		t, err := NewServerTLSConfig(ctx, opt.config.GetTLS(), opt.vault)
+		t, err := NewServerTLSConfigContext(ctx, opt.config.GetTLS(), opt.vault)
 		if err != nil {
 			return errors.Wrap(err, "server: failed to load server TLS config")
 		}

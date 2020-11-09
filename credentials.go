@@ -63,7 +63,14 @@ type Credentials struct {
 }
 
 // GetCredentials retrieves credentials
-func GetCredentials(ctx context.Context, cfg HasCredentialsConfig, vault HasVaultConfig) (*Credentials, error) {
+//
+// deprecated: use GetCredentialsContext
+func GetCredentials(cfg HasCredentialsConfig, vault HasVaultConfig) (*Credentials, error) {
+	return GetCredentialsContext(context.TODO(), cfg, vault)
+}
+
+// GetCredentialsContext retrieves credentials
+func GetCredentialsContext(ctx context.Context, cfg HasCredentialsConfig, vault HasVaultConfig) (*Credentials, error) {
 	ctx, span := tracer.Start(ctx, "GetCredentials")
 	defer span.End()
 
@@ -88,14 +95,14 @@ func GetCredentials(ctx context.Context, cfg HasCredentialsConfig, vault HasVaul
 		return nil, err
 	}
 
-	client, err := NewVault(ctx, vault)
+	client, err := NewVaultContext(ctx, vault)
 	if err != nil {
 		err := errors.Wrap(err, "credentials: could not connect to Vault")
 		span.RecordError(ctx, err)
 		return nil, err
 	}
 
-	s, err := client.Read(ctx, cfg.GetID())
+	s, err := client.ReadContext(ctx, cfg.GetID())
 	if err != nil {
 		err = errors.Wrap(err, "credentials: not found")
 		span.RecordError(ctx, err)
