@@ -27,6 +27,7 @@ import (
 	"github.com/grpc-ecosystem/grpc-gateway/runtime"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/sirupsen/logrus"
+	"github.com/switch-bit/orlop/errors"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 	"mime"
@@ -50,7 +51,7 @@ type mux interface {
 }
 
 type serverOptions struct {
-	log          *logrus.Entry
+	logger       *logrus.Entry
 	serviceName  string
 	addr         string
 	notFound     http.Handler
@@ -86,7 +87,7 @@ func (o serverConfigOption) apply(ctx context.Context, opt *serverOptions) error
 	}
 
 	opt.addr = fmt.Sprintf("%s:%d", opt.config.GetBind(), opt.config.GetListen())
-	opt.log = opt.log.WithField("addr", opt.addr)
+	opt.logger = opt.logger.WithField("addr", opt.addr)
 
 	return nil
 }
@@ -101,7 +102,7 @@ type loggerServerOption struct {
 }
 
 func (o loggerServerOption) apply(ctx context.Context, opt *serverOptions) error {
-	opt.log = o.log
+	opt.logger = o.log
 	return nil
 }
 
@@ -179,16 +180,12 @@ func (o grpcServicesServerOption) addHandler(ctx context.Context, opt *serverOpt
 
 	// If certificate file and key file have been specified then setup a TLS server
 	if opt.config.TLS.GetEnabled() {
-		opt.log.Trace("tls enabled")
-
 		t, err := NewServerTLSConfig(ctx, opt.config.GetTLS(), opt.vault)
 		if err != nil {
-			return err
+			return errors.Wrap(err, "server: failed to load server TLS config")
 		}
 
 		grpcServerOptions = append(grpcServerOptions, grpc.Creds(credentials.NewTLS(t)))
-	} else {
-		opt.log.Trace("tls disabled")
 	}
 
 	// Intercept all request to provide authentication
@@ -208,7 +205,7 @@ func (o grpcServicesServerOption) addHandler(ctx context.Context, opt *serverOpt
 	grpcServer := grpc.NewServer(grpcServerOptions...)
 
 	// Register all the services
-	opt.log.Trace("registering GRPC services")
+	opt.logger.Trace("registering GRPC services")
 	o.registerServices(ctx, grpcServer)
 
 	// Finally, add the GRPC handler at the root
@@ -272,17 +269,17 @@ func (o gatewayServerOption) addHandler(ctx context.Context, opt *serverOptions,
 	cc.TLS = opt.config.TLS
 
 	// Dial the server
-	opt.log.Trace("dialling gateway loopback grpc")
+	opt.logger.Trace("dialling gateway loopback grpc")
 	conn, err := ConnectContext(ctx, cc, opt.vault)
 	if err != nil {
-		return err
+		return errors.Wrap(err, "server: failed to dial loopback")
 	}
 
-	opt.log.Trace("registering gateway handlers")
+	opt.logger.Trace("registering gateway handlers")
 	for _, gatewayHandler := range o.gatewayHandlers {
 		err = gatewayHandler(ctx, gwmux, conn)
 		if err != nil {
-			return err
+			return errors.Wrap(err, "server: failed to register gateway handler")
 		}
 	}
 
@@ -321,7 +318,7 @@ func WithVault(vault HasVaultConfig) ServerOption {
 
 // WithHealthCheck specifies a health checker function
 func WithHealthCheck(check string, checker http.Handler) ServerOption {
-	return WithGET("/healthz/" + check, checker)
+	return WithGET("/healthz/"+check, checker)
 }
 
 // WithMetrics specifies a metrics handler
@@ -373,7 +370,7 @@ func (o swaggerHandlerServerOption) apply(ctx context.Context, opt *serverOption
 func (o swaggerHandlerServerOption) addHandler(ctx context.Context, opt *serverOptions, mux mux) error {
 	err := mime.AddExtensionType(".svg", "image/svg+xml")
 	if err != nil {
-		return err
+		return errors.Wrap(err, "failed to add svg extension")
 	}
 
 	handler := http.StripPrefix(fmt.Sprintf("/%s/swagger", opt.serviceName), http.FileServer(o.fs))

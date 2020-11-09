@@ -33,6 +33,8 @@ import (
 )
 
 // Connect creates a new client from configuration
+//
+// deprecated: use ConnectContext instead
 func Connect(cfg HasClientConfig, vault HasVaultConfig) (*grpc.ClientConn, error) {
 	return ConnectContext(context.Background(), cfg, vault)
 }
@@ -41,6 +43,8 @@ func Connect(cfg HasClientConfig, vault HasVaultConfig) (*grpc.ClientConn, error
 func ConnectContext(ctx context.Context, cfg HasClientConfig, vault HasVaultConfig) (*grpc.ClientConn, error) {
 	ctx, span := tracer.Start(ctx, "Connect")
 	defer span.End()
+
+	logger := log.FromContext(ctx)
 
 	var opts []grpc.DialOption
 
@@ -75,7 +79,7 @@ func ConnectContext(ctx context.Context, cfg HasClientConfig, vault HasVaultConf
 				s, err := LoadKey(ctx, shared, vault, "secret")
 				if err != nil {
 					span.RecordError(ctx, err)
-					log.WithError(err).Error("client: could not load secret key")
+					logger.WithError(err).Error("client: could not load secret key")
 					return ""
 				}
 
@@ -130,18 +134,18 @@ func ConnectContext(ctx context.Context, cfg HasClientConfig, vault HasVaultConf
 	}
 	opts = append(opts, grpc.WithUserAgent(ua))
 
-	log.WithContext(ctx).WithFields(logrus.Fields{
-		"url": cfg.GetURL(),
-		"connTimeout": cfg.GetConnTimeout(),
-		"block": cfg.GetBlock(),
+	logger.WithContext(ctx).WithFields(logrus.Fields{
+		"url":                   cfg.GetURL(),
+		"connTimeout":           cfg.GetConnTimeout(),
+		"block":                 cfg.GetBlock(),
 		"initialConnWindowSize": cfg.GetInitialConnWindowSize(),
-		"initialWindowSize": cfg.GetInitialWindowSize(),
-		"maxCallRecvMsgSize": cfg.GetMaxCallRecvMsgSize(),
-		"maxCallSendMsgSize": cfg.GetMaxCallSendMsgSize(),
-		"minConnectTimeout": cfg.GetMinConnectTimeout(),
-		"readBufferSize": cfg.GetReadBufferSize(),
-		"userAgent": ua,
-		"writeBufferSize": cfg.GetWriteBufferSize(),
+		"initialWindowSize":     cfg.GetInitialWindowSize(),
+		"maxCallRecvMsgSize":    cfg.GetMaxCallRecvMsgSize(),
+		"maxCallSendMsgSize":    cfg.GetMaxCallSendMsgSize(),
+		"minConnectTimeout":     cfg.GetMinConnectTimeout(),
+		"readBufferSize":        cfg.GetReadBufferSize(),
+		"userAgent":             ua,
+		"writeBufferSize":       cfg.GetWriteBufferSize(),
 	}).Trace("dialling")
 	conn, err := grpc.DialContext(ctx, cfg.GetURL(), opts...)
 	if err != nil {

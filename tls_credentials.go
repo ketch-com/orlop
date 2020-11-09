@@ -30,8 +30,8 @@ import (
 
 const (
 	TLSCertificateKey = "certificate"
-	TLSPrivateKey = "private_key"
-	TLSRootCAKey = "issuing_ca"
+	TLSPrivateKey     = "private_key"
+	TLSRootCAKey      = "issuing_ca"
 )
 
 // NewServerTLSConfig returns a new tls.VaultConfig from the given configuration input

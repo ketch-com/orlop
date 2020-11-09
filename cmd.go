@@ -40,7 +40,7 @@ func Run(prefix string, runner interface{}, cfg interface{}) {
 	var initFlag bool
 	var envFlag string
 	var loglevelFlag string
-	pflag.BoolVar(&initFlag,"init", false, "outputs the config environment variables and exits")
+	pflag.BoolVar(&initFlag, "init", false, "outputs the config environment variables and exits")
 	pflag.StringVar(&envFlag, "env", strings.ToLower(getenv(prefix, "environment")), "specifies the environment")
 	pflag.StringVar(&loglevelFlag, "loglevel", strings.ToLower(getenv(prefix, "loglevel")), "specifies the log level")
 	pflag.StringSliceVar(&configFiles, "config", nil, "specifies a .env configuration file to load")
@@ -49,7 +49,7 @@ func Run(prefix string, runner interface{}, cfg interface{}) {
 	if initFlag {
 		vars, err := GetVariablesFromConfig(prefix, cfg)
 		if err != nil {
-			logrus.Fatal(err)
+			log.Fatal(err)
 		}
 
 		sort.Strings(vars)
@@ -79,7 +79,7 @@ func Run(prefix string, runner interface{}, cfg interface{}) {
 	// Unmarshal the configuration
 	err := Unmarshal(prefix, cfg)
 	if err != nil {
-		logrus.Fatal(err)
+		log.FromContext(ctx).Fatal(err)
 	}
 
 	// Call the runner
@@ -93,7 +93,7 @@ func Run(prefix string, runner interface{}, cfg interface{}) {
 		e := out[0].MethodByName("Error")
 		out = e.Call([]reflect.Value{})
 		if len(out) > 0 && out[0].IsValid() {
-			logrus.Fatal(out[0].String())
+			log.FromContext(ctx).Fatal(out[0].String())
 		}
 	}
 }

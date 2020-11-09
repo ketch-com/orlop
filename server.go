@@ -44,7 +44,7 @@ func Serve(ctx context.Context, serviceName string, options ...ServerOption) err
 	// Setup the server options
 	serverOptions := &serverOptions{
 		serviceName: serviceName,
-		log:         logger.WithField("service", serviceName),
+		logger:      logger.WithField("service", serviceName),
 	}
 
 	options = append([]ServerOption{
@@ -92,7 +92,7 @@ func Serve(ctx context.Context, serviceName string, options ...ServerOption) err
 	}
 
 	// Start listening
-	serverOptions.log.Info("listening")
+	serverOptions.logger.Info("listening")
 	ln, err := net.Listen("tcp", serverOptions.addr)
 	if err != nil {
 		err = errors.Wrap(err, "serve: failed to listen")
@@ -116,9 +116,9 @@ func Serve(ctx context.Context, serviceName string, options ...ServerOption) err
 
 	defer ln.Close()
 
-	serverOptions.log.Info("serving")
+	serverOptions.logger.Info("serving")
 
-	w := serverOptions.log.WriterLevel(logrus.WarnLevel)
+	w := serverOptions.logger.WriterLevel(logrus.WarnLevel)
 	defer w.Close()
 
 	srv := &http.Server{

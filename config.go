@@ -26,6 +26,7 @@ import (
 	"encoding/hex"
 	"fmt"
 	"github.com/joho/godotenv"
+	"github.com/switch-bit/orlop/errors"
 	"os"
 	"reflect"
 	"strconv"
@@ -63,7 +64,7 @@ func UnmarshalFromEnv(prefix string, vars []string, cfg interface{}) error {
 				return err
 			}
 		} else if field.tag.Required {
-			return fmt.Errorf("%s required", name)
+			return errors.Errorf("%s required", name)
 		}
 	}
 
@@ -162,7 +163,7 @@ func reflectStructValue(prefix []string, r map[string]*configField, v reflect.Va
 	}
 
 	if v.Kind() != reflect.Struct {
-		return fmt.Errorf("input is not a struct")
+		return errors.New("input is not a struct")
 	}
 
 	t := v.Type()
@@ -338,7 +339,7 @@ func intFieldSetter(value reflect.Value, input string) error {
 
 	i, err := strconv.ParseInt(input, 0, 0)
 	if err != nil {
-		return fmt.Errorf("could not parse '%s' as integer", value)
+		return errors.Errorf("could not parse '%s' as integer", value)
 	}
 
 	value.SetInt(i)
@@ -352,7 +353,7 @@ func uintFieldSetter(value reflect.Value, input string) error {
 
 	i, err := strconv.ParseUint(input, 0, 0)
 	if err != nil {
-		return fmt.Errorf("could not parse '%s' as integer", value)
+		return errors.Errorf("could not parse '%s' as integer", value)
 	}
 
 	value.SetUint(i)
@@ -366,7 +367,7 @@ func floatFieldSetter(value reflect.Value, input string) error {
 
 	i, err := strconv.ParseFloat(input, 0)
 	if err != nil {
-		return fmt.Errorf("could not parse '%s' as float", value)
+		return errors.Errorf("could not parse '%s' as float", value)
 	}
 
 	value.SetFloat(i)
@@ -389,7 +390,7 @@ func mapFieldSetter(value reflect.Value, input string) error {
 		for _, pair := range ss {
 			kv := strings.SplitN(pair, "=", 2)
 			if len(kv) != 2 {
-				return fmt.Errorf("%s must be formatted as key=value", pair)
+				return errors.Errorf("%s must be formatted as key=value", pair)
 			}
 
 			m.SetMapIndex(reflect.ValueOf(kv[0]), reflect.ValueOf(kv[1]))
