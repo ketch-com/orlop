@@ -23,8 +23,11 @@ package orlop
 import (
 	"context"
 	"fmt"
+	"github.com/sirupsen/logrus"
+	"github.com/switch-bit/orlop/errors"
 	"github.com/switch-bit/orlop/log"
 	"github.com/switch-bit/orlop/version"
+	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 )
@@ -36,28 +39,29 @@ func Connect(cfg HasClientConfig, vault HasVaultConfig) (*grpc.ClientConn, error
 
 // ConnectContext creates a new client from configuration
 func ConnectContext(ctx context.Context, cfg HasClientConfig, vault HasVaultConfig) (*grpc.ClientConn, error) {
+	ctx, span := tracer.Start(ctx, "Connect")
+	defer span.End()
+
 	var opts []grpc.DialOption
 
-	l := log.WithContext(ctx)
-
 	if len(cfg.GetURL()) == 0 {
-		l.Errorf("client: url required")
-		return nil, fmt.Errorf("client: url required")
+		err := errors.New("client: url required")
+		span.RecordError(ctx, err)
+		return nil, err
 	}
 
-	l = l.WithField("url", cfg.GetURL())
+	opts = append(opts, grpc.WithUnaryInterceptor(otelgrpc.UnaryClientInterceptor()))
+	opts = append(opts, grpc.WithStreamInterceptor(otelgrpc.StreamClientInterceptor()))
 
 	if cfg.GetTLS().GetEnabled() {
-		l.Trace("tls enabled")
-
-		t, err := NewClientTLSConfig(cfg.GetTLS(), vault)
+		t, err := NewClientTLSConfig(ctx, cfg.GetTLS(), vault)
 		if err != nil {
-			return nil, err
+			span.RecordError(ctx, err)
+			return nil, errors.Wrap(err, "client: failed to get client TLS config")
 		}
 
 		opts = append(opts, grpc.WithTransportCredentials(credentials.NewTLS(t)))
 	} else {
-		l.Trace("tls disabled")
 		opts = append(opts, grpc.WithInsecure())
 	}
 
@@ -65,11 +69,13 @@ func ConnectContext(ctx context.Context, cfg HasClientConfig, vault HasVaultConf
 	if len(shared.GetID()) > 0 || len(shared.GetFile()) > 0 || len(shared.GetSecret()) > 0 {
 		opts = append(opts, grpc.WithPerRPCCredentials(SharedContextCredentials{
 			tokenProvider: func(ctx context.Context) string {
-				l.Trace("loading token from configuration")
+				ctx, span := tracer.Start(ctx, "TokenProvider")
+				defer span.End()
 
-				s, err := LoadKey(shared, vault, "secret")
+				s, err := LoadKey(ctx, shared, vault, "secret")
 				if err != nil {
-					log.WithError(err).Error("could not load secret key")
+					span.RecordError(ctx, err)
+					log.WithError(err).Error("client: could not load secret key")
 					return ""
 				}
 
@@ -77,55 +83,44 @@ func ConnectContext(ctx context.Context, cfg HasClientConfig, vault HasVaultConf
 			},
 		}))
 	} else {
-		l.Trace("using context credentials")
-
 		opts = append(opts, grpc.WithPerRPCCredentials(ContextCredentials{}))
 	}
 
 	if cfg.GetWriteBufferSize() > 0 {
-		l.Tracef("WriteBufferSize=%d", cfg.GetWriteBufferSize())
 		opts = append(opts, grpc.WithWriteBufferSize(cfg.GetWriteBufferSize()))
 	}
 
 	if cfg.GetReadBufferSize() > 0 {
-		l.Tracef("ReadBufferSize=%d", cfg.GetReadBufferSize())
 		opts = append(opts, grpc.WithReadBufferSize(cfg.GetReadBufferSize()))
 	}
 
 	if cfg.GetInitialWindowSize() > 0 {
-		l.Tracef("InitialWindowSize=%d", cfg.GetInitialWindowSize())
 		opts = append(opts, grpc.WithInitialWindowSize(cfg.GetInitialWindowSize()))
 	}
 
 	if cfg.GetInitialConnWindowSize() > 0 {
-		l.Tracef("InitialConnWindowSize=%d", cfg.GetInitialConnWindowSize())
 		opts = append(opts, grpc.WithInitialConnWindowSize(cfg.GetInitialConnWindowSize()))
 	}
 
 	if cfg.GetMaxCallRecvMsgSize() > 0 {
-		l.Tracef("MaxCallRecvMsgSize=%d", cfg.GetMaxCallRecvMsgSize())
 		opts = append(opts, grpc.WithDefaultCallOptions(grpc.MaxCallRecvMsgSize(cfg.GetMaxCallRecvMsgSize())))
 	}
 
 	if cfg.GetMaxCallSendMsgSize() > 0 {
-		l.Tracef("MaxCallSendMsgSize=%d", cfg.GetMaxCallSendMsgSize())
 		opts = append(opts, grpc.WithDefaultCallOptions(grpc.MaxCallSendMsgSize(cfg.GetMaxCallSendMsgSize())))
 	}
 
 	if cfg.GetMinConnectTimeout() > 0 {
-		l.Tracef("MinConnectTimeout=%d", cfg.GetMinConnectTimeout())
 		opts = append(opts, grpc.WithConnectParams(grpc.ConnectParams{
 			MinConnectTimeout: cfg.GetMinConnectTimeout(),
 		}))
 	}
 
 	if cfg.GetBlock() {
-		l.Tracef("Block=%v", cfg.GetBlock())
 		opts = append(opts, grpc.WithBlock())
 	}
 
 	if cfg.GetConnTimeout() > 0 {
-		l.Tracef("ConnTimeout=%d", cfg.GetConnTimeout())
 		ctx, _ = context.WithTimeout(ctx, cfg.GetConnTimeout())
 	}
 
@@ -134,12 +129,23 @@ func ConnectContext(ctx context.Context, cfg HasClientConfig, vault HasVaultConf
 		ua = cfg.GetUserAgent()
 	}
 	opts = append(opts, grpc.WithUserAgent(ua))
-	l.Tracef("UserAgent=%s", ua)
 
-	l.Trace("dialling")
+	log.WithContext(ctx).WithFields(logrus.Fields{
+		"url": cfg.GetURL(),
+		"connTimeout": cfg.GetConnTimeout(),
+		"block": cfg.GetBlock(),
+		"initialConnWindowSize": cfg.GetInitialConnWindowSize(),
+		"initialWindowSize": cfg.GetInitialWindowSize(),
+		"maxCallRecvMsgSize": cfg.GetMaxCallRecvMsgSize(),
+		"maxCallSendMsgSize": cfg.GetMaxCallSendMsgSize(),
+		"minConnectTimeout": cfg.GetMinConnectTimeout(),
+		"readBufferSize": cfg.GetReadBufferSize(),
+		"userAgent": ua,
+		"writeBufferSize": cfg.GetWriteBufferSize(),
+	}).Trace("dialling")
 	conn, err := grpc.DialContext(ctx, cfg.GetURL(), opts...)
 	if err != nil {
-		l.WithError(err).Error("failed dialling")
+		span.RecordError(ctx, err)
 		return nil, err
 	}
 

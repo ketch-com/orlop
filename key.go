@@ -21,73 +21,98 @@
 package orlop
 
 import (
+	"context"
 	"crypto/rsa"
 	"crypto/x509"
 	"encoding/pem"
-	"fmt"
 	"github.com/dgrijalva/jwt-go"
 	"github.com/sirupsen/logrus"
+	"github.com/switch-bit/orlop/errors"
 	"github.com/switch-bit/orlop/log"
+	"go.opentelemetry.io/otel/label"
 	"io/ioutil"
 )
 
 // LoadKey loads the key material based on the config
-func LoadKey(cfg HasKeyConfig, vault HasVaultConfig, which string) ([]byte, error) {
-	l := log.WithFields(logrus.Fields{
+func LoadKey(ctx context.Context, cfg HasKeyConfig, vault HasVaultConfig, which string) ([]byte, error) {
+	ctx, span := tracer.Start(ctx, "LoadKey")
+	defer span.End()
+
+	fields := logrus.Fields{
 		"key":           which,
-		"key.id":        cfg.GetID(),
-		"key.file":      cfg.GetFile(),
-		"key.secret":    "*********",
 		"vault.enabled": vault != nil && vault.GetEnabled(),
-	})
-	l.Debug("loading key")
-
-	if len(cfg.GetSecret()) > 0 {
-		l.WithField("method", "secret").Trace("key provided as secret")
-		return cfg.GetSecret(), nil
 	}
 
-	if len(cfg.GetID()) > 0 && vault != nil && vault.GetEnabled() {
-		l = l.WithField("method", "id")
-		l.Tracef("using vault to lookup ID %s", cfg.GetID())
-
-		client, err := NewVault(vault)
-		if err != nil {
-			l.WithError(err).Error("could not connect to Vault")
-			return nil, err
-		}
-
-		s, err := client.Read(cfg.GetID())
-		if err != nil {
-			l.WithError(err).Error("key not found")
-			return nil, err
-		}
-
-		if s != nil && s.Data[which] != nil {
-			l.Tracef("key found")
-			return []byte(s.Data[which].(string)), nil
-		}
-
-		l.Tracef("key not found")
-		return nil, fmt.Errorf("key: could not load key from %s", cfg.GetID())
-	}
+	method := "none"
 
 	if len(cfg.GetFile()) > 0 {
-		l = l.WithField("method", "file").WithField("file", cfg.GetFile())
-		l.Trace("loading key from file")
+		method = "file"
+		fields["key.file"] = cfg.GetFile()
+		span.SetAttributes(label.String("key.file", cfg.GetFile()))
+	}
 
+	if len(cfg.GetID()) > 0 {
+		if vault != nil && vault.GetEnabled() {
+			method = "id"
+		}
+		fields["key.id"] = cfg.GetID()
+		span.SetAttributes(label.String("key.id", cfg.GetID()))
+	}
+
+	if len(cfg.GetSecret()) > 0 {
+		method = "secret"
+		fields["key.secret"] = "*********"
+		span.SetAttributes(label.String("key.secret", "*********"))
+	}
+
+	fields["method"] = method
+	span.SetAttributes(label.String("key.method", method))
+	l := log.WithFields(fields)
+
+	switch method {
+	case "secret":
+		l.Trace("key found")
+		return cfg.GetSecret(), nil
+
+	case "id":
+		client, err := NewVault(ctx, vault)
+		if err != nil {
+			err = errors.Wrap(err, "key: could not connect to Vault")
+			span.RecordError(ctx, err)
+			return nil, err
+		}
+
+		s, err := client.Read(ctx, cfg.GetID())
+		if err != nil {
+			err = errors.Wrap(err, "key: not found")
+			span.RecordError(ctx, err)
+			return nil, err
+		}
+
+		if s == nil || s.Data[which] == nil {
+			err = errors.New("key: not found")
+			span.RecordError(ctx, err)
+			return nil, err
+		}
+
+		l.Tracef("key found")
+		return []byte(s.Data[which].(string)), nil
+
+	case "file":
 		key, err := ioutil.ReadFile(cfg.GetFile())
 		if err != nil {
-			l.Trace("key not found")
+			err = errors.Wrap(err, "key: not found")
+			span.RecordError(ctx, err)
 			return nil, err
 		}
 
 		l.Trace("key found")
-
 		return key, nil
 	}
 
-	return nil, fmt.Errorf("key: no key configured for %s", which)
+	err := errors.Errorf("key: no key configured for %s", which)
+	span.RecordError(ctx, err)
+	return nil, err
 }
 
 // LoadPrivateKey loads a private key from the given bytes

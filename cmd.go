@@ -26,7 +26,9 @@ import (
 	"github.com/iancoleman/strcase"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/pflag"
-	"log"
+	"github.com/switch-bit/orlop/log"
+	"go.opentelemetry.io/otel/label"
+	stdlog "log"
 	"os"
 	"reflect"
 	"sort"
@@ -61,14 +63,18 @@ func Run(prefix string, runner interface{}, cfg interface{}) {
 		return
 	}
 
+	ctx, span := tracer.Start(context.Background(), "Run")
+	defer span.End()
+
 	// First figure out the environment
 	env := Environment(envFlag)
+	span.SetAttributes(label.String("env", env.String()))
 
 	// Load the environment from files
 	loadEnvironment(env, configFiles...)
 
 	// Setup logging
-	setupLogging(env, loglevelFlag)
+	ctx = setupLogging(ctx, env, loglevelFlag)
 
 	// Unmarshal the configuration
 	err := Unmarshal(prefix, cfg)
@@ -78,7 +84,7 @@ func Run(prefix string, runner interface{}, cfg interface{}) {
 
 	// Call the runner
 	out := reflect.ValueOf(runner).Call([]reflect.Value{
-		reflect.ValueOf(context.TODO()),
+		reflect.ValueOf(ctx),
 		reflect.ValueOf(cfg),
 	})
 
@@ -96,7 +102,7 @@ func getenv(prefix string, key string) string {
 	return os.Getenv(strcase.ToScreamingSnake(strings.Join([]string{prefix, key}, "_")))
 }
 
-func setupLogging(env Environment, loglevel string) {
+func setupLogging(ctx context.Context, env Environment, loglevel string) context.Context {
 	switch loglevel {
 	case "fatal":
 		logrus.SetLevel(logrus.FatalLevel)
@@ -130,5 +136,7 @@ func setupLogging(env Environment, loglevel string) {
 		})
 	}
 
-	log.SetOutput(logrus.New().Writer())
+	stdlog.SetOutput(logrus.New().Writer())
+
+	return log.ToContext(ctx, log.New())
 }

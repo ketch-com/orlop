@@ -181,7 +181,7 @@ func (o grpcServicesServerOption) addHandler(ctx context.Context, opt *serverOpt
 	if opt.config.TLS.GetEnabled() {
 		opt.log.Trace("tls enabled")
 
-		t, err := NewServerTLSConfig(opt.config.GetTLS(), opt.vault)
+		t, err := NewServerTLSConfig(ctx, opt.config.GetTLS(), opt.vault)
 		if err != nil {
 			return err
 		}

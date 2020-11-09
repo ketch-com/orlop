@@ -21,7 +21,9 @@
 package orlop
 
 import (
+	"context"
 	vault "github.com/hashicorp/vault/api"
+	"github.com/switch-bit/orlop/errors"
 	"github.com/switch-bit/orlop/log"
 	"net/http"
 	"path"
@@ -34,7 +36,7 @@ type VaultClient struct {
 }
 
 // NewVault connects to Vault given the configuration
-func NewVault(cfg HasVaultConfig) (*VaultClient, error) {
+func NewVault(ctx context.Context, cfg HasVaultConfig) (*VaultClient, error) {
 	var err error
 
 	// First check if Vault is enabled in config, returning if not
@@ -56,7 +58,7 @@ func NewVault(cfg HasVaultConfig) (*VaultClient, error) {
 
 		t := http.DefaultTransport.(*http.Transport).Clone()
 
-		t.TLSClientConfig, err = NewClientTLSConfig(cfg.GetTLS(), &VaultConfig{Enabled: false})
+		t.TLSClientConfig, err = NewClientTLSConfig(ctx, cfg.GetTLS(), &VaultConfig{Enabled: false})
 		if err != nil {
 			return nil, err
 		}
@@ -80,18 +82,14 @@ func NewVault(cfg HasVaultConfig) (*VaultClient, error) {
 }
 
 // Reads a secret at the given path
-func (c VaultClient) Read(p string) (*vault.Secret, error) {
+func (c VaultClient) Read(ctx context.Context, p string) (*vault.Secret, error) {
+	ctx, span := tracer.Start(ctx, "Read")
+	defer span.End()
+
 	// If the client isn't connected (because Vault is not enabled, just return an empty secret).
 	if c.client == nil {
 		return &vault.Secret{
-			RequestID:     "",
-			LeaseID:       "",
-			LeaseDuration: 0,
-			Renewable:     false,
-			Data:          make(map[string]interface{}),
-			Warnings:      nil,
-			Auth:          nil,
-			WrapInfo:      nil,
+			Data: make(map[string]interface{}),
 		}, nil
 	}
 
@@ -99,25 +97,22 @@ func (c VaultClient) Read(p string) (*vault.Secret, error) {
 
 	sec, err := c.client.Logical().Read(keyPath)
 	if err != nil {
-		log.WithField("vault.path", keyPath).WithError(err).Trace("read")
-		return nil, err
+		log.WithField("vault.path", keyPath).WithError(err).Trace("read failed")
+		span.RecordError(ctx, err)
+		return nil, errors.Wrap(err, "failed to read from Vault")
 	}
 
 	return sec, nil
 }
 
 // Writes secret data at the given path
-func (c VaultClient) Write(p string, data map[string]interface{}) (*vault.Secret, error) {
+func (c VaultClient) Write(ctx context.Context, p string, data map[string]interface{}) (*vault.Secret, error) {
+	ctx, span := tracer.Start(ctx, "Write")
+	defer span.End()
+
 	if c.client == nil {
 		return &vault.Secret{
-			RequestID:     "",
-			LeaseID:       "",
-			LeaseDuration: 0,
-			Renewable:     false,
-			Data:          make(map[string]interface{}),
-			Warnings:      nil,
-			Auth:          nil,
-			WrapInfo:      nil,
+			Data: make(map[string]interface{}),
 		}, nil
 	}
 
@@ -125,15 +120,19 @@ func (c VaultClient) Write(p string, data map[string]interface{}) (*vault.Secret
 
 	sec, err := c.client.Logical().Write(keyPath, data)
 	if err != nil {
-		log.WithField("vault.path", keyPath).WithError(err).Trace("write")
-		return nil, err
+		log.WithField("vault.path", keyPath).WithError(err).Trace("write failed")
+		span.RecordError(ctx, err)
+		return nil, errors.Wrap(err, "failed to write to Vault")
 	}
 
 	return sec, nil
 }
 
 // Delete deletes a secret at the given path
-func (c VaultClient) Delete(p string) error {
+func (c VaultClient) Delete(ctx context.Context, p string) error {
+	ctx, span := tracer.Start(ctx, "Delete")
+	defer span.End()
+
 	if c.client == nil {
 		return nil
 	}
@@ -142,8 +141,9 @@ func (c VaultClient) Delete(p string) error {
 
 	_, err := c.client.Logical().Delete(keyPath)
 	if err != nil {
-		log.WithField("vault.path", keyPath).WithError(err).Trace("delete")
-		return err
+		log.WithField("vault.path", keyPath).WithError(err).Trace("delete failed")
+		span.RecordError(ctx, err)
+		return errors.Wrap(err, "failed to delete from Vault")
 	}
 
 	return nil

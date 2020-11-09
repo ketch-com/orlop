@@ -21,20 +21,33 @@
 package orlop
 
 import (
+	"context"
 	"crypto/tls"
 	"crypto/x509"
-	"fmt"
+	"github.com/switch-bit/orlop/errors"
 	"github.com/switch-bit/orlop/log"
 )
 
+const (
+	TLSCertificateKey = "certificate"
+	TLSPrivateKey = "private_key"
+	TLSRootCAKey = "issuing_ca"
+)
+
 // NewServerTLSConfig returns a new tls.VaultConfig from the given configuration input
-func NewServerTLSConfig(cfg HasTLSConfig, vault HasVaultConfig) (*tls.Config, error) {
+func NewServerTLSConfig(ctx context.Context, cfg HasTLSConfig, vault HasVaultConfig) (*tls.Config, error) {
+	var err error
+
+	ctx, span := tracer.Start(ctx, "NewServerTLSConfig")
+	defer span.End()
+
 	config := &tls.Config{
 		ClientAuth: cfg.GetClientAuth(),
 		MinVersion: tls.VersionTLS12,
 	}
 
 	if !strSliceContains(config.NextProtos, "http/1.1") {
+		// Enable HTTP/1.1
 		config.NextProtos = append(config.NextProtos, "http/1.1")
 	}
 
@@ -48,43 +61,48 @@ func NewServerTLSConfig(cfg HasTLSConfig, vault HasVaultConfig) (*tls.Config, er
 		config.NextProtos = append([]string{"h2"}, config.NextProtos...)
 	}
 
-	var err error
 	t := CloneTLSConfig(cfg)
 
-	err = GenerateCertificates(vault, cfg.GetGenerate(), &t.Cert.Secret, &t.Key.Secret)
+	err = GenerateCertificates(ctx, vault, cfg.GetGenerate(), &t.Cert.Secret, &t.Key.Secret)
 	if err != nil {
+		err = errors.Wrap(err, "tls: failed to generate certificates")
+		span.RecordError(ctx, err)
 		return nil, err
 	}
 
-	certPEMBlock, err := LoadKey(t.GetCert(), vault, "certificate")
+	certPEMBlock, err := LoadKey(ctx, t.GetCert(), vault, TLSCertificateKey)
 	if err != nil {
-		log.WithError(err).Error("error loading certificate")
+		err = errors.Wrap(err, "tls: failed to load certificate")
+		span.RecordError(ctx, err)
 		return nil, err
 	}
 
 	log.Trace("certificate loaded")
 
-	keyPEMBlock, err := LoadKey(t.GetKey(), vault, "private_key")
+	keyPEMBlock, err := LoadKey(ctx, t.GetKey(), vault, TLSPrivateKey)
 	if err != nil {
-		log.WithError(err).Error("error loading private key")
+		err = errors.Wrap(err, "tls: failed to load private key")
+		span.RecordError(ctx, err)
 		return nil, err
 	}
 
 	if t.GetRootCA().GetEnabled() {
-		rootcaPEMBlock, err := LoadKey(t.GetRootCA(), vault, "issuing_ca")
+		rootcaPEMBlock, err := LoadKey(ctx, t.GetRootCA(), vault, TLSRootCAKey)
 		if err == nil {
 			config.ClientCAs = x509.NewCertPool()
 
 			if !config.ClientCAs.AppendCertsFromPEM(rootcaPEMBlock) {
-				log.WithError(err).Error("failed to append client CA certificates")
-				return nil, fmt.Errorf("tls: failed to append client CA certificates")
+				err = errors.Wrap(err, "tls: failed to append root CA certificates")
+				span.RecordError(ctx, err)
+				return nil, err
 			}
 		}
 	}
 
 	c, err := tls.X509KeyPair(certPEMBlock, keyPEMBlock)
 	if err != nil {
-		log.WithError(err).Error("error creating key pair")
+		err = errors.Wrap(err, "tls: failed creating key pair")
+		span.RecordError(ctx, err)
 		return nil, err
 	}
 
@@ -94,7 +112,10 @@ func NewServerTLSConfig(cfg HasTLSConfig, vault HasVaultConfig) (*tls.Config, er
 }
 
 // NewClientTLSConfig returns a new tls.VaultConfig from the given configuration input
-func NewClientTLSConfig(cfg HasTLSConfig, vault HasVaultConfig) (*tls.Config, error) {
+func NewClientTLSConfig(ctx context.Context, cfg HasTLSConfig, vault HasVaultConfig) (*tls.Config, error) {
+	ctx, span := tracer.Start(ctx, "NewClientTLSConfig")
+	defer span.End()
+
 	if !cfg.GetEnabled() {
 		log.Trace("tls disabled")
 		return &tls.Config{}, nil
@@ -109,47 +130,55 @@ func NewClientTLSConfig(cfg HasTLSConfig, vault HasVaultConfig) (*tls.Config, er
 	var err error
 	t := CloneTLSConfig(cfg)
 
-	err = GenerateCertificates(vault, cfg.GetGenerate(), &t.Cert.Secret, &t.Key.Secret)
+	err = GenerateCertificates(ctx, vault, cfg.GetGenerate(), &t.Cert.Secret, &t.Key.Secret)
 	if err != nil {
+		err = errors.Wrap(err, "tls: failed to generate certificates")
+		span.RecordError(ctx, err)
 		return nil, err
 	}
 
 	if t.GetCert().GetEnabled() && t.GetKey().GetEnabled() {
-		certPEMBlock, err := LoadKey(t.GetCert(), vault, "certificate")
+		certPEMBlock, err := LoadKey(ctx, t.GetCert(), vault, TLSCertificateKey)
 		if err != nil {
-			log.WithError(err).Error("error loading certificate")
+			err = errors.Wrap(err, "tls: failed to load certificate")
+			span.RecordError(ctx, err)
 			return nil, err
 		}
 
-		keyPEMBlock, err := LoadKey(t.GetKey(), vault, "private_key")
+		keyPEMBlock, err := LoadKey(ctx, t.GetKey(), vault, TLSPrivateKey)
 		if err != nil {
-			log.WithError(err).Error("error loading private key")
+			err = errors.Wrap(err, "tls: failed to load private key")
+			span.RecordError(ctx, err)
 			return nil, err
 		}
 
 		config.RootCAs = x509.NewCertPool()
 
 		if !config.RootCAs.AppendCertsFromPEM(certPEMBlock) {
-			log.WithError(err).Error("failed to append certificates")
-			return nil, fmt.Errorf("tls: failed to append certificates")
+			err = errors.Wrap(err, "tls: failed to append to RootCA certificates")
+			span.RecordError(ctx, err)
+			return nil, err
 		}
 
 		if t.GetRootCA().GetEnabled() {
-			rootcaPEMBlock, err := LoadKey(t.GetRootCA(), vault, "issuing_ca")
+			rootcaPEMBlock, err := LoadKey(ctx, t.GetRootCA(), vault, TLSRootCAKey)
 			if err != nil {
-				log.WithError(err).Error("error loading CA")
+				err = errors.Wrap(err, "tls: failed to load RootCA certificates")
+				span.RecordError(ctx, err)
 				return nil, err
 			}
 
 			if !config.RootCAs.AppendCertsFromPEM(rootcaPEMBlock) {
-				log.WithError(err).Error("failed to append root certificates")
-				return nil, fmt.Errorf("tls: failed to append root certificates")
+				err = errors.Wrap(err, "tls: failed to append to RootCA certificates")
+				span.RecordError(ctx, err)
+				return nil, err
 			}
 		}
 
 		c, err := tls.X509KeyPair(certPEMBlock, keyPEMBlock)
 		if err != nil {
-			log.WithError(err).Error("error creating key pair")
+			err = errors.Wrap(err, "tls: failed creating key pair")
+			span.RecordError(ctx, err)
 			return nil, err
 		}
 
