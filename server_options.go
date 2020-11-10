@@ -25,8 +25,10 @@ import (
 	"fmt"
 	"github.com/golang/protobuf/proto"
 	"github.com/grpc-ecosystem/grpc-gateway/runtime"
-	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/sirupsen/logrus"
+	"github.com/switch-bit/orlop/errors"
+	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
+	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 	"mime"
@@ -50,14 +52,15 @@ type mux interface {
 }
 
 type serverOptions struct {
-	log          *logrus.Entry
-	serviceName  string
-	addr         string
-	notFound     http.Handler
-	config       ServerConfig
-	vault        HasVaultConfig
-	middlewares  []func(http.Handler) http.Handler
-	authenticate func(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error)
+	logger           *logrus.Entry
+	serviceName      string
+	addr             string
+	notFound         http.Handler
+	methodNotAllowed http.Handler
+	config           ServerConfig
+	vault            HasVaultConfig
+	middlewares      []func(http.Handler) http.Handler
+	authenticate     func(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error)
 }
 
 // serverConfigOption provides the capability to override default server configuration including address, port and TLS
@@ -70,7 +73,9 @@ func (o serverConfigOption) apply(ctx context.Context, opt *serverOptions) error
 		Bind:   o.config.GetBind(),
 		Listen: o.config.GetListen(),
 		TLS:    CloneTLSConfig(o.config.GetTLS()),
-		Loopback: ClientConfig{
+	}
+	if o.config.GetLoopback() != nil {
+		opt.config.Loopback = ClientConfig{
 			Headers:               o.config.GetLoopback().GetHeaders(),
 			WriteBufferSize:       o.config.GetLoopback().GetWriteBufferSize(),
 			ReadBufferSize:        o.config.GetLoopback().GetReadBufferSize(),
@@ -82,11 +87,11 @@ func (o serverConfigOption) apply(ctx context.Context, opt *serverOptions) error
 			Block:                 o.config.GetLoopback().GetBlock(),
 			ConnTimeout:           o.config.GetLoopback().GetConnTimeout(),
 			UserAgent:             o.config.GetLoopback().GetUserAgent(),
-		},
+		}
 	}
 
 	opt.addr = fmt.Sprintf("%s:%d", opt.config.GetBind(), opt.config.GetListen())
-	opt.log = opt.log.WithField("addr", opt.addr)
+	opt.logger = opt.logger.WithField("addr", opt.addr)
 
 	return nil
 }
@@ -95,13 +100,20 @@ func (o serverConfigOption) addHandler(ctx context.Context, opt *serverOptions, 
 	return nil
 }
 
+// WithServerConfig returns a new serverConfigOption
+func WithServerConfig(config HasServerConfig) ServerOption {
+	return &serverConfigOption{
+		config: config,
+	}
+}
+
 // loggerServerOption provides capability to provide custom logger
 type loggerServerOption struct {
 	log *logrus.Entry
 }
 
 func (o loggerServerOption) apply(ctx context.Context, opt *serverOptions) error {
-	opt.log = o.log
+	opt.logger = o.log
 	return nil
 }
 
@@ -113,13 +125,6 @@ func (o loggerServerOption) addHandler(ctx context.Context, opt *serverOptions, 
 func WithLogger(log *logrus.Entry) ServerOption {
 	return &loggerServerOption{
 		log: log,
-	}
-}
-
-// WithServerConfig returns a new serverConfigOption
-func WithServerConfig(config HasServerConfig) ServerOption {
-	return &serverConfigOption{
-		config: config,
 	}
 }
 
@@ -179,16 +184,12 @@ func (o grpcServicesServerOption) addHandler(ctx context.Context, opt *serverOpt
 
 	// If certificate file and key file have been specified then setup a TLS server
 	if opt.config.TLS.GetEnabled() {
-		opt.log.Trace("tls enabled")
-
-		t, err := NewServerTLSConfig(opt.config.GetTLS(), opt.vault)
+		t, err := NewServerTLSConfigContext(ctx, opt.config.GetTLS(), opt.vault)
 		if err != nil {
-			return err
+			return errors.Wrap(err, "server: failed to load server TLS config")
 		}
 
 		grpcServerOptions = append(grpcServerOptions, grpc.Creds(credentials.NewTLS(t)))
-	} else {
-		opt.log.Trace("tls disabled")
 	}
 
 	// Intercept all request to provide authentication
@@ -204,11 +205,14 @@ func (o grpcServicesServerOption) addHandler(ctx context.Context, opt *serverOpt
 		grpcServerOptions = append(grpcServerOptions, grpc.MaxSendMsgSize(opt.config.Loopback.MaxCallSendMsgSize))
 	}
 
+	grpcServerOptions = append(grpcServerOptions, grpc.UnaryInterceptor(otelgrpc.UnaryServerInterceptor()))
+	grpcServerOptions = append(grpcServerOptions, grpc.StreamInterceptor(otelgrpc.StreamServerInterceptor()))
+
 	// Setup the gRPC server
 	grpcServer := grpc.NewServer(grpcServerOptions...)
 
 	// Register all the services
-	opt.log.Trace("registering GRPC services")
+	opt.logger.Trace("registering GRPC services")
 	o.registerServices(ctx, grpcServer)
 
 	// Finally, add the GRPC handler at the root
@@ -272,17 +276,17 @@ func (o gatewayServerOption) addHandler(ctx context.Context, opt *serverOptions,
 	cc.TLS = opt.config.TLS
 
 	// Dial the server
-	opt.log.Trace("dialling gateway loopback grpc")
+	opt.logger.Trace("dialling gateway loopback grpc")
 	conn, err := ConnectContext(ctx, cc, opt.vault)
 	if err != nil {
-		return err
+		return errors.Wrap(err, "server: failed to dial loopback")
 	}
 
-	opt.log.Trace("registering gateway handlers")
+	opt.logger.Trace("registering gateway handlers")
 	for _, gatewayHandler := range o.gatewayHandlers {
 		err = gatewayHandler(ctx, gwmux, conn)
 		if err != nil {
-			return err
+			return errors.Wrap(err, "server: failed to register gateway handler")
 		}
 	}
 
@@ -319,19 +323,19 @@ func WithVault(vault HasVaultConfig) ServerOption {
 	}
 }
 
+// WithHealth specifies a health handler
+func WithHealth(checker http.Handler) ServerOption {
+	return WithHandler("/healthz", checker)
+}
+
 // WithHealthCheck specifies a health checker function
 func WithHealthCheck(check string, checker http.Handler) ServerOption {
-	return WithGET("/healthz/" + check, checker)
+	return WithGET("/healthz/"+check, checker)
 }
 
 // WithMetrics specifies a metrics handler
 func WithMetrics(handler http.Handler) ServerOption {
 	return WithGET("/metrics", handler)
-}
-
-// WithPrometheusMetrics specifies to use the Prometheus metrics handler
-func WithPrometheusMetrics() ServerOption {
-	return WithMetrics(promhttp.Handler())
 }
 
 // profileServerOption specifies how to add profiler endpoints
@@ -373,7 +377,7 @@ func (o swaggerHandlerServerOption) apply(ctx context.Context, opt *serverOption
 func (o swaggerHandlerServerOption) addHandler(ctx context.Context, opt *serverOptions, mux mux) error {
 	err := mime.AddExtensionType(".svg", "image/svg+xml")
 	if err != nil {
-		return err
+		return errors.Wrap(err, "failed to add svg extension")
 	}
 
 	handler := http.StripPrefix(fmt.Sprintf("/%s/swagger", opt.serviceName), http.FileServer(o.fs))
@@ -421,15 +425,15 @@ func (o handlerServerOption) addHandler(ctx context.Context, opt *serverOptions,
 func WithHandler(pattern string, handler http.Handler) ServerOption {
 	return &handlerServerOption{
 		pattern: pattern,
-		handler: handler,
+		handler: otelhttp.NewHandler(handler, pattern),
 	}
 }
 
 // WithHandlerFunc returns a handlerServerOption
 func WithHandlerFunc(pattern string, handler http.HandlerFunc) ServerOption {
 	return &handlerServerOption{
-		pattern:     pattern,
-		handlerFunc: handler,
+		pattern: pattern,
+		handler: otelhttp.NewHandler(handler, pattern),
 	}
 }
 
@@ -438,7 +442,7 @@ func WithGET(pattern string, handler http.Handler) ServerOption {
 	return &handlerServerOption{
 		method:  http.MethodGet,
 		pattern: pattern,
-		handler: handler,
+		handler: otelhttp.NewHandler(handler, pattern),
 	}
 }
 
@@ -447,7 +451,7 @@ func WithPUT(pattern string, handler http.Handler) ServerOption {
 	return &handlerServerOption{
 		method:  http.MethodPut,
 		pattern: pattern,
-		handler: handler,
+		handler: otelhttp.NewHandler(handler, pattern),
 	}
 }
 
@@ -456,7 +460,7 @@ func WithPOST(pattern string, handler http.Handler) ServerOption {
 	return &handlerServerOption{
 		method:  http.MethodPost,
 		pattern: pattern,
-		handler: handler,
+		handler: otelhttp.NewHandler(handler, pattern),
 	}
 }
 
@@ -465,7 +469,7 @@ func WithDELETE(pattern string, handler http.Handler) ServerOption {
 	return &handlerServerOption{
 		method:  http.MethodDelete,
 		pattern: pattern,
-		handler: handler,
+		handler: otelhttp.NewHandler(handler, pattern),
 	}
 }
 
@@ -474,7 +478,7 @@ func WithOPTIONS(pattern string, handler http.Handler) ServerOption {
 	return &handlerServerOption{
 		method:  http.MethodOptions,
 		pattern: pattern,
-		handler: handler,
+		handler: otelhttp.NewHandler(handler, pattern),
 	}
 }
 
@@ -483,7 +487,7 @@ func WithPATCH(pattern string, handler http.Handler) ServerOption {
 	return &handlerServerOption{
 		method:  http.MethodPatch,
 		pattern: pattern,
-		handler: handler,
+		handler: otelhttp.NewHandler(handler, pattern),
 	}
 }
 
@@ -504,7 +508,28 @@ func (o notFoundHandlerServerOption) addHandler(ctx context.Context, opt *server
 // WithNotFoundHandler returns a notFoundHandlerServerOption
 func WithNotFoundHandler(handler http.Handler) ServerOption {
 	return &notFoundHandlerServerOption{
-		handler: handler,
+		handler: otelhttp.NewHandler(handler, "not found"),
+	}
+}
+
+// methodNotAllowedHandlerServerOption specifies the handler to invoke when the route is not found
+type methodNotAllowedHandlerServerOption struct {
+	handler http.Handler
+}
+
+func (o methodNotAllowedHandlerServerOption) apply(ctx context.Context, opt *serverOptions) error {
+	opt.methodNotAllowed = o.handler
+	return nil
+}
+
+func (o methodNotAllowedHandlerServerOption) addHandler(ctx context.Context, opt *serverOptions, mux mux) error {
+	return nil
+}
+
+// WithMethodNotAllowedHandler returns a notFoundHandlerServerOption
+func WithMethodNotAllowedHandler(handler http.Handler) ServerOption {
+	return &methodNotAllowedHandlerServerOption{
+		handler: otelhttp.NewHandler(handler, "method not allowed"),
 	}
 }
 

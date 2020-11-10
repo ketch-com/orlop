@@ -25,6 +25,7 @@ import (
 	"strings"
 )
 
+// CORS is middleware to handle CORS headers
 func CORS(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		// Skip CORS for GRPC requests

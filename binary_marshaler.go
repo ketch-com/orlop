@@ -22,8 +22,8 @@ package orlop
 
 import (
 	"encoding/json"
-	"fmt"
 	"github.com/grpc-ecosystem/grpc-gateway/runtime"
+	"github.com/switch-bit/orlop/errors"
 	"io"
 	"io/ioutil"
 	"reflect"
@@ -77,7 +77,7 @@ func (BinaryMarshaler) NewDecoder(r io.Reader) runtime.Decoder {
 		}
 
 		if rv.IsNil() {
-			return fmt.Errorf("binary: v must not be nil")
+			return errors.New("binary: v must not be nil")
 		}
 
 		data, err := ioutil.ReadAll(r)

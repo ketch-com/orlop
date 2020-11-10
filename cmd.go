@@ -26,19 +26,24 @@ import (
 	"github.com/iancoleman/strcase"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/pflag"
-	"log"
+	"github.com/switch-bit/orlop/log"
+	"go.opentelemetry.io/contrib/instrumentation/runtime"
+	"go.opentelemetry.io/otel/label"
+	stdlog "log"
 	"os"
 	"reflect"
 	"sort"
 	"strings"
+	"time"
 )
 
+// Run loads config and then executes the given runner
 func Run(prefix string, runner interface{}, cfg interface{}) {
 	var configFiles []string
 	var initFlag bool
 	var envFlag string
 	var loglevelFlag string
-	pflag.BoolVar(&initFlag,"init", false, "outputs the config environment variables and exits")
+	pflag.BoolVar(&initFlag, "init", false, "outputs the config environment variables and exits")
 	pflag.StringVar(&envFlag, "env", strings.ToLower(getenv(prefix, "environment")), "specifies the environment")
 	pflag.StringVar(&loglevelFlag, "loglevel", strings.ToLower(getenv(prefix, "loglevel")), "specifies the log level")
 	pflag.StringSliceVar(&configFiles, "config", nil, "specifies a .env configuration file to load")
@@ -47,7 +52,7 @@ func Run(prefix string, runner interface{}, cfg interface{}) {
 	if initFlag {
 		vars, err := GetVariablesFromConfig(prefix, cfg)
 		if err != nil {
-			logrus.Fatal(err)
+			log.WithError(err).Fatal("could not create variables")
 		}
 
 		sort.Strings(vars)
@@ -61,24 +66,32 @@ func Run(prefix string, runner interface{}, cfg interface{}) {
 		return
 	}
 
+	if err := runtime.Start(runtime.WithMinimumReadMemStatsInterval(time.Second)); err != nil {
+		log.WithError(err).Fatal("could not start runtime tracing")
+	}
+
+	ctx, span := tracer.Start(context.Background(), "Run")
+	defer span.End()
+
 	// First figure out the environment
 	env := Environment(envFlag)
+	span.SetAttributes(label.String("env", env.String()))
 
 	// Load the environment from files
 	loadEnvironment(env, configFiles...)
 
 	// Setup logging
-	setupLogging(env, loglevelFlag)
+	ctx = setupLogging(ctx, env, loglevelFlag)
 
 	// Unmarshal the configuration
 	err := Unmarshal(prefix, cfg)
 	if err != nil {
-		logrus.Fatal(err)
+		log.FromContext(ctx).Fatal(err)
 	}
 
 	// Call the runner
 	out := reflect.ValueOf(runner).Call([]reflect.Value{
-		reflect.ValueOf(context.TODO()),
+		reflect.ValueOf(ctx),
 		reflect.ValueOf(cfg),
 	})
 
@@ -87,7 +100,7 @@ func Run(prefix string, runner interface{}, cfg interface{}) {
 		e := out[0].MethodByName("Error")
 		out = e.Call([]reflect.Value{})
 		if len(out) > 0 && out[0].IsValid() {
-			logrus.Fatal(out[0].String())
+			log.FromContext(ctx).Fatal(out[0].String())
 		}
 	}
 }
@@ -96,7 +109,7 @@ func getenv(prefix string, key string) string {
 	return os.Getenv(strcase.ToScreamingSnake(strings.Join([]string{prefix, key}, "_")))
 }
 
-func setupLogging(env Environment, loglevel string) {
+func setupLogging(ctx context.Context, env Environment, loglevel string) context.Context {
 	switch loglevel {
 	case "fatal":
 		logrus.SetLevel(logrus.FatalLevel)
@@ -130,5 +143,7 @@ func setupLogging(env Environment, loglevel string) {
 		})
 	}
 
-	log.SetOutput(logrus.New().Writer())
+	stdlog.SetOutput(logrus.New().Writer())
+
+	return log.ToContext(ctx, log.New())
 }

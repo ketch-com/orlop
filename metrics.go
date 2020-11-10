@@ -22,44 +22,72 @@ package orlop
 
 import (
 	"github.com/felixge/httpsnoop"
-	"github.com/prometheus/client_golang/prometheus"
+	"github.com/switch-bit/orlop/log"
+	"go.opentelemetry.io/otel/api/metric"
+	"go.opentelemetry.io/otel/exporters/metric/prometheus"
+	"go.opentelemetry.io/otel/label"
+	"go.opentelemetry.io/otel/sdk/metric/controller/pull"
 	"net/http"
-	"strconv"
 )
 
+// Metrics is middleware for handling metrics
 func Metrics(next http.Handler) http.Handler {
-	reg := prometheus.DefaultRegisterer
-
-	inflightRequests := prometheus.NewGaugeVec(prometheus.GaugeOpts{
-		Name: "requests_in_flight",
-		Help: "Current number of requests being served.",
-	}, []string{"method", "route"})
-	if err := reg.Register(inflightRequests); err != nil {
-		if are, ok := err.(prometheus.AlreadyRegisteredError); ok {
-			inflightRequests = are.ExistingCollector.(*prometheus.GaugeVec)
-		} else {
-			panic(err)
-		}
+	inflightRequests, err := metrics.NewInt64UpDownCounter("requests.in.flight", metric.WithUnit("requests"))
+	if err != nil {
+		log.Fatal(err)
 	}
 
-	requestDuration := prometheus.NewHistogramVec(prometheus.HistogramOpts{
-		Name:    "request_duration_seconds",
-		Help:    "Time (in seconds) spent serving HTTP requests.",
-		Buckets: prometheus.DefBuckets,
-	}, []string{"method", "route", "status_code"})
-	if err := reg.Register(requestDuration); err != nil {
-		if are, ok := err.(prometheus.AlreadyRegisteredError); ok {
-			requestDuration = are.ExistingCollector.(*prometheus.HistogramVec)
-		} else {
-			panic(err)
-		}
+	requestDuration, err := metrics.NewFloat64ValueRecorder("request.duration.seconds", metric.WithUnit("s"))
+	if err != nil {
+		log.Fatal(err)
 	}
 
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		inflightRequests.WithLabelValues(r.Method, r.URL.Path).Inc()
-		defer inflightRequests.WithLabelValues(r.Method, r.URL.Path).Dec()
+		method := label.String("method", r.Method)
+		route := label.String("route", r.URL.Path)
+
+		inflightRequests.Add(r.Context(), 1, method, route)
+		defer inflightRequests.Add(r.Context(), -1, method, route)
 
 		m := httpsnoop.CaptureMetrics(next, w, r)
-		requestDuration.WithLabelValues(r.Method, r.URL.Path, strconv.Itoa(m.Code)).Observe(m.Duration.Seconds())
+		requestDuration.Record(r.Context(), m.Duration.Seconds(), method, route, label.Int("status_code", m.Code))
 	})
+}
+
+// MetricsHandler is the Prometheus metrics exporter
+type MetricsHandler struct {
+	exporter *prometheus.Exporter
+}
+
+// NewMetricsHandler creates a new MetricsHandler
+func NewMetricsHandler() http.Handler {
+	exporter, err := prometheus.InstallNewPipeline(
+		prometheus.Config{
+			DefaultHistogramBoundaries: []float64{
+				0.005,
+				0.01,
+				0.025,
+				0.05,
+				0.1,
+				0.25,
+				0.5,
+				1,
+				10,
+				2.5,
+				5,
+			},
+		},
+		pull.WithResource(nil),
+	)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	return &MetricsHandler{
+		exporter: exporter,
+	}
+}
+
+func (s *MetricsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	s.exporter.ServeHTTP(w, r)
 }

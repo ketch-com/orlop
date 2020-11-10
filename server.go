@@ -25,6 +25,7 @@ import (
 	"crypto/tls"
 	"github.com/go-chi/chi"
 	"github.com/sirupsen/logrus"
+	"github.com/switch-bit/orlop/errors"
 	"github.com/switch-bit/orlop/log"
 	syslog "log"
 	"net"
@@ -35,10 +36,13 @@ import (
 func Serve(ctx context.Context, serviceName string, options ...ServerOption) error {
 	var err error
 
+	ctx, span := tracer.Start(ctx, "Serve")
+	defer span.End()
+
 	// Setup the server options
 	serverOptions := &serverOptions{
 		serviceName: serviceName,
-		log:         log.WithField("service", serviceName),
+		logger:      log.FromContext(ctx).WithField("service", serviceName),
 	}
 
 	options = append([]ServerOption{
@@ -47,14 +51,16 @@ func Serve(ctx context.Context, serviceName string, options ...ServerOption) err
 			Listen: 5000,
 			TLS:    TLSConfig{},
 		}),
-		WithHandler("/healthz", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})),
-		WithPrometheusMetrics(),
+		WithHealth(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})),
+		WithMetrics(NewMetricsHandler()),
 	}, options...)
 
 	// Process all server options (which may override any of the above)
 	for _, option := range options {
 		err = option.apply(ctx, serverOptions)
 		if err != nil {
+			err = errors.Wrap(err, "serve: failed to apply options")
+			span.RecordError(ctx, err)
 			return err
 		}
 	}
@@ -63,6 +69,9 @@ func Serve(ctx context.Context, serviceName string, options ...ServerOption) err
 	mux := chi.NewMux()
 	if serverOptions.notFound != nil {
 		mux.NotFound(serverOptions.notFound.ServeHTTP)
+	}
+	if serverOptions.methodNotAllowed != nil {
+		mux.MethodNotAllowed(serverOptions.methodNotAllowed.ServeHTTP)
 	}
 
 	// Add standard middleware
@@ -77,24 +86,29 @@ func Serve(ctx context.Context, serviceName string, options ...ServerOption) err
 	for _, option := range options {
 		err = option.addHandler(ctx, serverOptions, mux)
 		if err != nil {
+			err = errors.Wrap(err, "serve: failed to add handler")
+			span.RecordError(ctx, err)
 			return err
 		}
 	}
 
 	// Start listening
-	serverOptions.log.Info("listening")
+	serverOptions.logger.Info("listening")
 	ln, err := net.Listen("tcp", serverOptions.addr)
 	if err != nil {
+		err = errors.Wrap(err, "serve: failed to listen")
+		span.RecordError(ctx, err)
 		return err
 	}
 
 	// Serve requests
 	if serverOptions.config.GetTLS().GetEnabled() {
-		serverOptions.log.Trace("loading server tls certs")
-		config, err := NewServerTLSConfig(serverOptions.config.GetTLS(), serverOptions.vault)
+		config, err := NewServerTLSConfigContext(ctx, serverOptions.config.GetTLS(), serverOptions.vault)
 		if err != nil {
 			ln.Close()
 
+			err = errors.Wrap(err, "serve: failed to get server TLS config")
+			span.RecordError(ctx, err)
 			return err
 		}
 
@@ -103,9 +117,9 @@ func Serve(ctx context.Context, serviceName string, options ...ServerOption) err
 
 	defer ln.Close()
 
-	serverOptions.log.Info("serving")
+	serverOptions.logger.Info("serving")
 
-	w := log.WriterLevel(logrus.WarnLevel)
+	w := serverOptions.logger.WriterLevel(logrus.WarnLevel)
 	defer w.Close()
 
 	srv := &http.Server{
@@ -114,10 +128,16 @@ func Serve(ctx context.Context, serviceName string, options ...ServerOption) err
 		ErrorLog: syslog.New(w, "[http]", 0),
 	}
 
-	return srv.Serve(ln)
+	if err = srv.Serve(ln); err != nil {
+		err = errors.Wrap(err, "serve: failed to serve")
+		span.RecordError(ctx, err)
+		return err
+	}
+
+	return nil
 }
 
-// URLParam returns the url parameter from a http.Request object.
+// URLParamFromRequest returns the url parameter from a http.Request object.
 func URLParamFromRequest(r *http.Request, key string) string {
 	return chi.URLParam(r, key)
 }

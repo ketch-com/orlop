@@ -20,16 +20,30 @@
 
 package orlop
 
+import (
+	"context"
+	"github.com/switch-bit/orlop/errors"
+)
+
 // GenerateCertificates calls Vault to generate a certificate
-func GenerateCertificates(vault HasVaultConfig, cfg HasCertGenerationConfig,
-	cert *[]byte, key *[]byte) error {
+//
+// deprecated: use GenerateCertificatesContext
+func GenerateCertificates(vault HasVaultConfig, cfg HasCertGenerationConfig, cert *[]byte, key *[]byte) error {
+	return GenerateCertificatesContext(context.TODO(), vault, cfg, cert, key)
+}
+
+// GenerateCertificatesContext calls Vault to generate a certificate
+func GenerateCertificatesContext(ctx context.Context, vault HasVaultConfig, cfg HasCertGenerationConfig, cert *[]byte, key *[]byte) error {
+	ctx, span := tracer.Start(ctx, "GenerateCertificates")
+	defer span.End()
+
 	// If Vault not enabled or certificate generation not enabled, just return
 	if !vault.GetEnabled() || !cfg.GetEnabled() {
 		return nil
 	}
 
 	// Connect to Vault
-	client, err := NewVault(vault)
+	client, err := NewVaultContext(ctx, vault)
 	if err != nil {
 		return err
 	}
@@ -46,8 +60,10 @@ func GenerateCertificates(vault HasVaultConfig, cfg HasCertGenerationConfig,
 	}
 
 	// Write the params to the path to generate the certificate
-	secret, err := client.Write(cfg.GetPath(), params)
+	secret, err := client.WriteContext(ctx, cfg.GetPath(), params)
 	if err != nil {
+		err = errors.Wrap(err, "generate: failed to write to Vault")
+		span.RecordError(ctx, err)
 		return err
 	}
 

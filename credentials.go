@@ -21,8 +21,9 @@
 package orlop
 
 import (
-	"fmt"
+	"context"
 	"github.com/sirupsen/logrus"
+	"github.com/switch-bit/orlop/errors"
 	"github.com/switch-bit/orlop/log"
 )
 
@@ -62,12 +63,22 @@ type Credentials struct {
 }
 
 // GetCredentials retrieves credentials
+//
+// deprecated: use GetCredentialsContext
 func GetCredentials(cfg HasCredentialsConfig, vault HasVaultConfig) (*Credentials, error) {
+	return GetCredentialsContext(context.TODO(), cfg, vault)
+}
+
+// GetCredentialsContext retrieves credentials
+func GetCredentialsContext(ctx context.Context, cfg HasCredentialsConfig, vault HasVaultConfig) (*Credentials, error) {
+	ctx, span := tracer.Start(ctx, "GetCredentials")
+	defer span.End()
+
 	l := log.WithFields(logrus.Fields{
 		"credentials.id": cfg.GetID(),
 		"vault.enabled":  vault != nil && vault.GetEnabled(),
 	})
-	l.Debug("loading credentials")
+	l.Trace("loading credentials")
 
 	if len(cfg.GetUsername()) > 0 && len(cfg.GetPassword()) > 0 {
 		l.Trace("loaded from inline settings")
@@ -79,30 +90,37 @@ func GetCredentials(cfg HasCredentialsConfig, vault HasVaultConfig) (*Credential
 	}
 
 	if len(cfg.GetID()) == 0 || vault == nil || !vault.GetEnabled() {
-		l.Error("no credentials specified")
-		return nil, fmt.Errorf("credentials: no credentials specified")
-	}
-
-	client, err := NewVault(vault)
-	if err != nil {
-		l.WithError(err).Error("could not connect to Vault")
+		err := errors.New("credentials: no credentials specified")
+		span.RecordError(ctx, err)
 		return nil, err
 	}
 
-	s, err := client.Read(cfg.GetID())
+	client, err := NewVaultContext(ctx, vault)
 	if err != nil {
-		l.WithError(err).Error("credentials not found")
+		err := errors.Wrap(err, "credentials: could not connect to Vault")
+		span.RecordError(ctx, err)
+		return nil, err
+	}
+
+	s, err := client.ReadContext(ctx, cfg.GetID())
+	if err != nil {
+		err = errors.Wrap(err, "credentials: not found")
+		span.RecordError(ctx, err)
 		return nil, err
 	}
 
 	if s == nil {
-		return nil, fmt.Errorf("credentials: could not load credentials from %s", cfg.GetID())
+		err := errors.Errorf("credentials: could not load credentials from %s", cfg.GetID())
+		span.RecordError(ctx, err)
+		return nil, err
 	} else if s.Data["username"] == nil {
-		l.Tracef("username not found")
-		return nil, fmt.Errorf("credentials: could not load credentials from %s", cfg.GetID())
+		err := errors.Errorf("credentials: could not load credentials from %s", cfg.GetID())
+		span.RecordError(ctx, err)
+		return nil, err
 	} else if s.Data["password"] == nil {
-		l.Tracef("password not found")
-		return nil, fmt.Errorf("credentials: could not load credentials from %s", cfg.GetID())
+		err := errors.Errorf("credentials: could not load credentials from %s", cfg.GetID())
+		span.RecordError(ctx, err)
+		return nil, err
 	}
 
 	creds := &Credentials{}
