@@ -51,8 +51,8 @@ func Serve(ctx context.Context, serviceName string, options ...ServerOption) err
 			Listen: 5000,
 			TLS:    TLSConfig{},
 		}),
-		WithHandler("/healthz", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})),
-		WithPrometheusMetrics(),
+		WithHealth(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})),
+		WithMetrics(NewMetricsHandler()),
 	}, options...)
 
 	// Process all server options (which may override any of the above)
@@ -69,6 +69,9 @@ func Serve(ctx context.Context, serviceName string, options ...ServerOption) err
 	mux := chi.NewMux()
 	if serverOptions.notFound != nil {
 		mux.NotFound(serverOptions.notFound.ServeHTTP)
+	}
+	if serverOptions.methodNotAllowed != nil {
+		mux.MethodNotAllowed(serverOptions.methodNotAllowed.ServeHTTP)
 	}
 
 	// Add standard middleware

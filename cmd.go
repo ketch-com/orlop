@@ -27,12 +27,14 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/pflag"
 	"github.com/switch-bit/orlop/log"
+	"go.opentelemetry.io/contrib/instrumentation/runtime"
 	"go.opentelemetry.io/otel/label"
 	stdlog "log"
 	"os"
 	"reflect"
 	"sort"
 	"strings"
+	"time"
 )
 
 // Run loads config and then executes the given runner
@@ -50,7 +52,7 @@ func Run(prefix string, runner interface{}, cfg interface{}) {
 	if initFlag {
 		vars, err := GetVariablesFromConfig(prefix, cfg)
 		if err != nil {
-			log.Fatal(err)
+			log.WithError(err).Fatal("could not create variables")
 		}
 
 		sort.Strings(vars)
@@ -62,6 +64,10 @@ func Run(prefix string, runner interface{}, cfg interface{}) {
 			}
 		}
 		return
+	}
+
+	if err := runtime.Start(runtime.WithMinimumReadMemStatsInterval(time.Second)); err != nil {
+		log.WithError(err).Fatal("could not start runtime tracing")
 	}
 
 	ctx, span := tracer.Start(context.Background(), "Run")
