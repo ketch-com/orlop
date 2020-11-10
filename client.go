@@ -58,7 +58,7 @@ func ConnectContext(ctx context.Context, cfg HasClientConfig, vault HasVaultConf
 	opts = append(opts, grpc.WithStreamInterceptor(otelgrpc.StreamClientInterceptor()))
 
 	if cfg.GetTLS().GetEnabled() {
-		t, err := NewClientTLSConfig(ctx, cfg.GetTLS(), vault)
+		t, err := NewClientTLSConfigContext(ctx, cfg.GetTLS(), vault)
 		if err != nil {
 			span.RecordError(ctx, err)
 			return nil, errors.Wrap(err, "client: failed to get client TLS config")

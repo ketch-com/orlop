@@ -34,10 +34,12 @@ import (
 	"time"
 )
 
+// Unmarshal reads configuration into the cfg object
 func Unmarshal(prefix string, cfg interface{}) error {
 	return UnmarshalFromEnv(prefix, os.Environ(), cfg)
 }
 
+// UnmarshalFromEnv reads configuration into the cfg object from the env vars
 func UnmarshalFromEnv(prefix string, vars []string, cfg interface{}) error {
 	prefix = toScreamingDelimited(prefix, '_', 0, true)
 
@@ -136,6 +138,7 @@ type fieldSetter func(value reflect.Value, input string) error
 
 var knownSetters map[string]fieldSetter
 
+// RegisterConfigParser registers a config parser
 func RegisterConfigParser(typeName string, parser func(value reflect.Value, input string) error) {
 	knownSetters[typeName] = parser
 }
@@ -266,6 +269,7 @@ func reflectStructValue(prefix []string, r map[string]*configField, v reflect.Va
 	return nil
 }
 
+// GetVariablesFromConfig returns the environment variables from the given config object
 func GetVariablesFromConfig(prefix string, cfg interface{}) ([]string, error) {
 	var vars []string
 

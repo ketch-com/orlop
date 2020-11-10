@@ -65,7 +65,7 @@ func NewVaultContext(ctx context.Context, cfg HasVaultConfig) (*VaultClient, err
 
 		t := http.DefaultTransport.(*http.Transport).Clone()
 
-		t.TLSClientConfig, err = NewClientTLSConfig(ctx, cfg.GetTLS(), &VaultConfig{Enabled: false})
+		t.TLSClientConfig, err = NewClientTLSConfigContext(ctx, cfg.GetTLS(), &VaultConfig{Enabled: false})
 		if err != nil {
 			return nil, err
 		}

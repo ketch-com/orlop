@@ -29,8 +29,11 @@ import (
 )
 
 const (
+	// TLSCertificateKey is the key of the TLS certificate in Vault
 	TLSCertificateKey = "certificate"
+	// TLSPrivateKey is the key of the TLS private key in Vault
 	TLSPrivateKey     = "private_key"
+	// TLSRootCAKey is the key of the TLS root CA in Vault
 	TLSRootCAKey      = "issuing_ca"
 )
 
@@ -121,8 +124,8 @@ func NewServerTLSConfigContext(ctx context.Context, cfg HasTLSConfig, vault HasV
 // NewClientTLSConfig returns a new tls.VaultConfig from the given configuration input
 //
 // deprecated: use NewClientTLSConfigContext instead
-func NewClientTLSConfig(ctx context.Context, cfg HasTLSConfig, vault HasVaultConfig) (*tls.Config, error) {
-	return NewClientTLSConfigContext(ctx, cfg, vault)
+func NewClientTLSConfig(cfg HasTLSConfig, vault HasVaultConfig) (*tls.Config, error) {
+	return NewClientTLSConfigContext(context.TODO(), cfg, vault)
 }
 
 // NewClientTLSConfigContext returns a new tls.VaultConfig from the given configuration input

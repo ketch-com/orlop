@@ -27,6 +27,7 @@ import (
 	"strconv"
 )
 
+// Metrics is middleware for handling metrics
 func Metrics(next http.Handler) http.Handler {
 	reg := prometheus.DefaultRegisterer
 

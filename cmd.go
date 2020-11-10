@@ -35,6 +35,7 @@ import (
 	"strings"
 )
 
+// Run loads config and then executes the given runner
 func Run(prefix string, runner interface{}, cfg interface{}) {
 	var configFiles []string
 	var initFlag bool

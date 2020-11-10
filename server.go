@@ -134,7 +134,7 @@ func Serve(ctx context.Context, serviceName string, options ...ServerOption) err
 	return nil
 }
 
-// URLParam returns the url parameter from a http.Request object.
+// URLParamFromRequest returns the url parameter from a http.Request object.
 func URLParamFromRequest(r *http.Request, key string) string {
 	return chi.URLParam(r, key)
 }
