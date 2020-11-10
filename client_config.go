@@ -24,6 +24,7 @@ import "time"
 
 // HasClientConfig denotes that an object provides client configuration
 type HasClientConfig interface {
+	GetName() string
 	GetTLS() HasTLSConfig
 	GetToken() HasTokenConfig
 	GetURL() string
@@ -42,6 +43,7 @@ type HasClientConfig interface {
 
 // ClientConfig is standard configuration of most client commands
 type ClientConfig struct {
+	Name                  string
 	URL                   string
 	Token                 TokenConfig
 	TLS                   TLSConfig
@@ -56,6 +58,14 @@ type ClientConfig struct {
 	Block                 bool
 	ConnTimeout           time.Duration
 	UserAgent             string
+}
+
+// GetName returns the Name of the client config
+func (c ClientConfig) GetName() string {
+	if len(c.Name) == 0 {
+		return "unknown"
+	}
+	return c.Name
 }
 
 // GetURL returns the URL to contact the server

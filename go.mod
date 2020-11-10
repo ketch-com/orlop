@@ -30,6 +30,7 @@ require (
 	go.opentelemetry.io/contrib/instrumentation/runtime v0.13.0
 	go.opentelemetry.io/otel v0.13.0
 	go.opentelemetry.io/otel/exporters/metric/prometheus v0.13.0
+	go.opentelemetry.io/otel/sdk v0.13.0
 	golang.org/x/crypto v0.0.0-20201016220609-9e8e0b390897 // indirect
 	golang.org/x/net v0.0.0-20201110031124-69a78807bb2b // indirect
 	golang.org/x/sys v0.0.0-20201109165425-215b40eba54c // indirect

@@ -41,7 +41,7 @@ func Connect(cfg HasClientConfig, vault HasVaultConfig) (*grpc.ClientConn, error
 
 // ConnectContext creates a new client from configuration
 func ConnectContext(ctx context.Context, cfg HasClientConfig, vault HasVaultConfig) (*grpc.ClientConn, error) {
-	ctx, span := tracer.Start(ctx, "Connect")
+	ctx, span := tracer.Start(ctx, cfg.GetName())
 	defer span.End()
 
 	logger := log.FromContext(ctx)
@@ -49,7 +49,7 @@ func ConnectContext(ctx context.Context, cfg HasClientConfig, vault HasVaultConf
 	var opts []grpc.DialOption
 
 	if len(cfg.GetURL()) == 0 {
-		err := errors.New("client: url required")
+		err := errors.Errorf("client: url required for %s", cfg.GetName())
 		span.RecordError(ctx, err)
 		return nil, err
 	}
@@ -135,6 +135,7 @@ func ConnectContext(ctx context.Context, cfg HasClientConfig, vault HasVaultConf
 	opts = append(opts, grpc.WithUserAgent(ua))
 
 	logger.WithContext(ctx).WithFields(logrus.Fields{
+		"name":                  cfg.GetName(),
 		"url":                   cfg.GetURL(),
 		"connTimeout":           cfg.GetConnTimeout(),
 		"block":                 cfg.GetBlock(),
