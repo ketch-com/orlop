@@ -1,6 +1,6 @@
 name: orlop
 description: Orlop is the base deck of the ship
-repository: https://github.com/ketch-com/orlop
+repository: https://github.com/switch-bit/orlop
 verbose: true
 test:
   enabled: false
