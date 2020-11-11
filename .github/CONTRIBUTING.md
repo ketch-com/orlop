@@ -13,7 +13,7 @@ Orlop is an open source project and we love to receive contributions from our co
 ### Using the issue tracker
 
 First things first: Do NOT report security vulnerabilities in public issues! Please disclose
-responsibly by letting the [SwitchBit team](mailto:security@switchbit.com) know upfront.
+responsibly by letting the [Ketch team](mailto:security@ketch.com) know upfront.
 We will assess the issue as soon as possible on a best-effort basis and will give you an
 estimate for when we have a fix and release available for an eventual public disclosure.
 
@@ -82,13 +82,13 @@ As a rule of thumb, changes are obvious fixes if they do not introduce any new f
 
 ## How to report a bug
 
-If you find a security vulnerability, do NOT open an issue. Email [security@switchbit.com](mailto:security@switchbit.com) instead.
+If you find a security vulnerability, do NOT open an issue. Email [security@ketch.com](mailto:security@ketch.com) instead.
 
 In order to determine whether you are dealing with a security issue, ask yourself these two questions:
 * Can I access something that's not mine, or something I shouldn't have access to?
 * Can I disable something for other people?
 
-If the answer to either of those two questions are "yes", then you're probably dealing with a security issue. Note that even if you answer "no" to both questions, you may still be dealing with a security issue, so if you're unsure, just email us at [security@switchbit.com](mailto:security@switchbit.com).
+If the answer to either of those two questions are "yes", then you're probably dealing with a security issue. Note that even if you answer "no" to both questions, you may still be dealing with a security issue, so if you're unsure, just email us at [security@ketch.com](mailto:security@ketch.com).
 
  When filing an issue, make sure to answer these five questions:
 

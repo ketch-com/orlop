@@ -1,4 +1,4 @@
-// Copyright (c) 2020 SwitchBit, Inc.
+// Copyright (c) 2020 Ketch, Inc.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -26,7 +26,7 @@ import (
 	"github.com/iancoleman/strcase"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/pflag"
-	"github.com/switch-bit/orlop/log"
+	"go.ketch.com/lib/orlop/log"
 	"go.opentelemetry.io/contrib/instrumentation/runtime"
 	"go.opentelemetry.io/otel/label"
 	stdlog "log"

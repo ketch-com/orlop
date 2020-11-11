@@ -1,4 +1,4 @@
-// Copyright (c) 2020 SwitchBit, Inc.
+// Copyright (c) 2020 Ketch, Inc.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -24,17 +24,17 @@ import (
 	"context"
 	"crypto/tls"
 	"crypto/x509"
-	"github.com/switch-bit/orlop/errors"
-	"github.com/switch-bit/orlop/log"
+	"go.ketch.com/lib/orlop/errors"
+	"go.ketch.com/lib/orlop/log"
 )
 
 const (
 	// TLSCertificateKey is the key of the TLS certificate in Vault
 	TLSCertificateKey = "certificate"
 	// TLSPrivateKey is the key of the TLS private key in Vault
-	TLSPrivateKey     = "private_key"
+	TLSPrivateKey = "private_key"
 	// TLSRootCAKey is the key of the TLS root CA in Vault
-	TLSRootCAKey      = "issuing_ca"
+	TLSRootCAKey = "issuing_ca"
 )
 
 // NewServerTLSConfig returns a new tls.VaultConfig from the given configuration input
