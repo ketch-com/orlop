@@ -1,4 +1,4 @@
-// Copyright (c) 2020 SwitchBit, Inc.
+// Copyright (c) 2020 Ketch, Inc.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -22,7 +22,7 @@ package orlop
 
 import (
 	"github.com/felixge/httpsnoop"
-	"github.com/switch-bit/orlop/log"
+	"go.ketch.com/lib/orlop/log"
 	"go.opentelemetry.io/otel/api/metric"
 	"go.opentelemetry.io/otel/exporters/metric/prometheus"
 	"go.opentelemetry.io/otel/label"

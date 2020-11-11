@@ -12,4 +12,4 @@ currently being supported with security updates.
 
 ## Reporting a Vulnerability
 
-To report a vulnerability, please email us at security@switchbit.com.
+To report a vulnerability, please email us at security@ketch.com.

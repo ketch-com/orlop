@@ -1,4 +1,4 @@
-// Copyright (c) 2020 SwitchBit, Inc.
+// Copyright (c) 2020 Ketch, Inc.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -22,7 +22,7 @@ package orlop
 
 import (
 	"context"
-	"github.com/switch-bit/orlop/errors"
+	"go.ketch.com/lib/orlop/errors"
 )
 
 // GenerateCertificates calls Vault to generate a certificate

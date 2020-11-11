@@ -1,4 +1,4 @@
-// Copyright (c) 2020 SwitchBit, Inc.
+// Copyright (c) 2020 Ketch, Inc.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -25,8 +25,8 @@ import (
 	"crypto/tls"
 	"github.com/go-chi/chi"
 	"github.com/sirupsen/logrus"
-	"github.com/switch-bit/orlop/errors"
-	"github.com/switch-bit/orlop/log"
+	"go.ketch.com/lib/orlop/errors"
+	"go.ketch.com/lib/orlop/log"
 	syslog "log"
 	"net"
 	"net/http"

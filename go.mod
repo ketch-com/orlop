@@ -1,4 +1,4 @@
-module github.com/switch-bit/orlop
+module go.ketch.com/lib/orlop
 
 go 1.14
 

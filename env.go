@@ -1,4 +1,4 @@
-// Copyright (c) 2020 SwitchBit, Inc.
+// Copyright (c) 2020 Ketch, Inc.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -23,7 +23,7 @@ package orlop
 import "os"
 
 // EnvironmentKey is the environment variable we look for to set the environment
-const EnvironmentKey = "SWITCHBIT_ENVIRONMENT"
+const EnvironmentKey = "KETCH_ENVIRONMENT"
 
 // Environment is a defined environment
 type Environment string

@@ -1,7 +1,7 @@
 package orlop
 
 import (
-	"github.com/switch-bit/orlop/version"
+	"go.ketch.com/lib/orlop/version"
 	"go.opentelemetry.io/otel/api/global"
 	"go.opentelemetry.io/otel/api/metric"
 	"go.opentelemetry.io/otel/api/trace"

@@ -1,4 +1,4 @@
-// Copyright (c) 2020 SwitchBit, Inc.
+// Copyright (c) 2020 Ketch, Inc.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -24,9 +24,9 @@ import (
 	"context"
 	"fmt"
 	"github.com/sirupsen/logrus"
-	"github.com/switch-bit/orlop/errors"
-	"github.com/switch-bit/orlop/log"
-	"github.com/switch-bit/orlop/version"
+	"go.ketch.com/lib/orlop/errors"
+	"go.ketch.com/lib/orlop/log"
+	"go.ketch.com/lib/orlop/version"
 	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
