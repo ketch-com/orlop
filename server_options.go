@@ -205,8 +205,8 @@ func (o grpcServicesServerOption) addHandler(ctx context.Context, opt *serverOpt
 		grpcServerOptions = append(grpcServerOptions, grpc.MaxSendMsgSize(opt.config.Loopback.MaxCallSendMsgSize))
 	}
 
-	grpcServerOptions = append(grpcServerOptions, grpc.UnaryInterceptor(otelgrpc.UnaryServerInterceptor()))
-	grpcServerOptions = append(grpcServerOptions, grpc.StreamInterceptor(otelgrpc.StreamServerInterceptor()))
+	// grpcServerOptions = append(grpcServerOptions, grpc.UnaryInterceptor(otelgrpc.UnaryServerInterceptor()))
+	// grpcServerOptions = append(grpcServerOptions, grpc.StreamInterceptor(otelgrpc.StreamServerInterceptor()))
 
 	// Setup the gRPC server
 	grpcServer := grpc.NewServer(grpcServerOptions...)
