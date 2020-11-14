@@ -6,7 +6,7 @@ test:
   enabled: false
 release:
   branches:
-    only: master
+    only: main
 environment:
   GO111MODULE: on
   CGO_ENABLED: "0"
