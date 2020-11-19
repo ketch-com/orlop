@@ -421,74 +421,53 @@ func (o handlerServerOption) addHandler(ctx context.Context, opt *serverOptions,
 	return nil
 }
 
-// WithHandler returns a handlerServerOption
-func WithHandler(pattern string, handler http.Handler) ServerOption {
+// WithHttpHandler returns a handlerServerOption
+func WithHttpHandler(method string, pattern string, handler http.Handler) ServerOption {
 	return &handlerServerOption{
+		method:  method,
 		pattern: pattern,
 		handler: otelhttp.NewHandler(handler, pattern),
 	}
+}
+
+// WithHandler returns a handlerServerOption
+func WithHandler(pattern string, handler http.Handler) ServerOption {
+	return WithHttpHandler("", pattern, handler)
 }
 
 // WithHandlerFunc returns a handlerServerOption
 func WithHandlerFunc(pattern string, handler http.HandlerFunc) ServerOption {
-	return &handlerServerOption{
-		pattern: pattern,
-		handler: otelhttp.NewHandler(handler, pattern),
-	}
+	return WithHttpHandler("", pattern, handler)
 }
 
 // WithGET returns a handlerServerOption
 func WithGET(pattern string, handler http.Handler) ServerOption {
-	return &handlerServerOption{
-		method:  http.MethodGet,
-		pattern: pattern,
-		handler: otelhttp.NewHandler(handler, pattern),
-	}
+	return WithHttpHandler(http.MethodGet, pattern, handler)
 }
 
 // WithPUT returns a handlerServerOption
 func WithPUT(pattern string, handler http.Handler) ServerOption {
-	return &handlerServerOption{
-		method:  http.MethodPut,
-		pattern: pattern,
-		handler: otelhttp.NewHandler(handler, pattern),
-	}
+	return WithHttpHandler(http.MethodPut, pattern, handler)
 }
 
 // WithPOST returns a handlerServerOption
 func WithPOST(pattern string, handler http.Handler) ServerOption {
-	return &handlerServerOption{
-		method:  http.MethodPost,
-		pattern: pattern,
-		handler: otelhttp.NewHandler(handler, pattern),
-	}
+	return WithHttpHandler(http.MethodPost, pattern, handler)
 }
 
 // WithDELETE returns a handlerServerOption
 func WithDELETE(pattern string, handler http.Handler) ServerOption {
-	return &handlerServerOption{
-		method:  http.MethodDelete,
-		pattern: pattern,
-		handler: otelhttp.NewHandler(handler, pattern),
-	}
+	return WithHttpHandler(http.MethodDelete, pattern, handler)
 }
 
 // WithOPTIONS returns a handlerServerOption
 func WithOPTIONS(pattern string, handler http.Handler) ServerOption {
-	return &handlerServerOption{
-		method:  http.MethodOptions,
-		pattern: pattern,
-		handler: otelhttp.NewHandler(handler, pattern),
-	}
+	return WithHttpHandler(http.MethodOptions, pattern, handler)
 }
 
 // WithPATCH returns a handlerServerOption
 func WithPATCH(pattern string, handler http.Handler) ServerOption {
-	return &handlerServerOption{
-		method:  http.MethodPatch,
-		pattern: pattern,
-		handler: otelhttp.NewHandler(handler, pattern),
-	}
+	return WithHttpHandler(http.MethodPatch, pattern, handler)
 }
 
 // notFoundHandlerServerOption specifies the handler to invoke when the route is not found
