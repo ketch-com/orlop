@@ -9,7 +9,7 @@ import (
 const (
 	Name        = "orlop"
 	Description = "Orlop is the base deck of the ship"
-	ReleaseName = "well-groomed cottonmouth"
+	ReleaseName = "dimpled trilobite"
 	Version     = "0.0.0"
 	Prerelease  = "dev"
 )
@@ -22,3 +22,4 @@ func String() string {
 	}
 	return fmt.Sprintf("%s %s", Version, s)
 }
+
