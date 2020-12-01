@@ -112,7 +112,7 @@ func (c VaultClient) ReadContext(ctx context.Context, p string) (*vault.Secret, 
 	sec, err := c.client.Logical().Read(keyPath)
 	if err != nil {
 		log.WithField("vault.path", keyPath).WithError(err).Trace("read failed")
-		span.RecordError(ctx, err)
+		span.RecordError(err)
 		return nil, errors.Wrap(err, "failed to read from Vault")
 	}
 
@@ -142,7 +142,7 @@ func (c VaultClient) WriteContext(ctx context.Context, p string, data map[string
 	sec, err := c.client.Logical().Write(keyPath, data)
 	if err != nil {
 		log.WithField("vault.path", keyPath).WithError(err).Trace("write failed")
-		span.RecordError(ctx, err)
+		span.RecordError(err)
 		return nil, errors.Wrap(err, "failed to write to Vault")
 	}
 
@@ -168,7 +168,7 @@ func (c VaultClient) DeleteContext(ctx context.Context, p string) error {
 	_, err := c.client.Logical().Delete(keyPath)
 	if err != nil {
 		log.WithField("vault.path", keyPath).WithError(err).Trace("delete failed")
-		span.RecordError(ctx, err)
+		span.RecordError(err)
 		return errors.Wrap(err, "failed to delete from Vault")
 	}
 

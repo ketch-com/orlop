@@ -76,14 +76,14 @@ func NewServerTLSConfigContext(ctx context.Context, cfg HasTLSConfig, vault HasV
 	err = GenerateCertificatesContext(ctx, vault, cfg.GetGenerate(), &t.Cert.Secret, &t.Key.Secret)
 	if err != nil {
 		err = errors.Wrap(err, "tls: failed to generate certificates")
-		span.RecordError(ctx, err)
+		span.RecordError(err)
 		return nil, err
 	}
 
 	certPEMBlock, err := LoadKeyContext(ctx, t.GetCert(), vault, TLSCertificateKey)
 	if err != nil {
 		err = errors.Wrap(err, "tls: failed to load certificate")
-		span.RecordError(ctx, err)
+		span.RecordError(err)
 		return nil, err
 	}
 
@@ -92,7 +92,7 @@ func NewServerTLSConfigContext(ctx context.Context, cfg HasTLSConfig, vault HasV
 	keyPEMBlock, err := LoadKeyContext(ctx, t.GetKey(), vault, TLSPrivateKey)
 	if err != nil {
 		err = errors.Wrap(err, "tls: failed to load private key")
-		span.RecordError(ctx, err)
+		span.RecordError(err)
 		return nil, err
 	}
 
@@ -103,7 +103,7 @@ func NewServerTLSConfigContext(ctx context.Context, cfg HasTLSConfig, vault HasV
 
 			if !config.ClientCAs.AppendCertsFromPEM(rootcaPEMBlock) {
 				err = errors.Wrap(err, "tls: failed to append root CA certificates")
-				span.RecordError(ctx, err)
+				span.RecordError(err)
 				return nil, err
 			}
 		}
@@ -112,7 +112,7 @@ func NewServerTLSConfigContext(ctx context.Context, cfg HasTLSConfig, vault HasV
 	c, err := tls.X509KeyPair(certPEMBlock, keyPEMBlock)
 	if err != nil {
 		err = errors.Wrap(err, "tls: failed creating key pair")
-		span.RecordError(ctx, err)
+		span.RecordError(err)
 		return nil, err
 	}
 
@@ -150,7 +150,7 @@ func NewClientTLSConfigContext(ctx context.Context, cfg HasTLSConfig, vault HasV
 	err = GenerateCertificatesContext(ctx, vault, cfg.GetGenerate(), &t.Cert.Secret, &t.Key.Secret)
 	if err != nil {
 		err = errors.Wrap(err, "tls: failed to generate certificates")
-		span.RecordError(ctx, err)
+		span.RecordError(err)
 		return nil, err
 	}
 
@@ -158,14 +158,14 @@ func NewClientTLSConfigContext(ctx context.Context, cfg HasTLSConfig, vault HasV
 		certPEMBlock, err := LoadKeyContext(ctx, t.GetCert(), vault, TLSCertificateKey)
 		if err != nil {
 			err = errors.Wrap(err, "tls: failed to load certificate")
-			span.RecordError(ctx, err)
+			span.RecordError(err)
 			return nil, err
 		}
 
 		keyPEMBlock, err := LoadKeyContext(ctx, t.GetKey(), vault, TLSPrivateKey)
 		if err != nil {
 			err = errors.Wrap(err, "tls: failed to load private key")
-			span.RecordError(ctx, err)
+			span.RecordError(err)
 			return nil, err
 		}
 
@@ -173,7 +173,7 @@ func NewClientTLSConfigContext(ctx context.Context, cfg HasTLSConfig, vault HasV
 
 		if !config.RootCAs.AppendCertsFromPEM(certPEMBlock) {
 			err = errors.Wrap(err, "tls: failed to append to RootCA certificates")
-			span.RecordError(ctx, err)
+			span.RecordError(err)
 			return nil, err
 		}
 
@@ -181,13 +181,13 @@ func NewClientTLSConfigContext(ctx context.Context, cfg HasTLSConfig, vault HasV
 			rootcaPEMBlock, err := LoadKeyContext(ctx, t.GetRootCA(), vault, TLSRootCAKey)
 			if err != nil {
 				err = errors.Wrap(err, "tls: failed to load RootCA certificates")
-				span.RecordError(ctx, err)
+				span.RecordError(err)
 				return nil, err
 			}
 
 			if !config.RootCAs.AppendCertsFromPEM(rootcaPEMBlock) {
 				err = errors.Wrap(err, "tls: failed to append to RootCA certificates")
-				span.RecordError(ctx, err)
+				span.RecordError(err)
 				return nil, err
 			}
 		}
@@ -195,7 +195,7 @@ func NewClientTLSConfigContext(ctx context.Context, cfg HasTLSConfig, vault HasV
 		c, err := tls.X509KeyPair(certPEMBlock, keyPEMBlock)
 		if err != nil {
 			err = errors.Wrap(err, "tls: failed creating key pair")
-			span.RecordError(ctx, err)
+			span.RecordError(err)
 			return nil, err
 		}
 

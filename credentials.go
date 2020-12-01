@@ -91,35 +91,35 @@ func GetCredentialsContext(ctx context.Context, cfg HasCredentialsConfig, vault 
 
 	if len(cfg.GetID()) == 0 || vault == nil || !vault.GetEnabled() {
 		err := errors.New("credentials: no credentials specified")
-		span.RecordError(ctx, err)
+		span.RecordError(err)
 		return nil, err
 	}
 
 	client, err := NewVaultContext(ctx, vault)
 	if err != nil {
 		err := errors.Wrap(err, "credentials: could not connect to Vault")
-		span.RecordError(ctx, err)
+		span.RecordError(err)
 		return nil, err
 	}
 
 	s, err := client.ReadContext(ctx, cfg.GetID())
 	if err != nil {
 		err = errors.Wrap(err, "credentials: not found")
-		span.RecordError(ctx, err)
+		span.RecordError(err)
 		return nil, err
 	}
 
 	if s == nil {
 		err := errors.Errorf("credentials: could not load credentials from %s", cfg.GetID())
-		span.RecordError(ctx, err)
+		span.RecordError(err)
 		return nil, err
 	} else if s.Data["username"] == nil {
 		err := errors.Errorf("credentials: could not load credentials from %s", cfg.GetID())
-		span.RecordError(ctx, err)
+		span.RecordError(err)
 		return nil, err
 	} else if s.Data["password"] == nil {
 		err := errors.Errorf("credentials: could not load credentials from %s", cfg.GetID())
-		span.RecordError(ctx, err)
+		span.RecordError(err)
 		return nil, err
 	}
 

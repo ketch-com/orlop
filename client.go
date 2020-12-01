@@ -50,7 +50,7 @@ func ConnectContext(ctx context.Context, cfg HasClientConfig, vault HasVaultConf
 
 	if len(cfg.GetURL()) == 0 {
 		err := errors.Errorf("client: url required for %s", cfg.GetName())
-		span.RecordError(ctx, err)
+		span.RecordError(err)
 		return nil, err
 	}
 
@@ -60,7 +60,7 @@ func ConnectContext(ctx context.Context, cfg HasClientConfig, vault HasVaultConf
 	if cfg.GetTLS().GetEnabled() {
 		t, err := NewClientTLSConfigContext(ctx, cfg.GetTLS(), vault)
 		if err != nil {
-			span.RecordError(ctx, err)
+			span.RecordError(err)
 			return nil, errors.Wrap(err, "client: failed to get client TLS config")
 		}
 
@@ -78,7 +78,7 @@ func ConnectContext(ctx context.Context, cfg HasClientConfig, vault HasVaultConf
 
 				s, err := LoadKeyContext(ctx, shared, vault, "secret")
 				if err != nil {
-					span.RecordError(ctx, err)
+					span.RecordError(err)
 					logger.WithError(err).Error("client: could not load secret key")
 					return ""
 				}
@@ -150,7 +150,7 @@ func ConnectContext(ctx context.Context, cfg HasClientConfig, vault HasVaultConf
 	}).Trace("dialling")
 	conn, err := grpc.DialContext(ctx, cfg.GetURL(), opts...)
 	if err != nil {
-		span.RecordError(ctx, err)
+		span.RecordError(err)
 		return nil, err
 	}
 

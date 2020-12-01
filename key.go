@@ -85,20 +85,20 @@ func LoadKeyContext(ctx context.Context, cfg HasKeyConfig, vault HasVaultConfig,
 		client, err := NewVaultContext(ctx, vault)
 		if err != nil {
 			err = errors.Wrap(err, "key: could not connect to Vault")
-			span.RecordError(ctx, err)
+			span.RecordError(err)
 			return nil, err
 		}
 
 		s, err := client.ReadContext(ctx, cfg.GetID())
 		if err != nil {
 			err = errors.Wrap(err, "key: not found")
-			span.RecordError(ctx, err)
+			span.RecordError(err)
 			return nil, err
 		}
 
 		if s == nil || s.Data[which] == nil {
 			err = errors.New("key: not found")
-			span.RecordError(ctx, err)
+			span.RecordError(err)
 			return nil, err
 		}
 
@@ -109,7 +109,7 @@ func LoadKeyContext(ctx context.Context, cfg HasKeyConfig, vault HasVaultConfig,
 		key, err := ioutil.ReadFile(cfg.GetFile())
 		if err != nil {
 			err = errors.Wrap(err, "key: not found")
-			span.RecordError(ctx, err)
+			span.RecordError(err)
 			return nil, err
 		}
 
@@ -118,7 +118,7 @@ func LoadKeyContext(ctx context.Context, cfg HasKeyConfig, vault HasVaultConfig,
 	}
 
 	err := errors.Errorf("key: no key configured for %s", which)
-	span.RecordError(ctx, err)
+	span.RecordError(err)
 	return nil, err
 }
 

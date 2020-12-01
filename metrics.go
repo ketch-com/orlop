@@ -23,9 +23,9 @@ package orlop
 import (
 	"github.com/felixge/httpsnoop"
 	"go.ketch.com/lib/orlop/log"
-	"go.opentelemetry.io/otel/api/metric"
 	"go.opentelemetry.io/otel/exporters/metric/prometheus"
 	"go.opentelemetry.io/otel/label"
+	"go.opentelemetry.io/otel/metric"
 	"go.opentelemetry.io/otel/sdk/metric/controller/pull"
 	"net/http"
 )

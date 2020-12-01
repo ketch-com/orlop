@@ -60,7 +60,7 @@ func Serve(ctx context.Context, serviceName string, options ...ServerOption) err
 		err = option.apply(ctx, serverOptions)
 		if err != nil {
 			err = errors.Wrap(err, "serve: failed to apply options")
-			span.RecordError(ctx, err)
+			span.RecordError(err)
 			return err
 		}
 	}
@@ -87,7 +87,7 @@ func Serve(ctx context.Context, serviceName string, options ...ServerOption) err
 		err = option.addHandler(ctx, serverOptions, mux)
 		if err != nil {
 			err = errors.Wrap(err, "serve: failed to add handler")
-			span.RecordError(ctx, err)
+			span.RecordError(err)
 			return err
 		}
 	}
@@ -97,7 +97,7 @@ func Serve(ctx context.Context, serviceName string, options ...ServerOption) err
 	ln, err := net.Listen("tcp", serverOptions.addr)
 	if err != nil {
 		err = errors.Wrap(err, "serve: failed to listen")
-		span.RecordError(ctx, err)
+		span.RecordError(err)
 		return err
 	}
 
@@ -108,7 +108,7 @@ func Serve(ctx context.Context, serviceName string, options ...ServerOption) err
 			ln.Close()
 
 			err = errors.Wrap(err, "serve: failed to get server TLS config")
-			span.RecordError(ctx, err)
+			span.RecordError(err)
 			return err
 		}
 
@@ -130,7 +130,7 @@ func Serve(ctx context.Context, serviceName string, options ...ServerOption) err
 
 	if err = srv.Serve(ln); err != nil {
 		err = errors.Wrap(err, "serve: failed to serve")
-		span.RecordError(ctx, err)
+		span.RecordError(err)
 		return err
 	}
 

@@ -63,7 +63,7 @@ func GenerateCertificatesContext(ctx context.Context, vault HasVaultConfig, cfg 
 	secret, err := client.WriteContext(ctx, cfg.GetPath(), params)
 	if err != nil {
 		err = errors.Wrap(err, "generate: failed to write to Vault")
-		span.RecordError(ctx, err)
+		span.RecordError(err)
 		return err
 	}
 
