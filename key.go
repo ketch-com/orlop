@@ -45,6 +45,11 @@ func LoadKeyContext(ctx context.Context, cfg HasKeyConfig, vault HasVaultConfig,
 	ctx, span := tracer.Start(ctx, "LoadKey")
 	defer span.End()
 
+	// If the key is not enabled, return an empty byte array
+	if en, ok := cfg.(HasEnabled); ok && !en.GetEnabled() {
+		return nil, nil
+	}
+
 	fields := logrus.Fields{
 		"key":           which,
 		"vault.enabled": vault != nil && vault.GetEnabled(),
