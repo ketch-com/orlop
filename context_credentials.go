@@ -22,17 +22,25 @@ package orlop
 
 import (
 	"context"
+	"fmt"
 	"google.golang.org/grpc/metadata"
 )
 
 // ContextCredentials provides credentials to the client based on the context
 type ContextCredentials struct{}
 
+// AuthToken is the context key to retrieve the Authentication token from context
+var AuthToken struct{}
+
 // GetRequestMetadata returns authorization metadata
 func (j ContextCredentials) GetRequestMetadata(ctx context.Context, uri ...string) (map[string]string, error) {
 	if md, ok := metadata.FromIncomingContext(ctx); ok && len(md.Get("Authorization")) > 0 {
 		return map[string]string{
 			"authorization": md.Get("Authorization")[0],
+		}, nil
+	} else if ctx.Value(AuthToken) != nil {
+		return map[string]string{
+			"authorization": fmt.Sprintf("%v", ctx.Value(AuthToken)),
 		}, nil
 	}
 
