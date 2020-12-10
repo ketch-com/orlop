@@ -22,7 +22,6 @@ package orlop
 
 import (
 	"context"
-	"fmt"
 	"google.golang.org/grpc/metadata"
 )
 
@@ -38,9 +37,9 @@ func (j ContextCredentials) GetRequestMetadata(ctx context.Context, uri ...strin
 		return map[string]string{
 			"authorization": md.Get("Authorization")[0],
 		}, nil
-	} else if ctx.Value(AuthToken) != nil {
+	} else if authToken, ok := ctx.Value(AuthToken).(string); ok {
 		return map[string]string{
-			"authorization": fmt.Sprintf("%v", ctx.Value(AuthToken)),
+			"authorization": authToken,
 		}, nil
 	}
 
