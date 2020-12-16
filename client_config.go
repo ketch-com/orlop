@@ -20,7 +20,11 @@
 
 package orlop
 
-import "time"
+import (
+	"fmt"
+	"go.ketch.com/lib/orlop/version"
+	"time"
+)
 
 // HasClientConfig denotes that an object provides client configuration
 type HasClientConfig interface {
@@ -45,6 +49,8 @@ type HasClientConfig interface {
 type ClientConfig struct {
 	Name                  string
 	URL                   string
+	Host                  string
+	Port                  int32
 	Token                 TokenConfig
 	TLS                   TLSConfig
 	Headers               map[string]string
@@ -55,8 +61,8 @@ type ClientConfig struct {
 	MaxCallRecvMsgSize    int
 	MaxCallSendMsgSize    int
 	MinConnectTimeout     time.Duration
-	Block                 bool
 	ConnTimeout           time.Duration
+	Block                 bool
 	UserAgent             string
 }
 
@@ -70,6 +76,14 @@ func (c ClientConfig) GetName() string {
 
 // GetURL returns the URL to contact the server
 func (c ClientConfig) GetURL() string {
+	if len(c.URL) == 0 && len(c.Host) > 0 {
+		if c.Port != 0 {
+			return fmt.Sprintf("%s:%d", c.Host, c.Port)
+		}
+
+		return c.Host
+	}
+
 	return c.URL
 }
 
@@ -135,5 +149,9 @@ func (c ClientConfig) GetConnTimeout() time.Duration {
 
 // GetUserAgent returns the user agent
 func (c ClientConfig) GetUserAgent() string {
+	if len(c.UserAgent) == 0 {
+		return fmt.Sprintf("%s/%s", version.Name, version.Version)
+	}
+
 	return c.UserAgent
 }
