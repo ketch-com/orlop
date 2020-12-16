@@ -54,8 +54,8 @@ func ConnectContext(ctx context.Context, cfg HasClientConfig, vault HasVaultConf
 		return nil, err
 	}
 
-	opts = append(opts, grpc.WithUnaryInterceptor(otelgrpc.UnaryClientInterceptor()))
-	opts = append(opts, grpc.WithStreamInterceptor(otelgrpc.StreamClientInterceptor()))
+	opts = append(opts, grpc.WithChainUnaryInterceptor(otelgrpc.UnaryClientInterceptor()))
+	opts = append(opts, grpc.WithChainStreamInterceptor(otelgrpc.StreamClientInterceptor()))
 
 	if cfg.GetTLS().GetEnabled() {
 		t, err := NewClientTLSConfigContext(ctx, cfg.GetTLS(), vault)
