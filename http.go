@@ -1,0 +1,213 @@
+package orlop
+
+import (
+	"bytes"
+	"context"
+	"encoding/json"
+	"fmt"
+	"go.ketch.com/lib/orlop/errors"
+	"io"
+	"net/http"
+	"path"
+)
+
+// HttpClient provides a wrapper around http.Client, providing automatic TLS setup and header management
+type HttpClient struct {
+	cfg   HasClientConfig
+	cli   *http.Client
+	token []byte
+}
+
+// NewHttpClient creates a new HttpClient
+func NewHttpClient(ctx context.Context, cfg HasClientConfig, vault HasVaultConfig) (*HttpClient, error) {
+	ct, err := NewClientTLSConfigContext(ctx, cfg.GetTLS(), vault)
+	if err != nil {
+		return nil, err
+	}
+
+	httpCli := &HttpClient{
+		cfg: cfg,
+		cli: &http.Client{
+			Transport: &http.Transport{
+				TLSClientConfig:        ct,
+				IdleConnTimeout:        cfg.GetConnTimeout(),
+				WriteBufferSize:        cfg.GetWriteBufferSize(),
+				ReadBufferSize:         cfg.GetReadBufferSize(),
+			},
+		},
+	}
+
+	if cfg.GetToken() != nil && cfg.GetToken().GetShared() != nil {
+		if httpCli.token, err = LoadKeyContext(ctx, cfg.GetToken().GetShared(), vault, "shared"); err != nil {
+			return nil, err
+		}
+	}
+
+	return httpCli, nil
+}
+
+// Do executes the request
+func (c *HttpClient) Do(req *http.Request) (*http.Response, error) {
+	for k, v := range c.cfg.GetHeaders() {
+		req.Header.Add(k, v)
+	}
+
+	req.Header.Set("User-Agent", c.cfg.GetUserAgent())
+	if c.token != nil {
+		req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", string(c.token)))
+	}
+
+	return c.cli.Do(req)
+}
+
+// Get performs a GET against the given relative url
+func (c *HttpClient) Get(ctx context.Context, url string) (resp *http.Response, err error) {
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, path.Join(c.cfg.GetURL(), url), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return c.Do(req)
+}
+
+// GetJSON performs a GET against the given relative url and returns the results unmarshalled from JSON
+func (c *HttpClient) GetJSON(ctx context.Context, url string, out interface{}) error {
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, path.Join(c.cfg.GetURL(), url), nil)
+	if err != nil {
+		return err
+	}
+
+	req.Header.Set("Accept", "application/json")
+
+	resp, err := c.Do(req)
+	if err != nil {
+		return err
+	}
+
+	defer resp.Body.Close()
+
+	if err = c.handleError(resp); err != nil {
+		return err
+	}
+
+	return json.NewDecoder(resp.Body).Decode(out)
+}
+
+// Head performs a HEAD against the given relative url
+func (c *HttpClient) Head(ctx context.Context, url string) (resp *http.Response, err error) {
+	req, err := http.NewRequestWithContext(ctx, http.MethodHead, path.Join(c.cfg.GetURL(), url), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return c.Do(req)
+}
+
+// Post performs a POST against the given relative url
+func (c *HttpClient) Post(ctx context.Context, url, contentType string, body io.Reader) (resp *http.Response, err error) {
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, path.Join(c.cfg.GetURL(), url), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Set("Content-Type", contentType)
+
+	return c.Do(req)
+}
+
+// PostJSON performs a POST against the given relative url using the JSON body and returns JSON
+func (c *HttpClient) PostJSON(ctx context.Context, url string, in interface{}, out interface{}) error {
+	b, err := json.Marshal(in)
+	if err != nil {
+		return err
+	}
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, path.Join(c.cfg.GetURL(), url), bytes.NewBuffer(b))
+	if err != nil {
+		return err
+	}
+
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Accept", "application/json")
+
+	resp, err := c.Do(req)
+	if err != nil {
+		return err
+	}
+
+	defer resp.Body.Close()
+
+	if err = c.handleError(resp); err != nil {
+		return err
+	}
+
+	return json.NewDecoder(resp.Body).Decode(out)
+}
+
+// Put performs a PUT against the given relative url
+func (c *HttpClient) Put(ctx context.Context, url, contentType string, body io.Reader) (resp *http.Response, err error) {
+	req, err := http.NewRequestWithContext(ctx, http.MethodPut, path.Join(c.cfg.GetURL(), url), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Set("Content-Type", contentType)
+
+	return c.Do(req)
+}
+
+// PutJSON performs a PUT against the given relative url using the JSON body and returns JSON
+func (c *HttpClient) PutJSON(ctx context.Context, url string, in interface{}, out interface{}) error {
+	b, err := json.Marshal(in)
+	if err != nil {
+		return err
+	}
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodPut, path.Join(c.cfg.GetURL(), url), bytes.NewBuffer(b))
+	if err != nil {
+		return err
+	}
+
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Accept", "application/json")
+
+	resp, err := c.Do(req)
+	if err != nil {
+		return err
+	}
+
+	defer resp.Body.Close()
+
+	if err = c.handleError(resp); err != nil {
+		return err
+	}
+
+	return json.NewDecoder(resp.Body).Decode(out)
+}
+
+// Delete performs a DELETE against the given relative url
+func (c *HttpClient) Delete(ctx context.Context, url string) (resp *http.Response, err error) {
+	req, err := http.NewRequestWithContext(ctx, http.MethodDelete, path.Join(c.cfg.GetURL(), url), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return c.Do(req)
+}
+
+func (c *HttpClient) handleError(resp *http.Response) error {
+	if resp.StatusCode < 300 {
+		return nil
+	}
+
+	var v map[string]interface{}
+	if err := json.NewDecoder(resp.Body).Decode(v); err != nil {
+		return errors.New(resp.Status)
+	}
+
+	if errMsg, ok := v["error"]; ok {
+		return errors.Errorf("%v", errMsg)
+	}
+
+	return errors.New(resp.Status)
+}
