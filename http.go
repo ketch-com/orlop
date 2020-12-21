@@ -29,10 +29,10 @@ func NewHttpClient(ctx context.Context, cfg HasClientConfig, vault HasVaultConfi
 		cfg: cfg,
 		cli: &http.Client{
 			Transport: &http.Transport{
-				TLSClientConfig:        ct,
-				IdleConnTimeout:        cfg.GetConnTimeout(),
-				WriteBufferSize:        cfg.GetWriteBufferSize(),
-				ReadBufferSize:         cfg.GetReadBufferSize(),
+				TLSClientConfig: ct,
+				IdleConnTimeout: cfg.GetConnTimeout(),
+				WriteBufferSize: cfg.GetWriteBufferSize(),
+				ReadBufferSize:  cfg.GetReadBufferSize(),
 			},
 		},
 	}
