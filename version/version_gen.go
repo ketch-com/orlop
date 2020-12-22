@@ -22,4 +22,3 @@ func String() string {
 	}
 	return fmt.Sprintf("%s %s", Version, s)
 }
-
