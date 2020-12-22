@@ -8,7 +8,7 @@ import (
 	"go.ketch.com/lib/orlop/errors"
 	"io"
 	"net/http"
-	"path"
+	"strings"
 )
 
 // HttpClient provides a wrapper around http.Client, providing automatic TLS setup and header management
@@ -62,7 +62,7 @@ func (c *HttpClient) Do(req *http.Request) (*http.Response, error) {
 
 // Get performs a GET against the given relative url
 func (c *HttpClient) Get(ctx context.Context, url string) (resp *http.Response, err error) {
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, path.Join(c.cfg.GetURL(), url), nil)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, c.join(c.cfg.GetURL(), url), nil)
 	if err != nil {
 		return nil, err
 	}
@@ -72,7 +72,7 @@ func (c *HttpClient) Get(ctx context.Context, url string) (resp *http.Response, 
 
 // GetJSON performs a GET against the given relative url and returns the results unmarshalled from JSON
 func (c *HttpClient) GetJSON(ctx context.Context, url string, out interface{}) error {
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, path.Join(c.cfg.GetURL(), url), nil)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, c.join(c.cfg.GetURL(), url), nil)
 	if err != nil {
 		return err
 	}
@@ -95,7 +95,7 @@ func (c *HttpClient) GetJSON(ctx context.Context, url string, out interface{}) e
 
 // Head performs a HEAD against the given relative url
 func (c *HttpClient) Head(ctx context.Context, url string) (resp *http.Response, err error) {
-	req, err := http.NewRequestWithContext(ctx, http.MethodHead, path.Join(c.cfg.GetURL(), url), nil)
+	req, err := http.NewRequestWithContext(ctx, http.MethodHead, c.join(c.cfg.GetURL(), url), nil)
 	if err != nil {
 		return nil, err
 	}
@@ -105,7 +105,7 @@ func (c *HttpClient) Head(ctx context.Context, url string) (resp *http.Response,
 
 // Post performs a POST against the given relative url
 func (c *HttpClient) Post(ctx context.Context, url, contentType string, body io.Reader) (resp *http.Response, err error) {
-	req, err := http.NewRequestWithContext(ctx, http.MethodPost, path.Join(c.cfg.GetURL(), url), body)
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, c.join(c.cfg.GetURL(), url), body)
 	if err != nil {
 		return nil, err
 	}
@@ -122,7 +122,7 @@ func (c *HttpClient) PostJSON(ctx context.Context, url string, in interface{}, o
 		return err
 	}
 
-	req, err := http.NewRequestWithContext(ctx, http.MethodPost, path.Join(c.cfg.GetURL(), url), bytes.NewBuffer(b))
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, c.join(c.cfg.GetURL(), url), bytes.NewBuffer(b))
 	if err != nil {
 		return err
 	}
@@ -146,7 +146,7 @@ func (c *HttpClient) PostJSON(ctx context.Context, url string, in interface{}, o
 
 // Put performs a PUT against the given relative url
 func (c *HttpClient) Put(ctx context.Context, url, contentType string, body io.Reader) (resp *http.Response, err error) {
-	req, err := http.NewRequestWithContext(ctx, http.MethodPut, path.Join(c.cfg.GetURL(), url), body)
+	req, err := http.NewRequestWithContext(ctx, http.MethodPut, c.join(c.cfg.GetURL(), url), body)
 	if err != nil {
 		return nil, err
 	}
@@ -163,7 +163,7 @@ func (c *HttpClient) PutJSON(ctx context.Context, url string, in interface{}, ou
 		return err
 	}
 
-	req, err := http.NewRequestWithContext(ctx, http.MethodPut, path.Join(c.cfg.GetURL(), url), bytes.NewBuffer(b))
+	req, err := http.NewRequestWithContext(ctx, http.MethodPut, c.join(c.cfg.GetURL(), url), bytes.NewBuffer(b))
 	if err != nil {
 		return err
 	}
@@ -187,7 +187,7 @@ func (c *HttpClient) PutJSON(ctx context.Context, url string, in interface{}, ou
 
 // Delete performs a DELETE against the given relative url
 func (c *HttpClient) Delete(ctx context.Context, url string) (resp *http.Response, err error) {
-	req, err := http.NewRequestWithContext(ctx, http.MethodDelete, path.Join(c.cfg.GetURL(), url), nil)
+	req, err := http.NewRequestWithContext(ctx, http.MethodDelete, c.join(c.cfg.GetURL(), url), nil)
 	if err != nil {
 		return nil, err
 	}
@@ -210,4 +210,10 @@ func (c *HttpClient) handleError(resp *http.Response) error {
 	}
 
 	return errors.New(resp.Status)
+}
+
+func (c *HttpClient) join(root, suffix string) string {
+	root = strings.TrimSuffix(root, "/")
+	suffix = strings.TrimPrefix(suffix, "/")
+	return root + "/" + suffix
 }
