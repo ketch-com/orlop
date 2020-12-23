@@ -41,6 +41,8 @@ func Connect(cfg HasClientConfig, vault HasVaultConfig) (*grpc.ClientConn, error
 
 // ConnectContext creates a new client from configuration
 func ConnectContext(ctx context.Context, cfg HasClientConfig, vault HasVaultConfig) (*grpc.ClientConn, error) {
+	var cancel context.CancelFunc = func() {}
+
 	ctx, span := tracer.Start(ctx, cfg.GetName())
 	defer span.End()
 
@@ -125,7 +127,8 @@ func ConnectContext(ctx context.Context, cfg HasClientConfig, vault HasVaultConf
 	}
 
 	if cfg.GetConnTimeout() > 0 {
-		ctx, _ = context.WithTimeout(ctx, cfg.GetConnTimeout())
+		ctx, cancel = context.WithTimeout(ctx, cfg.GetConnTimeout())
+		defer cancel()
 	}
 
 	ua := fmt.Sprintf("%s/%s", version.Name, version.Version)
