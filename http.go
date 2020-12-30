@@ -185,6 +185,47 @@ func (c *HttpClient) PutJSON(ctx context.Context, url string, in interface{}, ou
 	return json.NewDecoder(resp.Body).Decode(out)
 }
 
+// Patch performs a PATCH against the given relative url
+func (c *HttpClient) Patch(ctx context.Context, url, contentType string, body io.Reader) (resp *http.Response, err error) {
+	req, err := http.NewRequestWithContext(ctx, http.MethodPatch, c.join(c.cfg.GetURL(), url), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Set("Content-Type", contentType)
+
+	return c.Do(req)
+}
+
+// PatchJSON performs a PATCH against the given relative url using the JSON body and returns JSON
+func (c *HttpClient) PatchJSON(ctx context.Context, url string, in interface{}, out interface{}) error {
+	b, err := json.Marshal(in)
+	if err != nil {
+		return err
+	}
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodPatch, c.join(c.cfg.GetURL(), url), bytes.NewBuffer(b))
+	if err != nil {
+		return err
+	}
+
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Accept", "application/json")
+
+	resp, err := c.Do(req)
+	if err != nil {
+		return err
+	}
+
+	defer resp.Body.Close()
+
+	if err = c.handleError(resp); err != nil {
+		return err
+	}
+
+	return json.NewDecoder(resp.Body).Decode(out)
+}
+
 // Delete performs a DELETE against the given relative url
 func (c *HttpClient) Delete(ctx context.Context, url string) (resp *http.Response, err error) {
 	req, err := http.NewRequestWithContext(ctx, http.MethodDelete, c.join(c.cfg.GetURL(), url), nil)
