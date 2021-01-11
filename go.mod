@@ -7,7 +7,7 @@ require (
 	github.com/felixge/httpsnoop v1.0.1
 	github.com/frankban/quicktest v1.7.2 // indirect
 	github.com/go-chi/chi v4.1.2+incompatible
-	github.com/gogo/protobuf v1.3.1
+	github.com/gogo/protobuf v1.3.2
 	github.com/golang/protobuf v1.4.3
 	github.com/golang/snappy v0.0.2 // indirect
 	github.com/grpc-ecosystem/grpc-gateway v1.16.0
