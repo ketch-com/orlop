@@ -28,9 +28,9 @@ require (
 	go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc v0.14.0
 	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.14.0
 	go.opentelemetry.io/contrib/instrumentation/runtime v0.14.0
-	go.opentelemetry.io/otel v0.14.0
+	go.opentelemetry.io/otel v0.16.0
 	go.opentelemetry.io/otel/exporters/metric/prometheus v0.14.0
-	go.opentelemetry.io/otel/sdk v0.14.0
+	go.opentelemetry.io/otel/sdk v0.16.0 // indirect
 	golang.org/x/crypto v0.0.0-20201124201722-c8d3bf9c5392 // indirect
 	golang.org/x/net v0.0.0-20201110031124-69a78807bb2b // indirect
 	golang.org/x/sys v0.0.0-20201201145000-ef89a241ccb3 // indirect
