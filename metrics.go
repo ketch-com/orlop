@@ -26,7 +26,7 @@ import (
 	"go.opentelemetry.io/otel/exporters/metric/prometheus"
 	"go.opentelemetry.io/otel/label"
 	"go.opentelemetry.io/otel/metric"
-	"go.opentelemetry.io/otel/sdk/metric/controller/pull"
+	"go.opentelemetry.io/otel/sdk/metric/controller/basic"
 	"net/http"
 )
 
@@ -77,7 +77,7 @@ func NewMetricsHandler() http.Handler {
 				5,
 			},
 		},
-		pull.WithResource(nil),
+		basic.WithResource(nil),
 	)
 	if err != nil {
 		log.Fatal(err)
