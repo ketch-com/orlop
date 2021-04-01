@@ -23,8 +23,8 @@ package orlop
 import (
 	"github.com/felixge/httpsnoop"
 	"go.ketch.com/lib/orlop/log"
+	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/exporters/metric/prometheus"
-	"go.opentelemetry.io/otel/label"
 	"go.opentelemetry.io/otel/metric"
 	"go.opentelemetry.io/otel/sdk/metric/controller/basic"
 	"net/http"
@@ -43,14 +43,14 @@ func Metrics(next http.Handler) http.Handler {
 	}
 
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		method := label.String("method", r.Method)
-		route := label.String("route", r.URL.Path)
+		method := attribute.String("method", r.Method)
+		route := attribute.String("route", r.URL.Path)
 
 		inflightRequests.Add(r.Context(), 1, method, route)
 		defer inflightRequests.Add(r.Context(), -1, method, route)
 
 		m := httpsnoop.CaptureMetrics(next, w, r)
-		requestDuration.Record(r.Context(), m.Duration.Seconds(), method, route, label.Int("status_code", m.Code))
+		requestDuration.Record(r.Context(), m.Duration.Seconds(), method, route, attribute.Int("status_code", m.Code))
 	})
 }
 
