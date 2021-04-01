@@ -29,7 +29,7 @@ import (
 	"github.com/sirupsen/logrus"
 	"go.ketch.com/lib/orlop/errors"
 	"go.ketch.com/lib/orlop/log"
-	"go.opentelemetry.io/otel/label"
+	"go.opentelemetry.io/otel/attribute"
 	"io/ioutil"
 )
 
@@ -60,7 +60,7 @@ func LoadKeyContext(ctx context.Context, cfg HasKeyConfig, vault HasVaultConfig,
 	if len(cfg.GetFile()) > 0 {
 		method = "file"
 		fields["key.file"] = cfg.GetFile()
-		span.SetAttributes(label.String("key.file", cfg.GetFile()))
+		span.SetAttributes(attribute.String("key.file", cfg.GetFile()))
 	}
 
 	if len(cfg.GetID()) > 0 {
@@ -68,17 +68,17 @@ func LoadKeyContext(ctx context.Context, cfg HasKeyConfig, vault HasVaultConfig,
 			method = "id"
 		}
 		fields["key.id"] = cfg.GetID()
-		span.SetAttributes(label.String("key.id", cfg.GetID()))
+		span.SetAttributes(attribute.String("key.id", cfg.GetID()))
 	}
 
 	if len(cfg.GetSecret()) > 0 {
 		method = "secret"
 		fields["key.secret"] = "*********"
-		span.SetAttributes(label.String("key.secret", "*********"))
+		span.SetAttributes(attribute.String("key.secret", "*********"))
 	}
 
 	fields["method"] = method
-	span.SetAttributes(label.String("key.method", method))
+	span.SetAttributes(attribute.String("key.method", method))
 	l := log.WithFields(fields)
 
 	switch method {

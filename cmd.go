@@ -28,7 +28,7 @@ import (
 	"github.com/spf13/pflag"
 	"go.ketch.com/lib/orlop/log"
 	"go.opentelemetry.io/contrib/instrumentation/runtime"
-	"go.opentelemetry.io/otel/label"
+	"go.opentelemetry.io/otel/attribute"
 	stdlog "log"
 	"os"
 	"reflect"
@@ -75,7 +75,7 @@ func Run(prefix string, runner interface{}, cfg interface{}) {
 
 	// First figure out the environment
 	env := Environment(envFlag)
-	span.SetAttributes(label.String("env", env.String()))
+	span.SetAttributes(attribute.String("env", env.String()))
 
 	// Load the environment from files
 	loadEnvironment(env, configFiles...)
