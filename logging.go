@@ -37,7 +37,9 @@ func (l *loggingMiddleware) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	headers := make(map[string][]string)
 	for _, header := range l.cfg.Headers {
-		headers[header] = r.Header[header]
+		if v, ok := r.Header[header]; ok {
+			headers[header] = v
+		}
 	}
 
 	fields := logrus.Fields{
