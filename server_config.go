@@ -1,4 +1,4 @@
-// Copyright (c) 2020 Ketch, Inc.
+// Copyright (c) 2020 Ketch Kloud, Inc.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -20,12 +20,19 @@
 
 package orlop
 
+// HttpLoggingConfig provides configuration for HTTP logging
+type HttpLoggingConfig struct {
+	Enabled bool
+	Headers []string `config:",default=X-Forwarded-For"`
+}
+
 // HasServerConfig denotes an object provides server configuration
 type HasServerConfig interface {
 	GetBind() string
 	GetListen() uint
 	GetTLS() HasTLSConfig
 	GetLoopback() HasClientConfig
+	GetLogging() HttpLoggingConfig
 }
 
 // ServerConfig is standard configuration of most server commands
@@ -34,6 +41,7 @@ type ServerConfig struct {
 	Listen   uint   `config:"listen,default=5000"`
 	TLS      TLSConfig
 	Loopback ClientConfig
+	Logging  HttpLoggingConfig
 }
 
 // GetBind returns the address to bind to
@@ -54,4 +62,9 @@ func (c ServerConfig) GetTLS() HasTLSConfig {
 // GetLoopback returns GRPC gateway loopback client configuration
 func (c ServerConfig) GetLoopback() HasClientConfig {
 	return c.Loopback
+}
+
+// GetLogging returns logging configuration
+func (c ServerConfig) GetLogging() HttpLoggingConfig {
+	return c.Logging
 }
