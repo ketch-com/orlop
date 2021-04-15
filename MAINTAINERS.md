@@ -4,4 +4,4 @@ See [CONTRIBUTING.md](https://github.com/ketch-com/orlop/blob/main/.github/CONTR
 for general contribution guidelines.
 
 ## Maintainers (in alphabetical order)
-- [sethyates](https://github.com/sethyates), Ketch, Inc.
+- [sethyates](https://github.com/sethyates), Ketch Kloud, Inc.

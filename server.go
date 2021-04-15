@@ -1,4 +1,4 @@
-// Copyright (c) 2020 Ketch, Inc.
+// Copyright (c) 2020 Ketch Kloud, Inc.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -77,6 +77,9 @@ func Serve(ctx context.Context, serviceName string, options ...ServerOption) err
 	// Add standard middleware
 	mux.Use(Metrics)
 	mux.Use(CORS)
+	if serverOptions.config.Logging.Enabled {
+		mux.Use(Logging(serverOptions.config.Logging))
+	}
 
 	// Add any middlewares registered
 	if len(serverOptions.middlewares) > 0 {
