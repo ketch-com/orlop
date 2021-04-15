@@ -81,7 +81,9 @@ func (r *Runner) SetupRoot(cmd *cobra.Command) *Runner {
 
 // Setup sets up the Command
 func (r *Runner) Setup(cmd *cobra.Command) *Runner {
-	cmd.RunE = r.runE
+	if cmd.RunE == nil {
+		cmd.RunE = r.runE
+	}
 
 	cmd.AddCommand(&cobra.Command{
 		Use:   "init",
@@ -154,16 +156,14 @@ func (r *Runner) runE(cmd *cobra.Command, args []string) error {
 	// First figure out the environment
 	span.SetAttributes(attribute.String("env", Environment(envFlag).String()))
 
-	ctx = log.ToContext(ctx, log.New())
-
 	// Unmarshal the configuration
 	if err = Unmarshal(r.prefix, r.cfg); err != nil {
-		log.FromContext(ctx).Fatal(err)
+		return errors.Wrap(err, "unable to unmarshal configuration")
 	}
 
 	// Call the runner
 	out := reflect.ValueOf(r.runner).Call([]reflect.Value{
-		reflect.ValueOf(ctx),
+		reflect.ValueOf(log.ToContext(ctx, log.New())),
 		reflect.ValueOf(r.cfg),
 	})
 
