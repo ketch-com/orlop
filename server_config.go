@@ -33,15 +33,17 @@ type HasServerConfig interface {
 	GetTLS() HasTLSConfig
 	GetLoopback() HasClientConfig
 	GetLogging() HttpLoggingConfig
+	GetProfiling() HasEnabled
 }
 
 // ServerConfig is standard configuration of most server commands
 type ServerConfig struct {
-	Bind     string `config:"bind,default=0.0.0.0"`
-	Listen   uint   `config:"listen,default=5000"`
-	TLS      TLSConfig
-	Loopback ClientConfig
-	Logging  HttpLoggingConfig
+	Bind      string `config:"bind,default=0.0.0.0"`
+	Listen    uint   `config:"listen,default=5000"`
+	TLS       TLSConfig
+	Loopback  ClientConfig
+	Logging   HttpLoggingConfig
+	Profiling Enabled
 }
 
 // GetBind returns the address to bind to
@@ -67,4 +69,9 @@ func (c ServerConfig) GetLoopback() HasClientConfig {
 // GetLogging returns logging configuration
 func (c ServerConfig) GetLogging() HttpLoggingConfig {
 	return c.Logging
+}
+
+// GetProfiling returns the profiling configuration
+func (c ServerConfig) GetProfiling() HasEnabled {
+	return c.Profiling
 }
