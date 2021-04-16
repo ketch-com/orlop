@@ -55,6 +55,10 @@ func Serve(ctx context.Context, serviceName string, options ...ServerOption) err
 		WithMetrics(NewMetricsHandler()),
 	}, options...)
 
+	if serverOptions.config.Profiling.GetEnabled() {
+		options = append(options, WithProfiler())
+	}
+
 	// Process all server options (which may override any of the above)
 	for _, option := range options {
 		err = option.apply(ctx, serverOptions)
