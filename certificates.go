@@ -25,15 +25,15 @@ import (
 	"go.ketch.com/lib/orlop/errors"
 )
 
-// GenerateCertificates calls Vault to generate a certificate
+// GenerateCertificatesContext calls Vault to generate a certificate
 //
-// deprecated: use GenerateCertificatesContext
-func GenerateCertificates(vault HasVaultConfig, cfg HasCertGenerationConfig, cert *[]byte, key *[]byte) error {
-	return GenerateCertificatesContext(context.TODO(), vault, cfg, cert, key)
+// deprecated: use GenerateCertificates
+func GenerateCertificatesContext(ctx context.Context, vault HasVaultConfig, cfg HasCertGenerationConfig, cert *[]byte, key *[]byte) error {
+	return GenerateCertificates(ctx, vault, cfg, cert, key)
 }
 
-// GenerateCertificatesContext calls Vault to generate a certificate
-func GenerateCertificatesContext(ctx context.Context, vault HasVaultConfig, cfg HasCertGenerationConfig, cert *[]byte, key *[]byte) error {
+// GenerateCertificates calls Vault to generate a certificate
+func GenerateCertificates(ctx context.Context, vault HasVaultConfig, cfg HasCertGenerationConfig, cert *[]byte, key *[]byte) error {
 	ctx, span := tracer.Start(ctx, "GenerateCertificates")
 	defer span.End()
 
@@ -43,7 +43,7 @@ func GenerateCertificatesContext(ctx context.Context, vault HasVaultConfig, cfg 
 	}
 
 	// Connect to Vault
-	client, err := NewVaultContext(ctx, vault)
+	client, err := NewVault(ctx, vault)
 	if err != nil {
 		return err
 	}
@@ -60,7 +60,7 @@ func GenerateCertificatesContext(ctx context.Context, vault HasVaultConfig, cfg 
 	}
 
 	// Write the params to the path to generate the certificate
-	secret, err := client.WriteContext(ctx, cfg.GetPath(), params)
+	secret, err := client.Write(ctx, cfg.GetPath(), params)
 	if err != nil {
 		err = errors.Wrap(err, "generate: failed to write to Vault")
 		span.RecordError(err)

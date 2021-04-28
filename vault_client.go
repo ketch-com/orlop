@@ -22,11 +22,20 @@ package orlop
 
 import (
 	"context"
+	"encoding/base64"
+	"encoding/json"
+	"fmt"
 	vault "github.com/hashicorp/vault/api"
 	"go.ketch.com/lib/orlop/errors"
 	"go.ketch.com/lib/orlop/log"
 	"net/http"
 	"path"
+	"reflect"
+	"strings"
+)
+
+var (
+	errNotFound = errors.New("not found")
 )
 
 // VaultClient is a Vault client
@@ -35,15 +44,15 @@ type VaultClient struct {
 	client *vault.Client
 }
 
-// NewVault connects to Vault given the configuration
+// NewVaultContext connects to Vault given the configuration
 //
-// deprecated: use NewVaultContext instead
-func NewVault(cfg HasVaultConfig) (*VaultClient, error) {
-	return NewVaultContext(context.TODO(), cfg)
+// deprecated: use NewVault instead
+func NewVaultContext(ctx context.Context, cfg HasVaultConfig) (*VaultClient, error) {
+	return NewVault(ctx, cfg)
 }
 
-// NewVaultContext connects to Vault given the configuration
-func NewVaultContext(ctx context.Context, cfg HasVaultConfig) (*VaultClient, error) {
+// NewVault connects to Vault given the configuration
+func NewVault(ctx context.Context, cfg HasVaultConfig) (*VaultClient, error) {
 	var err error
 
 	// First check if Vault is enabled in config, returning if not
@@ -65,7 +74,7 @@ func NewVaultContext(ctx context.Context, cfg HasVaultConfig) (*VaultClient, err
 
 		t := http.DefaultTransport.(*http.Transport).Clone()
 
-		t.TLSClientConfig, err = NewClientTLSConfigContext(ctx, cfg.GetTLS(), &VaultConfig{Enabled: false})
+		t.TLSClientConfig, err = NewClientTLSConfig(ctx, cfg.GetTLS(), &VaultConfig{Enabled: false})
 		if err != nil {
 			return nil, err
 		}
@@ -88,15 +97,107 @@ func NewVaultContext(ctx context.Context, cfg HasVaultConfig) (*VaultClient, err
 	}, nil
 }
 
-// Reads a secret at the given path
+// ReadContext returns a secret at the given path
 //
-// deprecated: use ReadContext instead
-func (c VaultClient) Read(p string) (*vault.Secret, error) {
-	return c.ReadContext(context.TODO(), p)
+// deprecated: use Read instead
+func (c VaultClient) ReadContext(ctx context.Context, p string) (*vault.Secret, error) {
+	return c.Read(ctx, p)
 }
 
-// ReadContext returns a secret at the given path
-func (c VaultClient) ReadContext(ctx context.Context, p string) (*vault.Secret, error) {
+// ReadObject returns a secret at the given path
+func (c VaultClient) ReadObject(ctx context.Context, p string, out interface{}) error {
+	v := reflect.ValueOf(out)
+	if v.Kind() != reflect.Ptr {
+		panic("out must be a pointer")
+	}
+
+	for v.Kind() == reflect.Ptr {
+		v = v.Elem()
+	}
+
+	sec, err := c.Read(ctx, p)
+	if err != nil {
+		return err
+	}
+
+	if sec == nil || sec.Data == nil {
+		return errNotFound
+	}
+
+	t := v.Type()
+	for n := 0; n < t.NumField(); n++ {
+		ft := t.Field(n)
+
+		name := ft.Name
+
+		parts := strings.Split(ft.Tag.Get("json"), ",")
+		if len(parts) > 0 && len(parts[0]) > 0 {
+			name = parts[0]
+		}
+
+		if val, ok := sec.Data[name]; ok {
+			f := v.Field(n)
+			switch f.Kind() {
+			case reflect.String:
+				if s, ok := val.(string); ok {
+					f.SetString(s)
+				} else {
+					f.SetString(fmt.Sprintf("%v", val))
+				}
+
+			case reflect.Bool:
+				if b, ok := val.(bool); ok {
+					f.SetBool(b)
+				}
+
+			case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
+				if j, ok := val.(json.Number); ok {
+					if i, err := j.Int64(); err == nil {
+						f.SetInt(i)
+					}
+				}
+
+			case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
+				if j, ok := val.(json.Number); ok {
+					if i, err := j.Int64(); err == nil {
+						f.SetUint(uint64(i))
+					}
+				}
+
+			case reflect.Float32, reflect.Float64:
+				if j, ok := val.(json.Number); ok {
+					if i, err := j.Float64(); err == nil {
+						f.SetFloat(i)
+					}
+				}
+
+			case reflect.Slice:
+				if j, ok := val.(string); ok {
+					b, err := base64.StdEncoding.DecodeString(j)
+					if err != nil {
+						return err
+					}
+
+					f.SetBytes(b)
+				} else if j, ok := val.([]interface{}); ok {
+					sl := reflect.MakeSlice(f.Type(), 0, len(j))
+					for _, sv := range j {
+						sl = reflect.Append(sl, reflect.ValueOf(sv))
+					}
+					f.Set(sl)
+				}
+
+			default:
+				panic(fmt.Sprintf("%s not supported", f.Type()))
+			}
+		}
+	}
+
+	return nil
+}
+
+// Read returns a secret at the given path
+func (c VaultClient) Read(ctx context.Context, p string) (*vault.Secret, error) {
 	ctx, span := tracer.Start(ctx, "Read")
 	defer span.End()
 
@@ -119,15 +220,106 @@ func (c VaultClient) ReadContext(ctx context.Context, p string) (*vault.Secret, 
 	return sec, nil
 }
 
-// Writes secret data at the given path
+// WriteContext writes secret data at the given path
 //
-// deprecated: use WriteContext instead
-func (c VaultClient) Write(p string, data map[string]interface{}) (*vault.Secret, error) {
-	return c.WriteContext(context.TODO(), p, data)
+// deprecated: use Write instead
+func (c VaultClient) WriteContext(ctx context.Context, p string, data map[string]interface{}) (*vault.Secret, error) {
+	return c.Write(ctx, p, data)
 }
 
-// WriteContext secret data at the given path
-func (c VaultClient) WriteContext(ctx context.Context, p string, data map[string]interface{}) (*vault.Secret, error) {
+// WriteObject writes secret data at the given path from an object
+func (c VaultClient) WriteObject(ctx context.Context, p string, in interface{}) error {
+	m := make(map[string]interface{})
+
+	v := reflect.ValueOf(in)
+	if v.Kind() != reflect.Ptr && v.Kind() != reflect.Struct {
+		panic("in must be a pointer or struct")
+	}
+
+	for v.Kind() == reflect.Ptr {
+		v = v.Elem()
+	}
+
+	if v.Kind() != reflect.Struct {
+		panic("in must be a pointer or struct")
+	}
+
+	t := v.Type()
+	for n := 0; n < t.NumField(); n++ {
+		ft := t.Field(n)
+
+		name := ft.Name
+
+		parts := strings.Split(ft.Tag.Get("json"), ",")
+		if len(parts) > 0 && len(parts[0]) > 0 {
+			name = parts[0]
+		}
+
+		f := v.Field(n)
+		switch f.Kind() {
+		case reflect.String:
+			m[name] = f.String()
+
+		case reflect.Bool:
+			m[name] = f.Bool()
+
+		case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
+			m[name] = f.Int()
+
+		case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
+			m[name] = f.Uint()
+
+		case reflect.Float32, reflect.Float64:
+			m[name] = f.Float()
+
+		case reflect.Slice:
+			ftek := f.Type().Elem().Kind()
+			if ftek == reflect.Uint8 {
+				m[name] = base64.StdEncoding.EncodeToString(f.Bytes())
+			} else {
+				var sl []interface{}
+
+				for n := 0; n < f.Len(); n++ {
+					fn := f.Index(n)
+					var fv interface{}
+
+					switch ftek {
+					case reflect.String:
+						fv = fn.String()
+
+					case reflect.Bool:
+						fv = fn.Bool()
+
+					case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
+						fv = fn.Int()
+
+					case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
+						fv = fn.Uint()
+
+					case reflect.Float32, reflect.Float64:
+						fv = fn.Float()
+					}
+
+					sl = append(sl, fv)
+				}
+
+				m[name] = sl
+			}
+
+		default:
+			panic(fmt.Sprintf("%s not supported", f.Type()))
+		}
+	}
+
+	if _, err := c.Write(ctx, p, m); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// Write secret data at the given path
+func (c VaultClient) Write(ctx context.Context, p string, data map[string]interface{}) (*vault.Secret, error) {
 	ctx, span := tracer.Start(ctx, "Write")
 	defer span.End()
 
@@ -149,13 +341,15 @@ func (c VaultClient) WriteContext(ctx context.Context, p string, data map[string
 	return sec, nil
 }
 
-// Delete deletes a secret at the given path
-func (c VaultClient) Delete(p string) error {
-	return c.DeleteContext(context.TODO(), p)
+// DeleteContext deletes a secret at the given path
+//
+// deprecated: use Delete instead
+func (c VaultClient) DeleteContext(ctx context.Context, p string) error {
+	return c.Delete(ctx, p)
 }
 
-// DeleteContext deletes a secret at the given path
-func (c VaultClient) DeleteContext(ctx context.Context, p string) error {
+// Delete a secret at the given path
+func (c VaultClient) Delete(ctx context.Context, p string) error {
 	ctx, span := tracer.Start(ctx, "Delete")
 	defer span.End()
 
@@ -173,6 +367,41 @@ func (c VaultClient) DeleteContext(ctx context.Context, p string) error {
 	}
 
 	return nil
+}
+
+func (c VaultClient) List(ctx context.Context, p string) ([]string, error) {
+	ctx, span := tracer.Start(ctx, "List")
+	defer span.End()
+
+	var keys []string
+
+	if c.client == nil {
+		return keys, nil
+	}
+
+	keyPath := c.prefix(p)
+
+	sec, err := c.client.Logical().List(keyPath)
+	if err != nil {
+		log.WithField("vault.path", keyPath).WithError(err).Trace("list failed")
+		span.RecordError(err)
+		return nil, errors.Wrap(err, "failed to list from Vault")
+	}
+
+	if sec == nil || sec.Data == nil || sec.Data["keys"] == nil {
+		return nil, nil
+	}
+
+	for _, key := range sec.Data["keys"].([]interface{}) {
+		keys = append(keys, key.(string))
+	}
+
+	return keys, nil
+}
+
+// IsNotFound returns true if the error means the object was not found
+func (c VaultClient) IsNotFound(err error) bool {
+	return err == errNotFound
 }
 
 func (c VaultClient) prefix(p string) string {
