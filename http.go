@@ -40,7 +40,7 @@ type HttpClient struct {
 
 // NewHttpClient creates a new HttpClient
 func NewHttpClient(ctx context.Context, cfg HasClientConfig, vault HasVaultConfig) (*HttpClient, error) {
-	ct, err := NewClientTLSConfigContext(ctx, cfg.GetTLS(), vault)
+	ct, err := NewClientTLSConfig(ctx, cfg.GetTLS(), vault)
 	if err != nil {
 		return nil, err
 	}
@@ -58,7 +58,7 @@ func NewHttpClient(ctx context.Context, cfg HasClientConfig, vault HasVaultConfi
 	}
 
 	if cfg.GetToken() != nil && cfg.GetToken().GetShared() != nil {
-		if httpCli.token, err = LoadKeyContext(ctx, cfg.GetToken().GetShared(), vault, "shared"); err != nil {
+		if httpCli.token, err = LoadKey(ctx, cfg.GetToken().GetShared(), vault, "shared"); err != nil {
 			return nil, err
 		}
 	}

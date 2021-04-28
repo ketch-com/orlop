@@ -60,7 +60,7 @@ func ConnectContext(ctx context.Context, cfg HasClientConfig, vault HasVaultConf
 	opts = append(opts, grpc.WithChainStreamInterceptor(otelgrpc.StreamClientInterceptor()))
 
 	if cfg.GetTLS().GetEnabled() {
-		t, err := NewClientTLSConfigContext(ctx, cfg.GetTLS(), vault)
+		t, err := NewClientTLSConfig(ctx, cfg.GetTLS(), vault)
 		if err != nil {
 			span.RecordError(err)
 			return nil, errors.Wrap(err, "client: failed to get client TLS config")
@@ -78,7 +78,7 @@ func ConnectContext(ctx context.Context, cfg HasClientConfig, vault HasVaultConf
 				ctx, span := tracer.Start(ctx, "TokenProvider")
 				defer span.End()
 
-				s, err := LoadKeyContext(ctx, shared, vault, "secret")
+				s, err := LoadKey(ctx, shared, vault, "secret")
 				if err != nil {
 					span.RecordError(err)
 					logger.WithError(err).Error("client: could not load secret key")
