@@ -95,14 +95,14 @@ func GetCredentialsContext(ctx context.Context, cfg HasCredentialsConfig, vault 
 		return nil, err
 	}
 
-	client, err := NewVaultContext(ctx, vault)
+	client, err := NewVault(ctx, vault)
 	if err != nil {
 		err := errors.Wrap(err, "credentials: could not connect to Vault")
 		span.RecordError(err)
 		return nil, err
 	}
 
-	s, err := client.ReadContext(ctx, cfg.GetID())
+	s, err := client.Read(ctx, cfg.GetID())
 	if err != nil {
 		err = errors.Wrap(err, "credentials: not found")
 		span.RecordError(err)

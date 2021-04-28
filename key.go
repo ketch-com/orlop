@@ -33,15 +33,15 @@ import (
 	"io/ioutil"
 )
 
-// LoadKey loads the key material based on the config
+// LoadKeyContext loads the key material based on the config
 //
-// deprecated: use LoadKeyContext
-func LoadKey(cfg HasKeyConfig, vault HasVaultConfig, which string) ([]byte, error) {
-	return LoadKeyContext(context.TODO(), cfg, vault, which)
+// deprecated: use LoadKey
+func LoadKeyContext(ctx context.Context, cfg HasKeyConfig, vault HasVaultConfig, which string) ([]byte, error) {
+	return LoadKey(ctx, cfg, vault, which)
 }
 
-// LoadKeyContext loads the key material based on the config
-func LoadKeyContext(ctx context.Context, cfg HasKeyConfig, vault HasVaultConfig, which string) ([]byte, error) {
+// LoadKey loads the key material based on the config
+func LoadKey(ctx context.Context, cfg HasKeyConfig, vault HasVaultConfig, which string) ([]byte, error) {
 	ctx, span := tracer.Start(ctx, "LoadKey")
 	defer span.End()
 
@@ -87,14 +87,14 @@ func LoadKeyContext(ctx context.Context, cfg HasKeyConfig, vault HasVaultConfig,
 		return cfg.GetSecret(), nil
 
 	case "id":
-		client, err := NewVaultContext(ctx, vault)
+		client, err := NewVault(ctx, vault)
 		if err != nil {
 			err = errors.Wrap(err, "key: could not connect to Vault")
 			span.RecordError(err)
 			return nil, err
 		}
 
-		s, err := client.ReadContext(ctx, cfg.GetID())
+		s, err := client.Read(ctx, cfg.GetID())
 		if err != nil {
 			err = errors.Wrap(err, "key: not found")
 			span.RecordError(err)
