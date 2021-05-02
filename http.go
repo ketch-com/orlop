@@ -262,7 +262,7 @@ func (c *HttpClient) handleError(resp *http.Response) error {
 	}
 
 	var v map[string]interface{}
-	if err := json.NewDecoder(resp.Body).Decode(v); err != nil {
+	if err := json.NewDecoder(resp.Body).Decode(&v); err != nil {
 		return errors.New(resp.Status)
 	}
 

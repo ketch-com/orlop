@@ -22,6 +22,7 @@ package orlop
 
 import (
 	"crypto/tls"
+	"encoding/pem"
 	"fmt"
 	"reflect"
 )
@@ -101,6 +102,29 @@ func CloneTLSConfig(cfg HasTLSConfig) TLSConfig {
 		Key:        cfg.GetKey(),
 		RootCA:     cfg.GetRootCA(),
 		Generate:   cfg.GetGenerate(),
+	}
+}
+
+// FromTLSConfig returns a TLSConfig for the given tls.Config
+func FromTLSConfig(t *tls.Config) TLSConfig {
+	if t == nil || len(t.Certificates) < 1 {
+		return TLSConfig{}
+	}
+
+	bb := t.Certificates[0].Certificate
+
+	b := pem.EncodeToMemory(&pem.Block{
+		Type:  "CERTIFICATE",
+		Bytes: bb[0],
+	})
+
+	return TLSConfig{
+		Enabled:  true,
+		Insecure: t.InsecureSkipVerify,
+		Override: t.ServerName,
+		Cert: KeyConfig{
+			Secret: b,
+		},
 	}
 }
 

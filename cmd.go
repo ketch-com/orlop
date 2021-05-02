@@ -132,7 +132,7 @@ func (r *Runner) preRunE(cmd *cobra.Command, args []string) error {
 	env := Environment(envFlag)
 
 	// Load the environment from files
-	loadEnvironment(env, configFiles...)
+	LoadEnvironment(env, configFiles...)
 
 	// Setup logging
 	r.SetupLogging(env, loglevelFlag)
@@ -179,10 +179,12 @@ func (r *Runner) runE(cmd *cobra.Command, args []string) error {
 	return nil
 }
 
+// Getenv returns the value of the environment variabled named `key`
 func (r *Runner) Getenv(key string) string {
 	return os.Getenv(strcase.ToScreamingSnake(strings.Join([]string{r.prefix, key}, "_")))
 }
 
+// SetupLogging sets up logging for the environment and the default log level
 func (r *Runner) SetupLogging(env Environment, loglevel string) {
 	switch loglevel {
 	case "fatal":

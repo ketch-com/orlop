@@ -23,13 +23,12 @@ package orlop
 import (
 	"context"
 	"encoding/json"
-	"github.com/golang/protobuf/proto"
 	"net/http"
 	"strings"
 )
 
 // HealthChecker provides the capability to check the health
-type HealthChecker func(ctx context.Context, check string) (proto.Message, error)
+type HealthChecker func(ctx context.Context, check string) (interface{}, error)
 
 // HealthHandler is a HTTP handler for checking health
 type HealthHandler struct {

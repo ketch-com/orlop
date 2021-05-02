@@ -22,22 +22,70 @@ package orlop
 
 import (
 	"context"
-	"crypto/tls"
 	"github.com/go-chi/chi"
-	"github.com/sirupsen/logrus"
 	"go.ketch.com/lib/orlop/errors"
 	"go.ketch.com/lib/orlop/log"
-	syslog "log"
-	"net"
-	"net/http"
+	"google.golang.org/grpc"
+	"net/http/httptest"
+	"reflect"
+	"runtime"
+	"strings"
+	"testing"
 )
 
-// Serve sets up the server and listens for requests
-func Serve(ctx context.Context, serviceName string, options ...ServerOption) error {
-	var err error
+// TestServer provides functionality for running a test server instance
+type TestServer struct {
+	*httptest.Server
+}
 
-	ctx, span := tracer.Start(ctx, "Serve")
-	defer span.End()
+// Connect opens a gRPC client connection to the server
+func (s *TestServer) Connect(ctx context.Context) (*grpc.ClientConn, error) {
+	return Connect(ctx, s.ClientConfig(), VaultConfig{})
+}
+
+// ClientConfig returns a proper ClientConfig for connecting to the server
+func (s *TestServer) ClientConfig() *ClientConfig {
+	return &ClientConfig{
+		URL: strings.TrimPrefix(s.URL, "https://"),
+		TLS: FromTLSConfig(s.TLS),
+	}
+}
+
+// GrpcTestFunc defines a function called for a GRPC test
+type GrpcTestFunc func(ctx context.Context, t *testing.T, conn *grpc.ClientConn)
+
+// RunGrpcTest runs a test function with a client GRPC connection connected to the given server
+func RunGrpcTest(ctx context.Context, t *testing.T, s *TestServer, name string, fn GrpcTestFunc) {
+	conn, err := s.Connect(ctx)
+	if err != nil {
+		t.Fatal(err)
+		return
+	}
+	defer conn.Close()
+
+	t.Run(name, func(t *testing.T) {
+		fn(ctx, t, conn)
+	})
+}
+
+// RunGrpcTestSuite runs a suite of GRPC tests
+func RunGrpcTestSuite(ctx context.Context, t *testing.T, serviceName string, options []ServerOption, testCases ...GrpcTestFunc) {
+	s, err := NewTestServer(ctx, serviceName, options...)
+	if err != nil {
+		t.Fatal(err)
+		return
+	}
+
+	defer s.Close()
+
+	for _, testCase := range testCases {
+		RunGrpcTest(ctx, t, s, runtime.FuncForPC(reflect.ValueOf(testCase).Pointer()).Name(), testCase)
+	}
+}
+
+// NewTestServer sets up the test server and
+func NewTestServer(ctx context.Context, serviceName string, options ...ServerOption) (*TestServer, error) {
+	var err error
 
 	// Setup the server options
 	serverOptions := &serverOptions{
@@ -51,21 +99,13 @@ func Serve(ctx context.Context, serviceName string, options ...ServerOption) err
 			Listen: 5000,
 			TLS:    TLSConfig{},
 		}),
-		WithHealth(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})),
-		WithMetrics(NewMetricsHandler()),
 	}, options...)
-
-	if serverOptions.config.Profiling.GetEnabled() {
-		options = append(options, WithProfiler())
-	}
 
 	// Process all server options (which may override any of the above)
 	for _, option := range options {
 		err = option.apply(ctx, serverOptions)
 		if err != nil {
-			err = errors.Wrap(err, "serve: failed to apply options")
-			span.RecordError(err)
-			return err
+			return nil, errors.Wrap(err, "serve: failed to apply options")
 		}
 	}
 
@@ -79,11 +119,7 @@ func Serve(ctx context.Context, serviceName string, options ...ServerOption) err
 	}
 
 	// Add standard middleware
-	mux.Use(Metrics)
 	mux.Use(CORS)
-	if serverOptions.config.Logging.Enabled {
-		mux.Use(Logging(serverOptions.config.Logging))
-	}
 
 	// Add any middlewares registered
 	if len(serverOptions.middlewares) > 0 {
@@ -93,53 +129,26 @@ func Serve(ctx context.Context, serviceName string, options ...ServerOption) err
 	for _, option := range options {
 		err = option.addHandler(ctx, serverOptions, mux)
 		if err != nil {
-			err = errors.Wrap(err, "serve: failed to add handler")
-			span.RecordError(err)
-			return err
+			return nil, errors.Wrap(err, "serve: failed to add handler")
 		}
 	}
 
 	// Start listening
-	serverOptions.logger.Info("listening")
-	ln, err := net.Listen("tcp", serverOptions.addr)
-	if err != nil {
-		err = errors.Wrap(err, "serve: failed to listen")
-		span.RecordError(err)
-		return err
-	}
+	srv := httptest.NewUnstartedServer(mux)
+	srv.EnableHTTP2 = true
 
 	// Serve requests
 	if serverOptions.config.GetTLS().GetEnabled() {
 		config, err := NewServerTLSConfig(ctx, serverOptions.config.GetTLS(), serverOptions.vault)
 		if err != nil {
-			ln.Close()
-
-			err = errors.Wrap(err, "serve: failed to get server TLS config")
-			span.RecordError(err)
-			return err
+			return nil, err
 		}
 
-		ln = tls.NewListener(ln, config)
+		srv.TLS = config
 	}
 
-	defer ln.Close()
-
-	serverOptions.logger.Info("serving")
-
-	w := serverOptions.logger.WriterLevel(logrus.WarnLevel)
-	defer w.Close()
-
-	srv := &http.Server{
-		Addr:     serverOptions.addr,
-		Handler:  mux,
-		ErrorLog: syslog.New(w, "[http]", 0),
-	}
-
-	if err = srv.Serve(ln); err != nil {
-		err = errors.Wrap(err, "serve: failed to serve")
-		span.RecordError(err)
-		return err
-	}
-
-	return nil
+	srv.StartTLS()
+	return &TestServer{
+		Server: srv,
+	}, nil
 }
