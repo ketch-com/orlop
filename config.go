@@ -491,7 +491,8 @@ func pointerFieldSetter(x func(value reflect.Value, input string) error) func(va
 	}
 }
 
-func loadEnvironment(env Environment, files ...string) {
+// LoadEnvironment loads the environment variables from the specified files and from the standard locations
+func LoadEnvironment(env Environment, files ...string) {
 	var envFiles []string
 	envFiles = append(envFiles, files...)
 	if env.IsLocal() {

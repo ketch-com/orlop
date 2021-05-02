@@ -198,7 +198,7 @@ func (c VaultClient) ReadObject(ctx context.Context, p string, out interface{}) 
 
 // Read returns a secret at the given path
 func (c VaultClient) Read(ctx context.Context, p string) (*vault.Secret, error) {
-	ctx, span := tracer.Start(ctx, "Read")
+	_, span := tracer.Start(ctx, "Read")
 	defer span.End()
 
 	// If the client isn't connected (because Vault is not enabled, just return an empty secret).
@@ -320,7 +320,7 @@ func (c VaultClient) WriteObject(ctx context.Context, p string, in interface{}) 
 
 // Write secret data at the given path
 func (c VaultClient) Write(ctx context.Context, p string, data map[string]interface{}) (*vault.Secret, error) {
-	ctx, span := tracer.Start(ctx, "Write")
+	_, span := tracer.Start(ctx, "Write")
 	defer span.End()
 
 	if c.client == nil {
@@ -350,7 +350,7 @@ func (c VaultClient) DeleteContext(ctx context.Context, p string) error {
 
 // Delete a secret at the given path
 func (c VaultClient) Delete(ctx context.Context, p string) error {
-	ctx, span := tracer.Start(ctx, "Delete")
+	_, span := tracer.Start(ctx, "Delete")
 	defer span.End()
 
 	if c.client == nil {
@@ -369,8 +369,9 @@ func (c VaultClient) Delete(ctx context.Context, p string) error {
 	return nil
 }
 
+// List returns keys available at the given path p
 func (c VaultClient) List(ctx context.Context, p string) ([]string, error) {
-	ctx, span := tracer.Start(ctx, "List")
+	_, span := tracer.Start(ctx, "List")
 	defer span.End()
 
 	var keys []string
