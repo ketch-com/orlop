@@ -21,7 +21,6 @@
 package orlop
 
 import (
-	"context"
 	"fmt"
 	"github.com/iancoleman/strcase"
 	"github.com/sirupsen/logrus"
@@ -41,17 +40,13 @@ import (
 // Runner represents a command runner
 type Runner struct {
 	prefix      string
-	runner      interface{}
-	cfg         interface{}
 	prevPreRunE func(cmd *cobra.Command, args []string) error
 }
 
 // NewRunner creates a new Runner
-func NewRunner(prefix string, runner interface{}, cfg interface{}) *Runner {
+func NewRunner(prefix string) *Runner {
 	return &Runner{
 		prefix: prefix,
-		runner: runner,
-		cfg:    cfg,
 	}
 }
 
@@ -80,9 +75,9 @@ func (r *Runner) SetupRoot(cmd *cobra.Command) *Runner {
 }
 
 // Setup sets up the Command
-func (r *Runner) Setup(cmd *cobra.Command) *Runner {
+func (r *Runner) Setup(cmd *cobra.Command, runner interface{}, cfg interface{}) *Runner {
 	if cmd.RunE == nil {
-		cmd.RunE = r.runE
+		cmd.RunE = r.runE(runner, cfg)
 	}
 
 	cmd.AddCommand(&cobra.Command{
@@ -90,7 +85,7 @@ func (r *Runner) Setup(cmd *cobra.Command) *Runner {
 		Short: "output the config environment variables and exits",
 		Args:  cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			vars, err := GetVariablesFromConfig(r.prefix, r.cfg)
+			vars, err := GetVariablesFromConfig(r.prefix, cfg)
 			if err != nil {
 				log.WithError(err).Fatal("could not create variables")
 			}
@@ -144,39 +139,41 @@ func (r *Runner) preRunE(cmd *cobra.Command, args []string) error {
 	return r.prevPreRunE(cmd, args)
 }
 
-func (r *Runner) runE(cmd *cobra.Command, args []string) error {
-	envFlag, err := cmd.Flags().GetString("env")
-	if err != nil {
-		return err
-	}
-
-	ctx, span := tracer.Start(context.Background(), "Run")
-	defer span.End()
-
-	// First figure out the environment
-	span.SetAttributes(attribute.String("env", Environment(envFlag).String()))
-
-	// Unmarshal the configuration
-	if err = Unmarshal(r.prefix, r.cfg); err != nil {
-		return errors.Wrap(err, "unable to unmarshal configuration")
-	}
-
-	// Call the runner
-	out := reflect.ValueOf(r.runner).Call([]reflect.Value{
-		reflect.ValueOf(log.ToContext(ctx, log.New())),
-		reflect.ValueOf(r.cfg),
-	})
-
-	// Handle any result
-	if len(out) > 0 && out[0].IsValid() && !out[0].IsNil() {
-		e := out[0].MethodByName("Error")
-		out = e.Call([]reflect.Value{})
-		if len(out) > 0 && out[0].IsValid() {
-			return errors.New(out[0].String())
+func (r *Runner) runE(runner interface{}, cfg interface{}) func(cmd *cobra.Command, args []string) error {
+	return func(cmd *cobra.Command, args []string) error {
+		envFlag, err := cmd.Flags().GetString("env")
+		if err != nil {
+			return err
 		}
-	}
 
-	return nil
+		ctx, span := tracer.Start(cmd.Context(), "Run")
+		defer span.End()
+
+		// First figure out the environment
+		span.SetAttributes(attribute.String("env", Environment(envFlag).String()))
+
+		// Unmarshal the configuration
+		if err = Unmarshal(r.prefix, cfg); err != nil {
+			return errors.Wrap(err, "unable to unmarshal configuration")
+		}
+
+		// Call the runner
+		out := reflect.ValueOf(runner).Call([]reflect.Value{
+			reflect.ValueOf(log.ToContext(ctx, log.New())),
+			reflect.ValueOf(cfg),
+		})
+
+		// Handle any result
+		if len(out) > 0 && out[0].IsValid() && !out[0].IsNil() {
+			e := out[0].MethodByName("Error")
+			out = e.Call([]reflect.Value{})
+			if len(out) > 0 && out[0].IsValid() {
+				return errors.New(out[0].String())
+			}
+		}
+
+		return nil
+	}
 }
 
 // Getenv returns the value of the environment variabled named `key`
@@ -230,7 +227,7 @@ func Run(prefix string, runner interface{}, cfg interface{}) {
 		SilenceUsage:     true,
 	}
 
-	NewRunner(prefix, runner, cfg).SetupRoot(cmd).Setup(cmd)
+	NewRunner(prefix).SetupRoot(cmd).Setup(cmd, runner, cfg)
 
 	if err := cmd.Execute(); err != nil {
 		log.WithError(err).Fatal(err)
