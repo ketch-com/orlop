@@ -22,7 +22,8 @@ package orlop
 
 import (
 	"fmt"
-	"reflect"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"strings"
 	"testing"
 	"time"
@@ -62,6 +63,7 @@ type TestConfig struct {
 	HexEncoded    []byte
 	Base64Encoded []byte `config:",encoding=base64"`
 	Ptr           *int32
+	Unknown       int32
 }
 
 func (e *TestConfig) UnmarshalText(text []byte) error {
@@ -71,16 +73,12 @@ func (e *TestConfig) UnmarshalText(text []byte) error {
 
 func TestUnmarshalStruct(t *testing.T) {
 	err := Unmarshal("wheelhouse", &LargerConfig{})
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
 }
 
 func TestVars(t *testing.T) {
 	vars, err := GetVariablesFromConfig("wheelhouse", &TestConfig{})
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
 
 	fmt.Println(strings.Join(vars, "\n"))
 }
@@ -97,44 +95,20 @@ func TestUnmarshal(t *testing.T) {
 		"WHEELHOUSE_HEX_ENCODED=0102030405060708090A0B0C0D0E0F",
 		"WHEELHOUSE_BASE_64_ENCODED=AQIDBAUGBwgJCgsMDQ4P",
 		"WHEELHOUSE_PTR=123",
+		"WHEELHOUSE_UNKNOWN=abc",
 	}, &c)
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
 
-	fmt.Println(c)
-
-	if !c.Embedded.Embedded {
-		t.Fail()
-	}
-
-	if c.WithDefault != "/pki/issue" {
-		t.Fail()
-	}
-
-	if c.Required != "imhere" {
-		t.Fail()
-	}
-
-	if c.SomeSlice == nil || !reflect.DeepEqual(c.SomeSlice, []string{"a", "b", "c"}) {
-		t.Fail()
-	}
-
-	if c.CustomParser != time.Minute {
-		t.Fail()
-	}
-
-	if !reflect.DeepEqual(c.Map, map[string]string{"a": "b", "c": "d"}) {
-		t.Fail()
-	}
-
-	if !reflect.DeepEqual(c.HexEncoded, []byte{0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0A, 0x0B, 0x0C, 0x0D, 0x0E, 0x0F}) {
-		t.Fail()
-	}
-
-	if c.Ptr == nil || *c.Ptr != 123 {
-		t.Fail()
-	}
+	assert.True(t, c.Embedded.Embedded)
+	assert.Equal(t, "/pki/issue", c.WithDefault)
+	assert.Equal(t, "imhere", c.Required)
+	assert.NotEmpty(t, c.SomeSlice)
+	assert.Equal(t, []string{"a", "b", "c"}, c.SomeSlice)
+	assert.Equal(t, time.Minute, c.CustomParser)
+	assert.Equal(t, map[string]string{"a": "b", "c": "d"}, c.Map)
+	assert.Equal(t, []byte{0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0A, 0x0B, 0x0C, 0x0D, 0x0E, 0x0F}, c.HexEncoded)
+	require.NotNil(t, c.Ptr)
+	assert.Equal(t, int32(123), *c.Ptr)
 }
 
 func st(s string) *string {
@@ -196,8 +170,6 @@ func TestParseConfigTag(t *testing.T) {
 			},
 		},
 	} {
-		if f.T.String() != parseConfigTag(f.S).String() {
-			t.Fatal(f.S, f.T.String(), parseConfigTag(f.S).String())
-		}
+		assert.Equal(t, f.T.String(), parseConfigTag(f.S).String())
 	}
 }

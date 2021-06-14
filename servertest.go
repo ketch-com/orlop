@@ -22,7 +22,7 @@ package orlop
 
 import (
 	"context"
-	"github.com/go-chi/chi"
+	"github.com/go-chi/chi/v5"
 	"go.ketch.com/lib/orlop/errors"
 	"go.ketch.com/lib/orlop/log"
 	"google.golang.org/grpc"

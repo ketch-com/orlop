@@ -58,12 +58,12 @@ func UnmarshalFromEnv(prefix string, vars []string, cfg interface{}) error {
 
 	for name, field := range fields {
 		if v, ok := env[name]; ok {
-			if err := field.set(field.v, v); err != nil {
-				return err
+			if err = field.set(field.v, v); err != nil {
+				return errors.Wrapf(err, "failed to set field '%s' with value '%s'", name, v)
 			}
 		} else if field.tag.DefaultValue != nil {
-			if err := field.set(field.v, *field.tag.DefaultValue); err != nil {
-				return err
+			if err = field.set(field.v, *field.tag.DefaultValue); err != nil {
+				return errors.Wrapf(err, "failed to set field '%s' with value '%s'", name, v)
 			}
 		} else if field.tag.Required {
 			return errors.Errorf("%s required", name)
@@ -343,7 +343,7 @@ func intFieldSetter(value reflect.Value, input string) error {
 
 	i, err := strconv.ParseInt(input, 0, 0)
 	if err != nil {
-		return errors.Errorf("could not parse '%s' as integer", value)
+		return errors.Errorf("could not parse '%s' as integer", input)
 	}
 
 	value.SetInt(i)
@@ -357,7 +357,7 @@ func uintFieldSetter(value reflect.Value, input string) error {
 
 	i, err := strconv.ParseUint(input, 0, 0)
 	if err != nil {
-		return errors.Errorf("could not parse '%s' as integer", value)
+		return errors.Errorf("could not parse '%s' as integer", input)
 	}
 
 	value.SetUint(i)
