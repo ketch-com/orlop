@@ -27,10 +27,33 @@ import (
 	"github.com/sirupsen/logrus"
 	"go.ketch.com/lib/orlop/errors"
 	"go.ketch.com/lib/orlop/log"
+	"go.uber.org/fx"
 	syslog "log"
 	"net"
 	"net/http"
 )
+
+type ServeLifecycleParams struct {
+	fx.In
+
+	Lifecycle     fx.Lifecycle
+	ServiceName   string `name:"serviceName"`
+	ServerOptions []ServerOption
+}
+
+func ServeLifecycle(params *ServeLifecycleParams) {
+	params.Lifecycle.Append(fx.Hook{
+		OnStart: func(ctx context.Context) error {
+			go func() {
+				err := Serve(ctx, params.ServiceName, params.ServerOptions...)
+				if err != nil {
+					log.Fatal(err)
+				}
+			}()
+			return nil
+		},
+	})
+}
 
 // Serve sets up the server and listens for requests
 func Serve(ctx context.Context, serviceName string, options ...ServerOption) error {

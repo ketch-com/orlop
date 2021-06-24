@@ -37,13 +37,6 @@ const (
 	TLSRootCAKey = "issuing_ca"
 )
 
-// NewServerTLSConfigContext returns a new tls.VaultConfig from the given configuration input
-//
-// deprecated: use NewServerTLSConfig instead
-func NewServerTLSConfigContext(ctx context.Context, cfg HasTLSConfig, vault HasVaultConfig) (*tls.Config, error) {
-	return NewServerTLSConfig(ctx, cfg, vault)
-}
-
 // NewServerTLSConfig returns a new tls.VaultConfig from the given configuration input
 func NewServerTLSConfig(ctx context.Context, cfg HasTLSConfig, vault HasVaultConfig) (*tls.Config, error) {
 	var err error
@@ -119,13 +112,6 @@ func NewServerTLSConfig(ctx context.Context, cfg HasTLSConfig, vault HasVaultCon
 	config.Certificates = append(config.Certificates, c)
 
 	return config, nil
-}
-
-// NewClientTLSConfigContext returns a new tls.VaultConfig from the given configuration input
-//
-// deprecated: use NewClientTLSConfig instead
-func NewClientTLSConfigContext(ctx context.Context, cfg HasTLSConfig, vault HasVaultConfig) (*tls.Config, error) {
-	return NewClientTLSConfig(ctx, cfg, vault)
 }
 
 // NewClientTLSConfig returns a new tls.VaultConfig from the given configuration input

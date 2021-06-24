@@ -32,13 +32,6 @@ import (
 	"google.golang.org/grpc/credentials"
 )
 
-// ConnectContext creates a new client from configuration
-//
-// deprecated: use Connect instead
-func ConnectContext(ctx context.Context, cfg HasClientConfig, vault HasVaultConfig) (*grpc.ClientConn, error) {
-	return Connect(ctx, cfg, vault)
-}
-
 // Connect creates a new client from configuration
 func Connect(ctx context.Context, cfg HasClientConfig, vault HasVaultConfig) (*grpc.ClientConn, error) {
 	var cancel context.CancelFunc = func() {}

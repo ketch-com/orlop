@@ -25,13 +25,6 @@ import (
 	"go.ketch.com/lib/orlop/errors"
 )
 
-// GenerateCertificatesContext calls Vault to generate a certificate
-//
-// deprecated: use GenerateCertificates
-func GenerateCertificatesContext(ctx context.Context, vault HasVaultConfig, cfg HasCertGenerationConfig, cert *[]byte, key *[]byte) error {
-	return GenerateCertificates(ctx, vault, cfg, cert, key)
-}
-
 // GenerateCertificates calls Vault to generate a certificate
 func GenerateCertificates(ctx context.Context, vault HasVaultConfig, cfg HasCertGenerationConfig, cert *[]byte, key *[]byte) error {
 	ctx, span := tracer.Start(ctx, "GenerateCertificates")
