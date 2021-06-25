@@ -33,13 +33,6 @@ import (
 	"io/ioutil"
 )
 
-// LoadKeyContext loads the key material based on the config
-//
-// deprecated: use LoadKey
-func LoadKeyContext(ctx context.Context, cfg HasKeyConfig, vault HasVaultConfig, which string) ([]byte, error) {
-	return LoadKey(ctx, cfg, vault, which)
-}
-
 // LoadKey loads the key material based on the config
 func LoadKey(ctx context.Context, cfg HasKeyConfig, vault HasVaultConfig, which string) ([]byte, error) {
 	ctx, span := tracer.Start(ctx, "LoadKey")

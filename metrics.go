@@ -24,7 +24,7 @@ import (
 	"github.com/felixge/httpsnoop"
 	"go.ketch.com/lib/orlop/log"
 	"go.opentelemetry.io/otel/attribute"
-	"go.opentelemetry.io/otel/exporters/metric/prometheus"
+	"go.opentelemetry.io/otel/exporters/prometheus"
 	"go.opentelemetry.io/otel/metric"
 	"go.opentelemetry.io/otel/sdk/metric/controller/basic"
 	"net/http"
@@ -61,7 +61,7 @@ type MetricsHandler struct {
 
 // NewMetricsHandler creates a new MetricsHandler
 func NewMetricsHandler() http.Handler {
-	exporter, err := prometheus.InstallNewPipeline(
+	exporter, err := prometheus.New(
 		prometheus.Config{
 			DefaultHistogramBoundaries: []float64{
 				0.005,
@@ -77,7 +77,7 @@ func NewMetricsHandler() http.Handler {
 				5,
 			},
 		},
-		basic.WithResource(nil),
+		basic.New(nil),
 	)
 	if err != nil {
 		log.Fatal(err)

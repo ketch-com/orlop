@@ -62,13 +62,6 @@ type Credentials struct {
 	Password string
 }
 
-// GetCredentialsContext retrieves credentials
-//
-// deprecated: use GetCredentialsContext
-func GetCredentialsContext(ctx context.Context, cfg HasCredentialsConfig, vault HasVaultConfig) (*Credentials, error) {
-	return GetCredentials(ctx, cfg, vault)
-}
-
 // GetCredentials retrieves credentials
 func GetCredentials(ctx context.Context, cfg HasCredentialsConfig, vault HasVaultConfig) (*Credentials, error) {
 	ctx, span := tracer.Start(ctx, "GetCredentials")

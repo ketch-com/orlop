@@ -44,13 +44,6 @@ type VaultClient struct {
 	client *vault.Client
 }
 
-// NewVaultContext connects to Vault given the configuration
-//
-// deprecated: use NewVault instead
-func NewVaultContext(ctx context.Context, cfg HasVaultConfig) (*VaultClient, error) {
-	return NewVault(ctx, cfg)
-}
-
 // NewVault connects to Vault given the configuration
 func NewVault(ctx context.Context, cfg HasVaultConfig) (*VaultClient, error) {
 	var err error
@@ -95,13 +88,6 @@ func NewVault(ctx context.Context, cfg HasVaultConfig) (*VaultClient, error) {
 		cfg:    cfg,
 		client: client,
 	}, nil
-}
-
-// ReadContext returns a secret at the given path
-//
-// deprecated: use Read instead
-func (c VaultClient) ReadContext(ctx context.Context, p string) (*vault.Secret, error) {
-	return c.Read(ctx, p)
 }
 
 // ReadObject returns a secret at the given path
@@ -220,13 +206,6 @@ func (c VaultClient) Read(ctx context.Context, p string) (*vault.Secret, error) 
 	return sec, nil
 }
 
-// WriteContext writes secret data at the given path
-//
-// deprecated: use Write instead
-func (c VaultClient) WriteContext(ctx context.Context, p string, data map[string]interface{}) (*vault.Secret, error) {
-	return c.Write(ctx, p, data)
-}
-
 // WriteObject writes secret data at the given path from an object
 func (c VaultClient) WriteObject(ctx context.Context, p string, in interface{}) error {
 	m := make(map[string]interface{})
@@ -339,13 +318,6 @@ func (c VaultClient) Write(ctx context.Context, p string, data map[string]interf
 	}
 
 	return sec, nil
-}
-
-// DeleteContext deletes a secret at the given path
-//
-// deprecated: use Delete instead
-func (c VaultClient) DeleteContext(ctx context.Context, p string) error {
-	return c.Delete(ctx, p)
 }
 
 // Delete a secret at the given path
