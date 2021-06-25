@@ -30,6 +30,7 @@ import (
 	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
+	"strings"
 )
 
 // Connect creates a new client from configuration
@@ -144,7 +145,11 @@ func Connect(ctx context.Context, cfg HasClientConfig, vault HasVaultConfig) (*g
 		"userAgent":             ua,
 		"writeBufferSize":       cfg.GetWriteBufferSize(),
 	}).Trace("dialling")
-	conn, err := grpc.DialContext(ctx, cfg.GetURL(), opts...)
+	u := cfg.GetURL()
+	for _, scheme := range []string{"https://", "http://"} {
+		u = strings.TrimPrefix(u, scheme)
+	}
+	conn, err := grpc.DialContext(ctx, u, opts...)
 	if err != nil {
 		span.RecordError(err)
 		return nil, err
