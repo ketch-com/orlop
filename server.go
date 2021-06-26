@@ -41,7 +41,7 @@ type ServeLifecycleParams struct {
 	ServerOptions []ServerOption
 }
 
-func ServeLifecycle(params *ServeLifecycleParams) {
+func ServeLifecycle(params ServeLifecycleParams) {
 	params.Lifecycle.Append(fx.Hook{
 		OnStart: func(ctx context.Context) error {
 			go func() {
