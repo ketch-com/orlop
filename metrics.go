@@ -26,6 +26,7 @@ import (
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/exporters/prometheus"
 	"go.opentelemetry.io/otel/metric"
+	"go.opentelemetry.io/otel/metric/global"
 	export "go.opentelemetry.io/otel/sdk/export/metric"
 	"go.opentelemetry.io/otel/sdk/metric/aggregator/histogram"
 	controller "go.opentelemetry.io/otel/sdk/metric/controller/basic"
@@ -98,6 +99,8 @@ func NewMetricsHandler() http.Handler {
 	if err != nil {
 		log.Fatal(err)
 	}
+
+	global.SetMeterProvider(exporter.MeterProvider())
 
 	return &MetricsHandler{
 		exporter: exporter,

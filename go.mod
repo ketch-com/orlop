@@ -16,16 +16,15 @@ require (
 	github.com/sirupsen/logrus v1.8.1
 	github.com/spf13/cobra v1.1.3
 	github.com/stretchr/testify v1.7.0
-	go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc v0.21.0
-	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.21.0
-	go.opentelemetry.io/contrib/instrumentation/runtime v0.21.0
-	go.opentelemetry.io/otel v1.0.0-RC1
-	go.opentelemetry.io/otel/exporters/metric/prometheus v0.21.0
-	go.opentelemetry.io/otel/exporters/prometheus v0.21.0
-	go.opentelemetry.io/otel/metric v0.21.0
-	go.opentelemetry.io/otel/sdk/export/metric v0.21.0
-	go.opentelemetry.io/otel/sdk/metric v0.21.0
-	go.opentelemetry.io/otel/trace v1.0.0-RC1
+	go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc v0.22.0
+	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.22.0
+	go.opentelemetry.io/contrib/instrumentation/runtime v0.22.0
+	go.opentelemetry.io/otel v1.0.0-RC2
+	go.opentelemetry.io/otel/exporters/prometheus v0.22.0
+	go.opentelemetry.io/otel/metric v0.22.0
+	go.opentelemetry.io/otel/sdk/export/metric v0.22.0
+	go.opentelemetry.io/otel/sdk/metric v0.22.0
+	go.opentelemetry.io/otel/trace v1.0.0-RC2
 	go.uber.org/fx v1.13.1
-	google.golang.org/grpc v1.38.0
+	google.golang.org/grpc v1.39.0
 )
