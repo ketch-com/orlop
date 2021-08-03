@@ -31,27 +31,24 @@ func DefaultHTTPHeaders(next http.Handler) http.Handler {
 		isGRPCRequest := r.ProtoMajor == 2 && strings.Contains(r.Header.Get("Content-Type"), "application/grpc")
 
 		if !isGRPCRequest {
-			addCORSHeaders(w, r)
+			// Add CORS headers
+			w.Header().Add("Vary", "Origin")
+			w.Header().Set("Access-Control-Allow-Credentials", "true")
+
+			if origin := r.Header.Get("Origin"); origin != "" {
+				w.Header().Set("Access-Control-Allow-Origin", origin)
+				if r.Method == "OPTIONS" && r.Header.Get("Access-Control-Request-Method") != "" {
+					w.Header().Set("Access-Control-Allow-Headers", headers)
+					w.Header().Set("Access-Control-Allow-Methods", methods)
+					return
+				}
+			}
 		}
 
 		addSecurityHeaders(w, r)
 
 		next.ServeHTTP(w, r)
 	})
-}
-
-func addCORSHeaders(w http.ResponseWriter, r *http.Request) {
-	w.Header().Add("Vary", "Origin")
-	w.Header().Set("Access-Control-Allow-Credentials", "true")
-
-	if origin := r.Header.Get("Origin"); origin != "" {
-		w.Header().Set("Access-Control-Allow-Origin", origin)
-		if r.Method == "OPTIONS" && r.Header.Get("Access-Control-Request-Method") != "" {
-			w.Header().Set("Access-Control-Allow-Headers", headers)
-			w.Header().Set("Access-Control-Allow-Methods", methods)
-			return
-		}
-	}
 }
 
 func addSecurityHeaders(w http.ResponseWriter, r *http.Request) {
