@@ -41,7 +41,7 @@ func DefaultHTTPHeaders(next http.Handler) http.Handler {
 }
 
 func addCORSHeaders(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Vary", "Origin")
+	w.Header().Add("Vary", "Origin")
 	w.Header().Set("Access-Control-Allow-Credentials", "true")
 
 	if origin := r.Header.Get("Origin"); origin != "" {
