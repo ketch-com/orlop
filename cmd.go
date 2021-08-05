@@ -29,6 +29,15 @@ import (
 	"go.ketch.com/lib/orlop/log"
 	"go.opentelemetry.io/contrib/instrumentation/runtime"
 	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/exporters/prometheus"
+	"go.opentelemetry.io/otel/metric/global"
+	export "go.opentelemetry.io/otel/sdk/export/metric"
+	"go.opentelemetry.io/otel/sdk/metric/aggregator/histogram"
+	controller "go.opentelemetry.io/otel/sdk/metric/controller/basic"
+	processor "go.opentelemetry.io/otel/sdk/metric/processor/basic"
+	selector "go.opentelemetry.io/otel/sdk/metric/selector/simple"
+	"go.opentelemetry.io/otel/sdk/resource"
+	semconv "go.opentelemetry.io/otel/semconv/v1.4.0"
 	stdlog "log"
 	"os"
 	"reflect"
@@ -141,6 +150,49 @@ func (r *Runner) preRunE(cmd *cobra.Command, args []string) error {
 
 func (r *Runner) runE(runner interface{}, cfg interface{}) func(cmd *cobra.Command, args []string) error {
 	return func(cmd *cobra.Command, args []string) error {
+		config := prometheus.Config{
+			DefaultHistogramBoundaries: []float64{
+				0.005,
+				0.01,
+				0.025,
+				0.05,
+				0.1,
+				0.25,
+				0.5,
+				1,
+				10,
+				2.5,
+				5,
+			},
+		}
+
+		res := resource.Environment()
+		attributes := res.Attributes()
+
+		res, _ = resource.New(cmd.Context(),
+			resource.WithSchemaURL(res.SchemaURL()),
+			resource.WithAttributes(attributes...))
+
+		c := controller.New(
+			processor.New(
+				selector.NewWithHistogramDistribution(
+					histogram.WithExplicitBoundaries(config.DefaultHistogramBoundaries),
+				),
+				export.CumulativeExportKindSelector(),
+				processor.WithMemory(true),
+			),
+			controller.WithResource(res),
+		)
+
+		exp, err := prometheus.New(config, c)
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		global.SetMeterProvider(exp.MeterProvider())
+
+		exporter = exp
+
 		envFlag, err := cmd.Flags().GetString("env")
 		if err != nil {
 			return err
@@ -151,6 +203,7 @@ func (r *Runner) runE(runner interface{}, cfg interface{}) func(cmd *cobra.Comma
 
 		// First figure out the environment
 		span.SetAttributes(attribute.String("env", Environment(envFlag).String()))
+		span.SetAttributes(semconv.ServiceNameKey.String(r.prefix))
 
 		// Unmarshal the configuration
 		if err = Unmarshal(r.prefix, cfg); err != nil {
