@@ -103,7 +103,9 @@ func Serve(ctx context.Context, serviceName string, options ...ServerOption) err
 
 	// Add standard middleware
 	mux.Use(Metrics)
-	mux.Use(DefaultHTTPHeaders)
+	mux.Use(DefaultHTTPHeaders(HeaderOptions{
+		AllowedOrigins: serverOptions.config.AllowedOrigins,
+	}))
 	if serverOptions.config.Logging.Enabled {
 		mux.Use(Logging(serverOptions.config.Logging))
 	}

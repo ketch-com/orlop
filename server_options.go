@@ -74,6 +74,7 @@ func (o serverConfigOption) apply(ctx context.Context, opt *serverOptions) error
 		Listen:  o.config.GetListen(),
 		Logging: o.config.GetLogging(),
 		TLS:     CloneTLSConfig(o.config.GetTLS()),
+		AllowedOrigins: o.config.GetAllowedOrigins(),
 	}
 	if o.config.GetLoopback() != nil {
 		opt.config.Loopback = ClientConfig{

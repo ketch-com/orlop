@@ -119,7 +119,9 @@ func NewTestServer(ctx context.Context, serviceName string, options ...ServerOpt
 	}
 
 	// Add standard middleware
-	mux.Use(DefaultHTTPHeaders)
+	mux.Use(DefaultHTTPHeaders(HeaderOptions{
+		AllowedOrigins: serverOptions.config.AllowedOrigins,
+	}))
 
 	// Add any middlewares registered
 	if len(serverOptions.middlewares) > 0 {
