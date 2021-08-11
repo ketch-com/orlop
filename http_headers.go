@@ -25,30 +25,47 @@ import (
 	"strings"
 )
 
-// DefaultHTTPHeaders is middleware to handle default HTTP headers
-func DefaultHTTPHeaders(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		isGRPCRequest := r.ProtoMajor == 2 && strings.Contains(r.Header.Get("Content-Type"), "application/grpc")
+type HeaderOptions struct {
+	AllowedOrigins []string
+}
 
-		if !isGRPCRequest {
+// DefaultHTTPHeaders is middleware to handle default HTTP headers
+func DefaultHTTPHeaders(options HeaderOptions) func(next http.Handler) http.Handler {
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			isGRPCRequest := r.ProtoMajor == 2 && strings.Contains(r.Header.Get("Content-Type"), "application/grpc")
+			if isGRPCRequest {
+				next.ServeHTTP(w, r)
+				return
+			}
+
 			// Add CORS headers
-			w.Header().Add("Vary", "Origin")
 			w.Header().Set("Access-Control-Allow-Credentials", "true")
 
 			if origin := r.Header.Get("Origin"); origin != "" {
-				w.Header().Set("Access-Control-Allow-Origin", origin)
+				if len(options.AllowedOrigins) > 0 {
+					for _, o := range options.AllowedOrigins {
+						if o == origin {
+							w.Header().Set("Access-Control-Allow-Origin", origin)
+							w.Header().Add("Vary", "Origin")
+						}
+					}
+				} else {
+					w.Header().Set("Access-Control-Allow-Origin", origin)
+					w.Header().Add("Vary", "Origin")
+				}
 				if r.Method == "OPTIONS" && r.Header.Get("Access-Control-Request-Method") != "" {
 					w.Header().Set("Access-Control-Allow-Headers", headers)
 					w.Header().Set("Access-Control-Allow-Methods", methods)
 					return
 				}
 			}
-		}
 
-		addSecurityHeaders(w, r)
+			addSecurityHeaders(w, r)
 
-		next.ServeHTTP(w, r)
-	})
+			next.ServeHTTP(w, r)
+		})
+	}
 }
 
 func addSecurityHeaders(w http.ResponseWriter, r *http.Request) {

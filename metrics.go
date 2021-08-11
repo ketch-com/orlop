@@ -56,7 +56,7 @@ func Metrics(next http.Handler) http.Handler {
 var exporter *prometheus.Exporter
 
 // MetricsHandler is the Prometheus metrics exporter
-type MetricsHandler struct {}
+type MetricsHandler struct{}
 
 // NewMetricsHandler creates a new MetricsHandler
 func NewMetricsHandler() http.Handler {
