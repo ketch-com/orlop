@@ -15,6 +15,7 @@ require (
 	github.com/pkg/errors v0.9.1
 	github.com/sirupsen/logrus v1.8.1
 	github.com/spf13/cobra v1.2.1
+	github.com/stretchr/testify v1.7.0
 	go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc v0.22.0
 	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.22.0
 	go.opentelemetry.io/contrib/instrumentation/runtime v0.22.0
@@ -25,6 +26,6 @@ require (
 	go.opentelemetry.io/otel/sdk/export/metric v0.22.0
 	go.opentelemetry.io/otel/sdk/metric v0.22.0
 	go.opentelemetry.io/otel/trace v1.0.0-RC2
-	go.uber.org/fx v1.13.1
+	go.uber.org/fx v1.14.0
 	google.golang.org/grpc v1.39.1
 )
