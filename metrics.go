@@ -36,7 +36,7 @@ func Metrics(next http.Handler) http.Handler {
 		log.Fatal(err)
 	}
 
-	requestDuration, err := metrics.NewFloat64ValueRecorder("request.duration.seconds", metric.WithUnit("s"))
+	requestDuration, err := metrics.NewFloat64Histogram("request.duration.seconds", metric.WithUnit("s"))
 	if err != nil {
 		log.Fatal(err)
 	}
