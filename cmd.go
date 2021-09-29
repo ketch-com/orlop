@@ -21,6 +21,7 @@
 package orlop
 
 import (
+	"context"
 	"fmt"
 	"github.com/iancoleman/strcase"
 	"github.com/sirupsen/logrus"
@@ -38,6 +39,7 @@ import (
 	selector "go.opentelemetry.io/otel/sdk/metric/selector/simple"
 	"go.opentelemetry.io/otel/sdk/resource"
 	semconv "go.opentelemetry.io/otel/semconv/v1.4.0"
+	"go.uber.org/fx"
 	stdlog "log"
 	"os"
 	"reflect"
@@ -210,9 +212,30 @@ func (r *Runner) runE(runner interface{}, cfg interface{}) func(cmd *cobra.Comma
 			return errors.Wrap(err, "unable to unmarshal configuration")
 		}
 
+		l := log.New()
+
+		if module, ok := runner.(fx.Option); ok {
+			if _, ok = cfg.(ProvidesFxOptions); ok {
+				runner = func(ctx context.Context, cfg ProvidesFxOptions) error {
+					app := fx.New(
+						log.FxLogger(l),
+						FxOptions(cfg),
+						FxContext(ctx),
+						module,
+					)
+
+					app.Run()
+
+					return app.Err()
+				}
+			} else {
+				panic("if providing an fx Module, then config must implement ProvidesFxOptions")
+			}
+		}
+
 		// Call the runner
 		out := reflect.ValueOf(runner).Call([]reflect.Value{
-			reflect.ValueOf(log.ToContext(ctx, log.New())),
+			reflect.ValueOf(log.ToContext(ctx, l)),
 			reflect.ValueOf(cfg),
 		})
 
