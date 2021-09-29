@@ -33,6 +33,15 @@ import (
 	"net/http"
 )
 
+func FxServiceName(n string) fx.Option {
+	return fx.Supply(
+		fx.Annotated{
+			Name:   "serviceName",
+			Target: n,
+		},
+	)
+}
+
 type ServeLifecycleParams struct {
 	fx.In
 
