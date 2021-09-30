@@ -39,7 +39,7 @@ func LoadKey(ctx context.Context, cfg KeyConfig, vault VaultConfig, which string
 	defer span.End()
 
 	// If the key is not enabled, return an empty byte array
-	if cfg.GetEnabled() {
+	if !cfg.GetEnabled() {
 		return nil, nil
 	}
 
