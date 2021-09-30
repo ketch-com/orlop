@@ -143,8 +143,8 @@ func Serve(ctx context.Context, serviceName string, options ...ServerOption) err
 	}
 
 	// Serve requests
-	if serverOptions.config.GetTLS().GetEnabled() {
-		config, err := NewServerTLSConfig(ctx, serverOptions.config.GetTLS(), serverOptions.vault)
+	if serverOptions.config.TLS.GetEnabled() {
+		config, err := NewServerTLSConfig(ctx, serverOptions.config.TLS, serverOptions.vault)
 		if err != nil {
 			ln.Close()
 

@@ -24,16 +24,6 @@ import (
 	"time"
 )
 
-// HasTokenConfig denotes that an object supports providing token configuration
-type HasTokenConfig interface {
-	GetIssuer() string
-	GetKeyMap() HasKeyConfig
-	GetPrivateKey() HasKeyConfig
-	GetPublicKey() HasKeyConfig
-	GetShared() HasKeyConfig
-	GetTTL() time.Duration
-}
-
 // TokenConfig is the configuration for managing tokens
 type TokenConfig struct {
 	Issuer     string
@@ -42,34 +32,4 @@ type TokenConfig struct {
 	PublicKey  KeyConfig `config:"publickey"`
 	Shared     KeyConfig
 	TTL        time.Duration `config:"ttl,default=24h"`
-}
-
-// GetTTL returns the time-to-live for the token
-func (t TokenConfig) GetTTL() time.Duration {
-	return t.TTL
-}
-
-// GetPrivateKey returns the private key configuration
-func (t TokenConfig) GetPrivateKey() HasKeyConfig {
-	return t.PrivateKey
-}
-
-// GetPublicKey returns the public key configuration
-func (t TokenConfig) GetPublicKey() HasKeyConfig {
-	return t.PublicKey
-}
-
-// GetShared returns a shared secret/key configuration
-func (t TokenConfig) GetShared() HasKeyConfig {
-	return t.Shared
-}
-
-// GetIssuer returns the issuer
-func (t TokenConfig) GetIssuer() string {
-	return t.Issuer
-}
-
-// GetKeyMap returns a key map
-func (t TokenConfig) GetKeyMap() HasKeyConfig {
-	return t.KeyMap
 }

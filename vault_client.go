@@ -40,12 +40,12 @@ var (
 
 // VaultClient is a Vault client
 type VaultClient struct {
-	cfg    HasVaultConfig
+	cfg    VaultConfig
 	client *vault.Client
 }
 
 // NewVault connects to Vault given the configuration
-func NewVault(ctx context.Context, cfg HasVaultConfig) (*VaultClient, error) {
+func NewVault(ctx context.Context, cfg VaultConfig) (*VaultClient, error) {
 	var err error
 
 	// First check if Vault is enabled in config, returning if not
@@ -58,16 +58,16 @@ func NewVault(ctx context.Context, cfg HasVaultConfig) (*VaultClient, error) {
 
 	// Setup the Vault native config
 	vc := &vault.Config{
-		Address: cfg.GetAddress(),
+		Address: cfg.Address,
 	}
 
 	// If TLS is enabled, then setup the TLS configuration
-	if cfg.GetTLS().GetEnabled() {
+	if cfg.TLS.GetEnabled() {
 		vc.HttpClient = &http.Client{}
 
 		t := http.DefaultTransport.(*http.Transport).Clone()
 
-		t.TLSClientConfig, err = NewClientTLSConfig(ctx, cfg.GetTLS(), &VaultConfig{Enabled: false})
+		t.TLSClientConfig, err = NewClientTLSConfig(ctx, cfg.TLS, VaultConfig{Enabled: false})
 		if err != nil {
 			return nil, err
 		}
@@ -82,7 +82,7 @@ func NewVault(ctx context.Context, cfg HasVaultConfig) (*VaultClient, error) {
 	}
 
 	// Set the token on the client
-	client.SetToken(cfg.GetToken())
+	client.SetToken(cfg.Token)
 
 	return &VaultClient{
 		cfg:    cfg,
@@ -378,5 +378,5 @@ func (c VaultClient) IsNotFound(err error) bool {
 }
 
 func (c VaultClient) prefix(p string) string {
-	return path.Join(c.cfg.GetPrefix(), p)
+	return path.Join(c.cfg.Prefix, p)
 }

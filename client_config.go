@@ -26,25 +26,6 @@ import (
 	"time"
 )
 
-// HasClientConfig denotes that an object provides client configuration
-type HasClientConfig interface {
-	GetName() string
-	GetTLS() HasTLSConfig
-	GetToken() HasTokenConfig
-	GetURL() string
-	GetHeaders() map[string]string
-	GetWriteBufferSize() int
-	GetReadBufferSize() int
-	GetInitialWindowSize() int32
-	GetInitialConnWindowSize() int32
-	GetMaxCallRecvMsgSize() int
-	GetMaxCallSendMsgSize() int
-	GetMinConnectTimeout() time.Duration
-	GetBlock() bool
-	GetConnTimeout() time.Duration
-	GetUserAgent() string
-}
-
 // ClientConfig is standard configuration of most client commands
 type ClientConfig struct {
 	Name                  string
@@ -85,66 +66,6 @@ func (c ClientConfig) GetURL() string {
 	}
 
 	return c.URL
-}
-
-// GetToken returns the security token configuration information
-func (c ClientConfig) GetToken() HasTokenConfig {
-	return c.Token
-}
-
-// GetTLS returns the TLS configuration
-func (c ClientConfig) GetTLS() HasTLSConfig {
-	return c.TLS
-}
-
-// GetHeaders returns static headers to add to requests
-func (c ClientConfig) GetHeaders() map[string]string {
-	return c.Headers
-}
-
-// GetWriteBufferSize returns the write buffer size
-func (c ClientConfig) GetWriteBufferSize() int {
-	return c.WriteBufferSize
-}
-
-// GetReadBufferSize returns the read buffer size
-func (c ClientConfig) GetReadBufferSize() int {
-	return c.ReadBufferSize
-}
-
-// GetInitialWindowSize returns the initial window size
-func (c ClientConfig) GetInitialWindowSize() int32 {
-	return c.InitialWindowSize
-}
-
-// GetInitialConnWindowSize reutrns the initial connection window size
-func (c ClientConfig) GetInitialConnWindowSize() int32 {
-	return c.InitialConnWindowSize
-}
-
-// GetMaxCallRecvMsgSize returns the maximum call receive message size
-func (c ClientConfig) GetMaxCallRecvMsgSize() int {
-	return c.MaxCallRecvMsgSize
-}
-
-// GetMaxCallSendMsgSize returns the maximum call send message size
-func (c ClientConfig) GetMaxCallSendMsgSize() int {
-	return c.MaxCallSendMsgSize
-}
-
-// GetMinConnectTimeout returns the minimum connect timeout
-func (c ClientConfig) GetMinConnectTimeout() time.Duration {
-	return c.MinConnectTimeout
-}
-
-// GetBlock returns true if the client is blocking
-func (c ClientConfig) GetBlock() bool {
-	return c.Block
-}
-
-// GetConnTimeout returns the connection timeout
-func (c ClientConfig) GetConnTimeout() time.Duration {
-	return c.ConnTimeout
 }
 
 // GetUserAgent returns the user agent

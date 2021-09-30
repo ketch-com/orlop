@@ -20,33 +20,11 @@
 
 package orlop
 
-// HasKeyConfig denotes that the object provides Key configuration
-type HasKeyConfig interface {
-	GetID() string
-	GetSecret() []byte
-	GetFile() string
-}
-
 // KeyConfig provides key-related configurations
 type KeyConfig struct {
 	ID     string
 	Secret []byte `config:"secret,encoding=base64"`
 	File   string
-}
-
-// GetID returns the Vault path to retrieve the key from
-func (c KeyConfig) GetID() string {
-	return c.ID
-}
-
-// GetSecret returns the secret (most likely from an environment variable)
-func (c KeyConfig) GetSecret() []byte {
-	return c.Secret
-}
-
-// GetFile returns the path to a file containing the key
-func (c KeyConfig) GetFile() string {
-	return c.File
 }
 
 // GetEnabled returns true if the key is enabled

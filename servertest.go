@@ -44,8 +44,8 @@ func (s *TestServer) Connect(ctx context.Context) (*grpc.ClientConn, error) {
 }
 
 // ClientConfig returns a proper ClientConfig for connecting to the server
-func (s *TestServer) ClientConfig() *ClientConfig {
-	return &ClientConfig{
+func (s *TestServer) ClientConfig() ClientConfig {
+	return ClientConfig{
 		URL: strings.TrimPrefix(s.URL, "https://"),
 		TLS: FromTLSConfig(s.TLS),
 	}
@@ -140,8 +140,8 @@ func NewTestServer(ctx context.Context, serviceName string, options ...ServerOpt
 	srv.EnableHTTP2 = true
 
 	// Serve requests
-	if serverOptions.config.GetTLS().GetEnabled() {
-		config, err := NewServerTLSConfig(ctx, serverOptions.config.GetTLS(), serverOptions.vault)
+	if serverOptions.config.TLS.GetEnabled() {
+		config, err := NewServerTLSConfig(ctx, serverOptions.config.TLS, serverOptions.vault)
 		if err != nil {
 			return nil, err
 		}

@@ -27,33 +27,11 @@ import (
 	"go.ketch.com/lib/orlop/log"
 )
 
-// HasCredentialsConfig denotes that an object provides credentials configuration
-type HasCredentialsConfig interface {
-	GetID() string
-	GetUsername() string
-	GetPassword() string
-}
-
 // CredentialsConfig provides credentials configuration
 type CredentialsConfig struct {
 	ID       string
 	Username string
 	Password string
-}
-
-// GetID returns the ID of the credentials in Vault
-func (c CredentialsConfig) GetID() string {
-	return c.ID
-}
-
-// GetUsername returns a static username
-func (c CredentialsConfig) GetUsername() string {
-	return c.Username
-}
-
-// GetPassword returns a static password
-func (c CredentialsConfig) GetPassword() string {
-	return c.Password
 }
 
 // Credentials provides username/password information
@@ -63,26 +41,26 @@ type Credentials struct {
 }
 
 // GetCredentials retrieves credentials
-func GetCredentials(ctx context.Context, cfg HasCredentialsConfig, vault HasVaultConfig) (*Credentials, error) {
+func GetCredentials(ctx context.Context, cfg CredentialsConfig, vault VaultConfig) (*Credentials, error) {
 	ctx, span := tracer.Start(ctx, "GetCredentials")
 	defer span.End()
 
 	l := log.WithFields(logrus.Fields{
-		"credentials.id": cfg.GetID(),
-		"vault.enabled":  vault != nil && vault.GetEnabled(),
+		"credentials.id": cfg.ID,
+		"vault.enabled":  vault.GetEnabled(),
 	})
 	l.Trace("loading credentials")
 
-	if len(cfg.GetUsername()) > 0 && len(cfg.GetPassword()) > 0 {
+	if len(cfg.Username) > 0 && len(cfg.Password) > 0 {
 		l.Trace("loaded from inline settings")
 
 		return &Credentials{
-			Username: cfg.GetUsername(),
-			Password: cfg.GetPassword(),
+			Username: cfg.Username,
+			Password: cfg.Password,
 		}, nil
 	}
 
-	if len(cfg.GetID()) == 0 || vault == nil || !vault.GetEnabled() {
+	if len(cfg.ID) == 0 || !vault.GetEnabled() {
 		err := errors.New("credentials: no credentials specified")
 		span.RecordError(err)
 		return nil, err
@@ -95,7 +73,7 @@ func GetCredentials(ctx context.Context, cfg HasCredentialsConfig, vault HasVaul
 		return nil, err
 	}
 
-	s, err := client.Read(ctx, cfg.GetID())
+	s, err := client.Read(ctx, cfg.ID)
 	if err != nil {
 		err = errors.Wrap(err, "credentials: not found")
 		span.RecordError(err)
@@ -103,15 +81,15 @@ func GetCredentials(ctx context.Context, cfg HasCredentialsConfig, vault HasVaul
 	}
 
 	if s == nil {
-		err := errors.Errorf("credentials: could not load credentials from %s", cfg.GetID())
+		err := errors.Errorf("credentials: could not load credentials from %s", cfg.ID)
 		span.RecordError(err)
 		return nil, err
 	} else if s.Data["username"] == nil {
-		err := errors.Errorf("credentials: could not load credentials from %s", cfg.GetID())
+		err := errors.Errorf("credentials: could not load credentials from %s", cfg.ID)
 		span.RecordError(err)
 		return nil, err
 	} else if s.Data["password"] == nil {
-		err := errors.Errorf("credentials: could not load credentials from %s", cfg.GetID())
+		err := errors.Errorf("credentials: could not load credentials from %s", cfg.ID)
 		span.RecordError(err)
 		return nil, err
 	}

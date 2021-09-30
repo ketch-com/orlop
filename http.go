@@ -33,14 +33,14 @@ import (
 
 // HttpClient provides a wrapper around http.Client, providing automatic TLS setup and header management
 type HttpClient struct {
-	cfg   HasClientConfig
+	cfg   ClientConfig
 	cli   *http.Client
 	token []byte
 }
 
 // NewHttpClient creates a new HttpClient
-func NewHttpClient(ctx context.Context, cfg HasClientConfig, vault HasVaultConfig) (*HttpClient, error) {
-	ct, err := NewClientTLSConfig(ctx, cfg.GetTLS(), vault)
+func NewHttpClient(ctx context.Context, cfg ClientConfig, vault VaultConfig) (*HttpClient, error) {
+	ct, err := NewClientTLSConfig(ctx, cfg.TLS, vault)
 	if err != nil {
 		return nil, err
 	}
@@ -50,15 +50,15 @@ func NewHttpClient(ctx context.Context, cfg HasClientConfig, vault HasVaultConfi
 		cli: &http.Client{
 			Transport: &http.Transport{
 				TLSClientConfig: ct,
-				IdleConnTimeout: cfg.GetConnTimeout(),
-				WriteBufferSize: cfg.GetWriteBufferSize(),
-				ReadBufferSize:  cfg.GetReadBufferSize(),
+				IdleConnTimeout: cfg.ConnTimeout,
+				WriteBufferSize: cfg.WriteBufferSize,
+				ReadBufferSize:  cfg.ReadBufferSize,
 			},
 		},
 	}
 
-	if cfg.GetToken() != nil && cfg.GetToken().GetShared() != nil {
-		if httpCli.token, err = LoadKey(ctx, cfg.GetToken().GetShared(), vault, "shared"); err != nil {
+	if cfg.Token.Shared.GetEnabled() {
+		if httpCli.token, err = LoadKey(ctx, cfg.Token.Shared, vault, "shared"); err != nil {
 			return nil, err
 		}
 	}
@@ -68,7 +68,7 @@ func NewHttpClient(ctx context.Context, cfg HasClientConfig, vault HasVaultConfi
 
 // Do executes the request
 func (c *HttpClient) Do(req *http.Request) (*http.Response, error) {
-	for k, v := range c.cfg.GetHeaders() {
+	for k, v := range c.cfg.Headers {
 		req.Header.Add(k, v)
 	}
 

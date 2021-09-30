@@ -26,59 +26,12 @@ type HttpLoggingConfig struct {
 	Headers []string `config:",default=X-Forwarded-For"`
 }
 
-// HasServerConfig denotes an object provides server configuration
-type HasServerConfig interface {
-	GetBind() string
-	GetListen() uint
-	GetTLS() HasTLSConfig
-	GetLoopback() HasClientConfig
-	GetLogging() HttpLoggingConfig
-	GetProfiling() HasEnabled
-	GetAllowedOrigins() []string
-}
-
 // ServerConfig is standard configuration of most server commands
 type ServerConfig struct {
 	Bind           string `config:"bind,default=0.0.0.0"`
 	Listen         uint   `config:"listen,default=5000"`
 	TLS            TLSConfig
-	Loopback       ClientConfig
 	Logging        HttpLoggingConfig
 	Profiling      Enabled
 	AllowedOrigins []string
-}
-
-// GetBind returns the address to bind to
-func (c ServerConfig) GetBind() string {
-	return c.Bind
-}
-
-// GetListen returns the port to listen on
-func (c ServerConfig) GetListen() uint {
-	return c.Listen
-}
-
-// GetTLS returns TLS configuration
-func (c ServerConfig) GetTLS() HasTLSConfig {
-	return c.TLS
-}
-
-// GetLoopback returns GRPC gateway loopback client configuration
-func (c ServerConfig) GetLoopback() HasClientConfig {
-	return c.Loopback
-}
-
-// GetLogging returns logging configuration
-func (c ServerConfig) GetLogging() HttpLoggingConfig {
-	return c.Logging
-}
-
-// GetProfiling returns the profiling configuration
-func (c ServerConfig) GetProfiling() HasEnabled {
-	return c.Profiling
-}
-
-// GetAllowedOrigins returns allowed origins
-func (c ServerConfig) GetAllowedOrigins() []string {
-	return c.AllowedOrigins
 }

@@ -34,7 +34,7 @@ import (
 )
 
 // Connect creates a new client from configuration
-func Connect(ctx context.Context, cfg HasClientConfig, vault HasVaultConfig) (*grpc.ClientConn, error) {
+func Connect(ctx context.Context, cfg ClientConfig, vault VaultConfig) (*grpc.ClientConn, error) {
 	var cancel context.CancelFunc = func() {}
 
 	ctx, span := tracer.Start(ctx, cfg.GetName())
@@ -53,8 +53,8 @@ func Connect(ctx context.Context, cfg HasClientConfig, vault HasVaultConfig) (*g
 	opts = append(opts, grpc.WithChainUnaryInterceptor(otelgrpc.UnaryClientInterceptor()))
 	opts = append(opts, grpc.WithChainStreamInterceptor(otelgrpc.StreamClientInterceptor()))
 
-	if cfg.GetTLS().GetEnabled() {
-		t, err := NewClientTLSConfig(ctx, cfg.GetTLS(), vault)
+	if cfg.TLS.GetEnabled() {
+		t, err := NewClientTLSConfig(ctx, cfg.TLS, vault)
 		if err != nil {
 			span.RecordError(err)
 			return nil, errors.Wrap(err, "client: failed to get client TLS config")
@@ -65,8 +65,8 @@ func Connect(ctx context.Context, cfg HasClientConfig, vault HasVaultConfig) (*g
 		opts = append(opts, grpc.WithInsecure())
 	}
 
-	shared := cfg.GetToken().GetShared()
-	if len(shared.GetID()) > 0 || len(shared.GetFile()) > 0 || len(shared.GetSecret()) > 0 {
+	shared := cfg.Token.Shared
+	if len(shared.ID) > 0 || len(shared.File) > 0 || len(shared.Secret) > 0 {
 		opts = append(opts, grpc.WithPerRPCCredentials(SharedContextCredentials{
 			tokenProvider: func(ctx context.Context) string {
 				ctx, span := tracer.Start(ctx, "TokenProvider")
@@ -86,42 +86,42 @@ func Connect(ctx context.Context, cfg HasClientConfig, vault HasVaultConfig) (*g
 		opts = append(opts, grpc.WithPerRPCCredentials(ContextCredentials{}))
 	}
 
-	if cfg.GetWriteBufferSize() > 0 {
-		opts = append(opts, grpc.WithWriteBufferSize(cfg.GetWriteBufferSize()))
+	if cfg.WriteBufferSize > 0 {
+		opts = append(opts, grpc.WithWriteBufferSize(cfg.WriteBufferSize))
 	}
 
-	if cfg.GetReadBufferSize() > 0 {
-		opts = append(opts, grpc.WithReadBufferSize(cfg.GetReadBufferSize()))
+	if cfg.ReadBufferSize > 0 {
+		opts = append(opts, grpc.WithReadBufferSize(cfg.ReadBufferSize))
 	}
 
-	if cfg.GetInitialWindowSize() > 0 {
-		opts = append(opts, grpc.WithInitialWindowSize(cfg.GetInitialWindowSize()))
+	if cfg.InitialWindowSize > 0 {
+		opts = append(opts, grpc.WithInitialWindowSize(cfg.InitialWindowSize))
 	}
 
-	if cfg.GetInitialConnWindowSize() > 0 {
-		opts = append(opts, grpc.WithInitialConnWindowSize(cfg.GetInitialConnWindowSize()))
+	if cfg.InitialConnWindowSize > 0 {
+		opts = append(opts, grpc.WithInitialConnWindowSize(cfg.InitialConnWindowSize))
 	}
 
-	if cfg.GetMaxCallRecvMsgSize() > 0 {
-		opts = append(opts, grpc.WithDefaultCallOptions(grpc.MaxCallRecvMsgSize(cfg.GetMaxCallRecvMsgSize())))
+	if cfg.MaxCallRecvMsgSize > 0 {
+		opts = append(opts, grpc.WithDefaultCallOptions(grpc.MaxCallRecvMsgSize(cfg.MaxCallRecvMsgSize)))
 	}
 
-	if cfg.GetMaxCallSendMsgSize() > 0 {
-		opts = append(opts, grpc.WithDefaultCallOptions(grpc.MaxCallSendMsgSize(cfg.GetMaxCallSendMsgSize())))
+	if cfg.MaxCallSendMsgSize > 0 {
+		opts = append(opts, grpc.WithDefaultCallOptions(grpc.MaxCallSendMsgSize(cfg.MaxCallSendMsgSize)))
 	}
 
-	if cfg.GetMinConnectTimeout() > 0 {
+	if cfg.MinConnectTimeout > 0 {
 		opts = append(opts, grpc.WithConnectParams(grpc.ConnectParams{
-			MinConnectTimeout: cfg.GetMinConnectTimeout(),
+			MinConnectTimeout: cfg.MinConnectTimeout,
 		}))
 	}
 
-	if cfg.GetBlock() {
+	if cfg.Block {
 		opts = append(opts, grpc.WithBlock())
 	}
 
-	if cfg.GetConnTimeout() > 0 {
-		ctx, cancel = context.WithTimeout(ctx, cfg.GetConnTimeout())
+	if cfg.ConnTimeout > 0 {
+		ctx, cancel = context.WithTimeout(ctx, cfg.ConnTimeout)
 		defer cancel()
 	}
 
@@ -134,16 +134,16 @@ func Connect(ctx context.Context, cfg HasClientConfig, vault HasVaultConfig) (*g
 	logger.WithContext(ctx).WithFields(logrus.Fields{
 		"name":                  cfg.GetName(),
 		"url":                   cfg.GetURL(),
-		"connTimeout":           cfg.GetConnTimeout(),
-		"block":                 cfg.GetBlock(),
-		"initialConnWindowSize": cfg.GetInitialConnWindowSize(),
-		"initialWindowSize":     cfg.GetInitialWindowSize(),
-		"maxCallRecvMsgSize":    cfg.GetMaxCallRecvMsgSize(),
-		"maxCallSendMsgSize":    cfg.GetMaxCallSendMsgSize(),
-		"minConnectTimeout":     cfg.GetMinConnectTimeout(),
-		"readBufferSize":        cfg.GetReadBufferSize(),
+		"connTimeout":           cfg.ConnTimeout,
+		"block":                 cfg.Block,
+		"initialConnWindowSize": cfg.InitialConnWindowSize,
+		"initialWindowSize":     cfg.InitialWindowSize,
+		"maxCallRecvMsgSize":    cfg.MaxCallRecvMsgSize,
+		"maxCallSendMsgSize":    cfg.MaxCallSendMsgSize,
+		"minConnectTimeout":     cfg.MinConnectTimeout,
+		"readBufferSize":        cfg.ReadBufferSize,
 		"userAgent":             ua,
-		"writeBufferSize":       cfg.GetWriteBufferSize(),
+		"writeBufferSize":       cfg.WriteBufferSize,
 	}).Trace("dialling")
 	u := cfg.GetURL()
 	for _, scheme := range []string{"https://", "http://"} {
