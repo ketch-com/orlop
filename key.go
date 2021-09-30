@@ -34,37 +34,37 @@ import (
 )
 
 // LoadKey loads the key material based on the config
-func LoadKey(ctx context.Context, cfg HasKeyConfig, vault HasVaultConfig, which string) ([]byte, error) {
+func LoadKey(ctx context.Context, cfg KeyConfig, vault VaultConfig, which string) ([]byte, error) {
 	ctx, span := tracer.Start(ctx, "LoadKey")
 	defer span.End()
 
 	// If the key is not enabled, return an empty byte array
-	if en, ok := cfg.(HasEnabled); ok && !en.GetEnabled() {
+	if cfg.GetEnabled() {
 		return nil, nil
 	}
 
 	fields := logrus.Fields{
 		"key":           which,
-		"vault.enabled": vault != nil && vault.GetEnabled(),
+		"vault.enabled": vault.GetEnabled(),
 	}
 
 	method := "none"
 
-	if len(cfg.GetFile()) > 0 {
+	if len(cfg.File) > 0 {
 		method = "file"
-		fields["key.file"] = cfg.GetFile()
-		span.SetAttributes(attribute.String("key.file", cfg.GetFile()))
+		fields["key.file"] = cfg.File
+		span.SetAttributes(attribute.String("key.file", cfg.File))
 	}
 
-	if len(cfg.GetID()) > 0 {
-		if vault != nil && vault.GetEnabled() {
+	if len(cfg.ID) > 0 {
+		if vault.GetEnabled() {
 			method = "id"
 		}
-		fields["key.id"] = cfg.GetID()
-		span.SetAttributes(attribute.String("key.id", cfg.GetID()))
+		fields["key.id"] = cfg.ID
+		span.SetAttributes(attribute.String("key.id", cfg.ID))
 	}
 
-	if len(cfg.GetSecret()) > 0 {
+	if len(cfg.Secret) > 0 {
 		method = "secret"
 		fields["key.secret"] = "*********"
 		span.SetAttributes(attribute.String("key.secret", "*********"))
@@ -77,7 +77,7 @@ func LoadKey(ctx context.Context, cfg HasKeyConfig, vault HasVaultConfig, which 
 	switch method {
 	case "secret":
 		l.Trace("key found")
-		return cfg.GetSecret(), nil
+		return cfg.Secret, nil
 
 	case "id":
 		client, err := NewVault(ctx, vault)
@@ -87,7 +87,7 @@ func LoadKey(ctx context.Context, cfg HasKeyConfig, vault HasVaultConfig, which 
 			return nil, err
 		}
 
-		s, err := client.Read(ctx, cfg.GetID())
+		s, err := client.Read(ctx, cfg.ID)
 		if err != nil {
 			err = errors.Wrap(err, "key: not found")
 			span.RecordError(err)
@@ -104,7 +104,7 @@ func LoadKey(ctx context.Context, cfg HasKeyConfig, vault HasVaultConfig, which 
 		return []byte(s.Data[which].(string)), nil
 
 	case "file":
-		key, err := ioutil.ReadFile(cfg.GetFile())
+		key, err := ioutil.ReadFile(cfg.File)
 		if err != nil {
 			err = errors.Wrap(err, "key: not found")
 			span.RecordError(err)

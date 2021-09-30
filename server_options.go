@@ -58,41 +58,26 @@ type serverOptions struct {
 	notFound         http.Handler
 	methodNotAllowed http.Handler
 	config           ServerConfig
-	vault            HasVaultConfig
+	vault            VaultConfig
 	middlewares      []func(http.Handler) http.Handler
 	authenticate     func(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error)
 }
 
 // serverConfigOption provides the capability to override default server configuration including address, port and TLS
 type serverConfigOption struct {
-	config HasServerConfig
+	config ServerConfig
 }
 
 func (o serverConfigOption) apply(ctx context.Context, opt *serverOptions) error {
 	opt.config = ServerConfig{
-		Bind:           o.config.GetBind(),
-		Listen:         o.config.GetListen(),
-		Logging:        o.config.GetLogging(),
-		TLS:            CloneTLSConfig(o.config.GetTLS()),
-		AllowedOrigins: o.config.GetAllowedOrigins(),
-	}
-	if o.config.GetLoopback() != nil {
-		opt.config.Loopback = ClientConfig{
-			Headers:               o.config.GetLoopback().GetHeaders(),
-			WriteBufferSize:       o.config.GetLoopback().GetWriteBufferSize(),
-			ReadBufferSize:        o.config.GetLoopback().GetReadBufferSize(),
-			InitialWindowSize:     o.config.GetLoopback().GetInitialWindowSize(),
-			InitialConnWindowSize: o.config.GetLoopback().GetInitialConnWindowSize(),
-			MaxCallRecvMsgSize:    o.config.GetLoopback().GetMaxCallRecvMsgSize(),
-			MaxCallSendMsgSize:    o.config.GetLoopback().GetMaxCallSendMsgSize(),
-			MinConnectTimeout:     o.config.GetLoopback().GetMinConnectTimeout(),
-			Block:                 o.config.GetLoopback().GetBlock(),
-			ConnTimeout:           o.config.GetLoopback().GetConnTimeout(),
-			UserAgent:             o.config.GetLoopback().GetUserAgent(),
-		}
+		Bind:           o.config.Bind,
+		Listen:         o.config.Listen,
+		Logging:        o.config.Logging,
+		TLS:            CloneTLSConfig(o.config.TLS),
+		AllowedOrigins: o.config.AllowedOrigins,
 	}
 
-	opt.addr = fmt.Sprintf("%s:%d", opt.config.GetBind(), opt.config.GetListen())
+	opt.addr = fmt.Sprintf("%s:%d", opt.config.Bind, opt.config.Listen)
 	opt.logger = opt.logger.WithField("addr", opt.addr)
 
 	return nil
@@ -103,7 +88,7 @@ func (o serverConfigOption) addHandler(ctx context.Context, opt *serverOptions, 
 }
 
 // WithServerConfig returns a new serverConfigOption
-func WithServerConfig(config HasServerConfig) ServerOption {
+func WithServerConfig(config ServerConfig) ServerOption {
 	return &serverConfigOption{
 		config: config,
 	}
@@ -186,20 +171,12 @@ func (o grpcServicesServerOption) addHandler(ctx context.Context, opt *serverOpt
 
 	// If certificate file and key file have been specified then setup a TLS server
 	if opt.config.TLS.GetEnabled() {
-		t, err := NewServerTLSConfig(ctx, opt.config.GetTLS(), opt.vault)
+		t, err := NewServerTLSConfig(ctx, opt.config.TLS, opt.vault)
 		if err != nil {
 			return errors.Wrap(err, "server: failed to load server TLS config")
 		}
 
 		grpcServerOptions = append(grpcServerOptions, grpc.Creds(credentials.NewTLS(t)))
-	}
-
-	if opt.config.Loopback.MaxCallRecvMsgSize > 0 {
-		grpcServerOptions = append(grpcServerOptions, grpc.MaxRecvMsgSize(opt.config.Loopback.MaxCallRecvMsgSize))
-	}
-
-	if opt.config.Loopback.MaxCallSendMsgSize > 0 {
-		grpcServerOptions = append(grpcServerOptions, grpc.MaxSendMsgSize(opt.config.Loopback.MaxCallSendMsgSize))
 	}
 
 	grpcServerOptions = append(grpcServerOptions, grpc.ChainUnaryInterceptor(otelgrpc.UnaryServerInterceptor()))
@@ -239,74 +216,9 @@ func WithGRPCServices(registerServices func(ctx context.Context, grpcServer *grp
 	}
 }
 
-// gatewayServerOption is used to specify handlers for a JSON-GRPC gateway
-type gatewayServerOption struct {
-	gatewayHandlers []func(ctx context.Context, gwmux *runtime.ServeMux, conn *grpc.ClientConn) error
-}
-
-func (o gatewayServerOption) apply(ctx context.Context, opt *serverOptions) error {
-	return nil
-}
-
-func (o gatewayServerOption) addHandler(ctx context.Context, opt *serverOptions, mux mux) error {
-	gwmux := runtime.NewServeMux(
-		runtime.WithIncomingHeaderMatcher(incomingHeaderMatcher),
-		runtime.WithForwardResponseOption(redirectFilter),
-		runtime.WithOutgoingHeaderMatcher(outgoingHeaderMatcher),
-		runtime.WithMarshalerOption("application/octet-stream", &BinaryMarshaler{}),
-		runtime.WithMarshalerOption("application/json", &runtime.JSONPb{
-			EnumsAsInts:  true,
-			EmitDefaults: false,
-			OrigName:     false,
-		}),
-		runtime.WithMarshalerOption("application/javascript", &runtime.JSONPb{
-			EnumsAsInts:  true,
-			EmitDefaults: false,
-			OrigName:     false,
-		}),
-		runtime.WithMarshalerOption(runtime.MIMEWildcard, &runtime.HTTPBodyMarshaler{
-			Marshaler: &runtime.JSONPb{
-				EnumsAsInts:  true,
-				EmitDefaults: false,
-				OrigName:     true,
-			},
-		}),
-	)
-
-	cc := opt.config.Loopback
-	cc.URL = opt.addr
-	cc.TLS = opt.config.TLS
-
-	// Dial the server
-	opt.logger.Trace("dialling gateway loopback grpc")
-	conn, err := Connect(ctx, cc, opt.vault)
-	if err != nil {
-		return errors.Wrap(err, "server: failed to dial loopback")
-	}
-
-	opt.logger.Trace("registering gateway handlers")
-	for _, gatewayHandler := range o.gatewayHandlers {
-		err = gatewayHandler(ctx, gwmux, conn)
-		if err != nil {
-			return errors.Wrap(err, "server: failed to register gateway handler")
-		}
-	}
-
-	mux.Handle(fmt.Sprintf("/%s/*", opt.serviceName), gwmux)
-
-	return nil
-}
-
-// WithGateway returns a new gatewayServerOption
-func WithGateway(gatewayHandlers ...func(ctx context.Context, gwmux *runtime.ServeMux, conn *grpc.ClientConn) error) ServerOption {
-	return &gatewayServerOption{
-		gatewayHandlers: gatewayHandlers,
-	}
-}
-
 // vaultServerOption is used to specify Vault configuration
 type vaultServerOption struct {
-	vault HasVaultConfig
+	vault VaultConfig
 }
 
 func (o vaultServerOption) apply(ctx context.Context, opt *serverOptions) error {
@@ -319,7 +231,7 @@ func (o vaultServerOption) addHandler(ctx context.Context, opt *serverOptions, m
 }
 
 // WithVault returns a new vaultServerOption
-func WithVault(vault HasVaultConfig) ServerOption {
+func WithVault(vault VaultConfig) ServerOption {
 	return &vaultServerOption{
 		vault: vault,
 	}

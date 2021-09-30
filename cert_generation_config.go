@@ -24,15 +24,6 @@ import (
 	"time"
 )
 
-// HasCertGenerationConfig denotes that an object provides certificate generation configuration.
-type HasCertGenerationConfig interface {
-	GetEnabled() bool
-	GetPath() string
-	GetCommonName() string
-	GetAltNames() string
-	GetTTL() time.Duration
-}
-
 // CertGenerationConfig provides the certificate generation configuration
 type CertGenerationConfig struct {
 	Enabled    bool
@@ -45,24 +36,4 @@ type CertGenerationConfig struct {
 // GetEnabled returns true if certificate generation is enabled
 func (c CertGenerationConfig) GetEnabled() bool {
 	return c.Enabled && len(c.CommonName) > 0
-}
-
-// GetPath returns the path to the certificate generator
-func (c CertGenerationConfig) GetPath() string {
-	return c.Path
-}
-
-// GetCommonName returns the common name to use for certificates
-func (c CertGenerationConfig) GetCommonName() string {
-	return c.CommonName
-}
-
-// GetAltNames returns alternate names to use for certificates
-func (c CertGenerationConfig) GetAltNames() string {
-	return c.AltNames
-}
-
-// GetTTL returns the time-to-live for the certificates
-func (c CertGenerationConfig) GetTTL() time.Duration {
-	return c.TTL
 }

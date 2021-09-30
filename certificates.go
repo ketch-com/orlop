@@ -26,7 +26,7 @@ import (
 )
 
 // GenerateCertificates calls Vault to generate a certificate
-func GenerateCertificates(ctx context.Context, vault HasVaultConfig, cfg HasCertGenerationConfig, cert *[]byte, key *[]byte) error {
+func GenerateCertificates(ctx context.Context, vault VaultConfig, cfg CertGenerationConfig, cert *[]byte, key *[]byte) error {
 	ctx, span := tracer.Start(ctx, "GenerateCertificates")
 	defer span.End()
 
@@ -42,18 +42,18 @@ func GenerateCertificates(ctx context.Context, vault HasVaultConfig, cfg HasCert
 	}
 
 	params := map[string]interface{}{
-		"common_name": cfg.GetCommonName(),
+		"common_name": cfg.CommonName,
 		"format":      "pem_bundle",
 	}
-	if len(cfg.GetAltNames()) > 0 {
-		params["alt_names"] = cfg.GetAltNames()
+	if len(cfg.AltNames) > 0 {
+		params["alt_names"] = cfg.AltNames
 	}
-	if cfg.GetTTL().Seconds() > 60 {
-		params["ttl"] = cfg.GetTTL().String()
+	if cfg.TTL.Seconds() > 60 {
+		params["ttl"] = cfg.TTL.String()
 	}
 
 	// Write the params to the path to generate the certificate
-	secret, err := client.Write(ctx, cfg.GetPath(), params)
+	secret, err := client.Write(ctx, cfg.Path, params)
 	if err != nil {
 		err = errors.Wrap(err, "generate: failed to write to Vault")
 		span.RecordError(err)
