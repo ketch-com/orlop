@@ -40,41 +40,40 @@ type fxLogger struct {
 
 func (l *fxLogger) LogEvent(event fxevent.Event) {
 	if e, ok := event.(*fxevent.OnStartExecuting); ok {
-		l.entry.WithFields(logrus.Fields{"fn": e.FunctionName, "caller": e.CallerName}).Trace("start executing")
+		l.message(nil, "start executing", l.entry.WithFields(logrus.Fields{"fn": e.FunctionName, "caller": e.CallerName}))
 	} else if e, ok := event.(*fxevent.OnStartExecuted); ok {
-		l.addError(e.Err).WithFields(logrus.Fields{"fn": e.FunctionName, "caller": e.CallerName, "method": e.Method, "runtime": e.Runtime}).Trace("start executed")
+		l.message(e.Err, "start executed", l.entry.WithFields(logrus.Fields{"fn": e.FunctionName, "caller": e.CallerName, "method": e.Method, "runtime": e.Runtime}))
 	} else if e, ok := event.(*fxevent.OnStopExecuting); ok {
-		l.entry.WithFields(logrus.Fields{"fn": e.FunctionName, "caller": e.CallerName}).Trace("stop executing")
+		l.message(nil, "stop executing", l.entry.WithFields(logrus.Fields{"fn": e.FunctionName, "caller": e.CallerName}))
 	} else if e, ok := event.(*fxevent.OnStopExecuted); ok {
-		l.addError(e.Err).WithFields(logrus.Fields{"fn": e.FunctionName, "caller": e.CallerName, "runtime": e.Runtime}).Trace("stop executed")
+		l.message(e.Err, "stop executed", l.entry.WithFields(logrus.Fields{"fn": e.FunctionName, "caller": e.CallerName, "runtime": e.Runtime}))
 	} else if e, ok := event.(*fxevent.Supplied); ok {
-		l.addError(e.Err).WithField("caller", e.TypeName).Trace("supplied")
+		l.message(e.Err, "supplied", l.entry.WithField("caller", e.TypeName))
 	} else if e, ok := event.(*fxevent.Provided); ok {
-		l.addError(e.Err).WithFields(logrus.Fields{"caller": e.ConstructorName, "outputTypeNames": e.OutputTypeNames}).Trace("provided")
+		l.message(e.Err, "provided", l.entry.WithFields(logrus.Fields{"caller": e.ConstructorName, "outputTypeNames": e.OutputTypeNames}))
 	} else if e, ok := event.(*fxevent.Invoking); ok {
-		l.entry.WithField("fn", e.FunctionName).Trace("invoking")
+		l.message(nil, "invoking", l.entry.WithField("fn", e.FunctionName))
 	} else if e, ok := event.(*fxevent.Invoked); ok {
-		l.addError(e.Err).WithField("caller", e.FunctionName).Trace("invoked")
+		l.message(e.Err, "invoked", l.entry.WithField("caller", e.FunctionName))
 	} else if e, ok := event.(*fxevent.Stopping); ok {
-		l.entry.WithField("signal", e.Signal).Trace("stopping")
+		l.message(nil, "stopping", l.entry.WithField("signal", e.Signal))
 	} else if e, ok := event.(*fxevent.Stopped); ok {
-		l.addError(e.Err).Trace("stopped")
+		l.message(e.Err, "stopped", l.entry)
 	} else if e, ok := event.(*fxevent.RollingBack); ok {
-		l.addError(e.StartErr).Trace("rolling back")
+		l.message(e.StartErr, "rolling back", l.entry)
 	} else if e, ok := event.(*fxevent.RolledBack); ok {
-		l.addError(e.Err).Trace("rolled back")
+		l.message(e.Err, "rolled back", l.entry)
 	} else if e, ok := event.(*fxevent.Started); ok {
-		l.addError(e.Err).Trace("started")
+		l.message(e.Err, "started", l.entry)
 	} else if e, ok := event.(*fxevent.LoggerInitialized); ok {
-		l.addError(e.Err).WithField("constructor", e.ConstructorName).Trace("logger initialized")
+		l.message(e.Err, "logger initialized", l.entry.WithField("constructor", e.ConstructorName))
 	}
 }
 
-func (l *fxLogger) addError(err error) *logrus.Entry {
+func (l *fxLogger) message(err error, message string, log *logrus.Entry) {
 	if err != nil {
-		return l.entry.WithError(err)
+		log.WithError(err).Errorln(message)
 	}
 
-	return l.entry
+	log.Trace(message)
 }
-
