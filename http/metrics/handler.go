@@ -57,7 +57,7 @@ func NewHandler(params Params) fx.Annotated {
 	}
 
 	c := controller.New(
-		processor.New(
+		processor.NewFactory(
 			selector.NewWithHistogramDistribution(
 				histogram.WithExplicitBoundaries(config.DefaultHistogramBoundaries),
 			),
