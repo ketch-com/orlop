@@ -22,9 +22,9 @@ package grpc
 
 import (
 	"context"
-	"go.ketch.com/lib/orlop/errors"
-	"go.ketch.com/lib/orlop/http/server"
-	"go.ketch.com/lib/orlop/tls"
+	"go.ketch.com/lib/orlop/v2/errors"
+	"go.ketch.com/lib/orlop/v2/http/server"
+	"go.ketch.com/lib/orlop/v2/tls"
 	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
 	"go.uber.org/fx"
 	"google.golang.org/grpc"

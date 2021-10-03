@@ -22,7 +22,7 @@ package orlop
 
 import (
 	"github.com/felixge/httpsnoop"
-	"go.ketch.com/lib/orlop/log"
+	"go.ketch.com/lib/orlop/v2/log"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/exporters/prometheus"
 	"go.opentelemetry.io/otel/metric"

@@ -23,7 +23,7 @@ package grpc
 import (
 	"fmt"
 	"github.com/go-chi/chi/v5"
-	"go.ketch.com/lib/orlop/service"
+	"go.ketch.com/lib/orlop/v2/service"
 	"go.uber.org/fx"
 	"google.golang.org/grpc"
 	"net/http"

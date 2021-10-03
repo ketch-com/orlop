@@ -22,7 +22,7 @@ package vault
 
 import (
 	"fmt"
-	"go.ketch.com/lib/orlop/tls"
+	"go.ketch.com/lib/orlop/v2/tls"
 	"time"
 )
 

@@ -22,9 +22,9 @@ package config
 
 import (
 	"fmt"
-	"go.ketch.com/lib/orlop/env"
-	"go.ketch.com/lib/orlop/errors"
-	"go.ketch.com/lib/orlop/service"
+	"go.ketch.com/lib/orlop/v2/env"
+	"go.ketch.com/lib/orlop/v2/errors"
+	"go.ketch.com/lib/orlop/v2/service"
 	"reflect"
 	"strings"
 )

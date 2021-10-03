@@ -1,4 +1,4 @@
-module go.ketch.com/lib/orlop
+module go.ketch.com/lib/orlop/v2
 
 go 1.16
 

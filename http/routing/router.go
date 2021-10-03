@@ -22,7 +22,7 @@ package routing
 
 import (
 	"github.com/go-chi/chi/v5"
-	"go.ketch.com/lib/orlop/http/middleware"
+	"go.ketch.com/lib/orlop/v2/http/middleware"
 	"go.uber.org/fx"
 	"net/http"
 )

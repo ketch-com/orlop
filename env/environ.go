@@ -22,7 +22,7 @@ package env
 
 import (
 	"github.com/iancoleman/strcase"
-	"go.ketch.com/lib/orlop/service"
+	"go.ketch.com/lib/orlop/v2/service"
 	"os"
 	"strings"
 )

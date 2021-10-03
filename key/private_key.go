@@ -25,9 +25,9 @@ import (
 	"crypto/rsa"
 	"crypto/x509"
 	encoding_pem "encoding/pem"
-	"go.ketch.com/lib/orlop/errors"
-	"go.ketch.com/lib/orlop/logging"
-	"go.ketch.com/lib/orlop/pem"
+	"go.ketch.com/lib/orlop/v2/errors"
+	"go.ketch.com/lib/orlop/v2/logging"
+	"go.ketch.com/lib/orlop/v2/pem"
 	"go.uber.org/fx"
 )
 

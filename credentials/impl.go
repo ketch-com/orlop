@@ -23,10 +23,10 @@ package credentials
 import (
 	"context"
 	"github.com/sirupsen/logrus"
-	"go.ketch.com/lib/orlop/config"
-	"go.ketch.com/lib/orlop/errors"
-	"go.ketch.com/lib/orlop/logging"
-	"go.ketch.com/lib/orlop/parameter"
+	"go.ketch.com/lib/orlop/v2/config"
+	"go.ketch.com/lib/orlop/v2/errors"
+	"go.ketch.com/lib/orlop/v2/logging"
+	"go.ketch.com/lib/orlop/v2/parameter"
 	"go.opentelemetry.io/otel/trace"
 	"go.uber.org/fx"
 )

@@ -22,7 +22,7 @@ package pem
 
 import (
 	"context"
-	"go.ketch.com/lib/orlop/secret"
+	"go.ketch.com/lib/orlop/v2/secret"
 	"go.uber.org/fx"
 )
 

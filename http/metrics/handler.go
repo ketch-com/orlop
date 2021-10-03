@@ -21,8 +21,8 @@
 package metrics
 
 import (
-	"go.ketch.com/lib/orlop/http/routing"
-	"go.ketch.com/lib/orlop/logging"
+	"go.ketch.com/lib/orlop/v2/http/routing"
+	"go.ketch.com/lib/orlop/v2/logging"
 	"go.opentelemetry.io/otel/exporters/prometheus"
 	export "go.opentelemetry.io/otel/sdk/export/metric"
 	"go.opentelemetry.io/otel/sdk/metric/aggregator/histogram"

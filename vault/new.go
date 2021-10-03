@@ -23,9 +23,9 @@ package vault
 import (
 	"context"
 	vault "github.com/hashicorp/vault/api"
-	"go.ketch.com/lib/orlop/logging"
-	"go.ketch.com/lib/orlop/parameter"
-	"go.ketch.com/lib/orlop/tls"
+	"go.ketch.com/lib/orlop/v2/logging"
+	"go.ketch.com/lib/orlop/v2/parameter"
+	"go.ketch.com/lib/orlop/v2/tls"
 	"go.opentelemetry.io/otel/trace"
 	"go.uber.org/fx"
 	"net/http"

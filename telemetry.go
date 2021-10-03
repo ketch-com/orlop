@@ -21,7 +21,7 @@
 package orlop
 
 import (
-	"go.ketch.com/lib/orlop/version"
+	"go.ketch.com/lib/orlop/v2/version"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/metric"
 	"go.opentelemetry.io/otel/metric/global"

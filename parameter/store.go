@@ -22,7 +22,7 @@ package parameter
 
 import (
 	"context"
-	"go.ketch.com/lib/orlop/errors"
+	"go.ketch.com/lib/orlop/v2/errors"
 )
 
 var ErrNotFound = errors.New("not found")

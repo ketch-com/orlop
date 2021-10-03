@@ -22,9 +22,9 @@ package server
 
 import (
 	"fmt"
-	"go.ketch.com/lib/orlop/config"
-	"go.ketch.com/lib/orlop/http/middleware"
-	"go.ketch.com/lib/orlop/tls"
+	"go.ketch.com/lib/orlop/v2/config"
+	"go.ketch.com/lib/orlop/v2/http/middleware"
+	"go.ketch.com/lib/orlop/v2/tls"
 )
 
 // Config is standard configuration of most server commands

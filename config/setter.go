@@ -24,7 +24,7 @@ import (
 	"encoding/base64"
 	"encoding/csv"
 	"encoding/hex"
-	"go.ketch.com/lib/orlop/errors"
+	"go.ketch.com/lib/orlop/v2/errors"
 	"reflect"
 	"strconv"
 	"strings"

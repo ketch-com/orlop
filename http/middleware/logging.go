@@ -23,7 +23,7 @@ package middleware
 import (
 	"github.com/felixge/httpsnoop"
 	"github.com/sirupsen/logrus"
-	"go.ketch.com/lib/orlop/logging"
+	"go.ketch.com/lib/orlop/v2/logging"
 	"go.uber.org/fx"
 	"net/http"
 )

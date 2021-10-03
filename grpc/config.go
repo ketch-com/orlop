@@ -22,9 +22,9 @@ package grpc
 
 import (
 	"fmt"
-	"go.ketch.com/lib/orlop/secret"
-	"go.ketch.com/lib/orlop/tls"
-	"go.ketch.com/lib/orlop/version"
+	"go.ketch.com/lib/orlop/v2/secret"
+	"go.ketch.com/lib/orlop/v2/tls"
+	"go.ketch.com/lib/orlop/v2/version"
 	"time"
 )
 

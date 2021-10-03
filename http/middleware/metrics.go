@@ -22,7 +22,7 @@ package middleware
 
 import (
 	"github.com/felixge/httpsnoop"
-	"go.ketch.com/lib/orlop/logging"
+	"go.ketch.com/lib/orlop/v2/logging"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/metric"
 	"go.uber.org/fx"

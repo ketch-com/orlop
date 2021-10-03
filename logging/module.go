@@ -22,7 +22,7 @@ package logging
 
 import (
 	"github.com/sirupsen/logrus"
-	"go.ketch.com/lib/orlop/env"
+	"go.ketch.com/lib/orlop/v2/env"
 	"go.uber.org/fx"
 	stdlog "log"
 )

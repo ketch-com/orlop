@@ -23,7 +23,7 @@ package logging
 import (
 	"context"
 	"github.com/sirupsen/logrus"
-	"go.ketch.com/lib/orlop/log"
+	"go.ketch.com/lib/orlop/v2/log"
 	"time"
 )
 

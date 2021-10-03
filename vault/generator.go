@@ -22,9 +22,9 @@ package vault
 
 import (
 	"context"
-	"go.ketch.com/lib/orlop/errors"
-	"go.ketch.com/lib/orlop/parameter"
-	"go.ketch.com/lib/orlop/tls"
+	"go.ketch.com/lib/orlop/v2/errors"
+	"go.ketch.com/lib/orlop/v2/parameter"
+	"go.ketch.com/lib/orlop/v2/tls"
 	"go.opentelemetry.io/otel/trace"
 	"go.uber.org/fx"
 )

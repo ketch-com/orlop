@@ -23,7 +23,7 @@ package orlop
 import (
 	"encoding/json"
 	"github.com/grpc-ecosystem/grpc-gateway/runtime"
-	"go.ketch.com/lib/orlop/errors"
+	"go.ketch.com/lib/orlop/v2/errors"
 	"io"
 	"io/ioutil"
 	"reflect"

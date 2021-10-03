@@ -24,9 +24,9 @@ import (
 	"context"
 	"crypto/tls"
 	"crypto/x509"
-	"go.ketch.com/lib/orlop/errors"
-	"go.ketch.com/lib/orlop/logging"
-	"go.ketch.com/lib/orlop/pem"
+	"go.ketch.com/lib/orlop/v2/errors"
+	"go.ketch.com/lib/orlop/v2/logging"
+	"go.ketch.com/lib/orlop/v2/pem"
 	"go.opentelemetry.io/otel/trace"
 	"go.uber.org/fx"
 )

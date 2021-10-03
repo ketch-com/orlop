@@ -22,7 +22,7 @@ syntax = "proto3";
 
 package orlop;
 
-option go_package = "go.ketch.com/lib/orlop;orlop";
+option go_package = "go.ketch.com/lib/orlop/v2;orlop";
 
 // Redirect represents a redirection to a new location
 message Redirect {

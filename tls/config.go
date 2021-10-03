@@ -23,8 +23,8 @@ package tls
 import (
 	"crypto/tls"
 	"fmt"
-	"go.ketch.com/lib/orlop/config"
-	"go.ketch.com/lib/orlop/pem"
+	"go.ketch.com/lib/orlop/v2/config"
+	"go.ketch.com/lib/orlop/v2/pem"
 	"reflect"
 )
 
