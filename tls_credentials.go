@@ -24,8 +24,8 @@ import (
 	"context"
 	"crypto/tls"
 	"crypto/x509"
-	"go.ketch.com/lib/orlop/errors"
-	"go.ketch.com/lib/orlop/log"
+	"go.ketch.com/lib/orlop/v2/errors"
+	"go.ketch.com/lib/orlop/v2/log"
 )
 
 const (

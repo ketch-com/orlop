@@ -1,4 +1,4 @@
-// Copyright (c) 2020 Ketch Kloud, Inc.
+// Copyright (c) 2021 Ketch Kloud, Inc.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -18,26 +18,29 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-syntax = "proto3";
+package env
 
-package orlop;
+import (
+	"github.com/iancoleman/strcase"
+	"go.ketch.com/lib/orlop/v2/service"
+	"os"
+	"strings"
+)
 
-option go_package = "go.ketch.com/lib/orlop/v2;orlop";
-
-// Redirect represents a redirection to a new location
-message Redirect {
-    // Location to redirect to
-    string location = 1;
+type Environ interface {
+	Getenv(key string) string
 }
 
-// ErrorMessage represents an error message
-message ErrorMessage {
-    // Code description
-    int32 code = 1;
+func NewEnviron(prefix service.Name) Environ {
+	return &environImpl{
+		prefix: prefix,
+	}
+}
 
-    // Error description
-    string error = 2;
+type environImpl struct {
+	prefix service.Name
+}
 
-    // Message description
-    string message = 3;
+func (e environImpl) Getenv(key string) string {
+	return os.Getenv(strcase.ToScreamingSnake(strings.Join([]string{string(e.prefix), key}, "_")))
 }

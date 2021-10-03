@@ -1,4 +1,4 @@
-// Copyright (c) 2020 Ketch Kloud, Inc.
+// Copyright (c) 2021 Ketch Kloud, Inc.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -18,26 +18,56 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-syntax = "proto3";
+package logging
 
-package orlop;
+import (
+	"github.com/sirupsen/logrus"
+	"go.ketch.com/lib/orlop/v2/env"
+	"go.uber.org/fx"
+	stdlog "log"
+)
 
-option go_package = "go.ketch.com/lib/orlop/v2;orlop";
+var Module = fx.Options(
+	fx.Invoke(SetupLogging),
+)
 
-// Redirect represents a redirection to a new location
-message Redirect {
-    // Location to redirect to
-    string location = 1;
-}
+// SetupLogging sets up logging for the environment and the default log level
+func SetupLogging(env env.Environment, loglevel Level) {
+	switch loglevel {
+	case FatalLevel:
+		logrus.SetLevel(logrus.FatalLevel)
 
-// ErrorMessage represents an error message
-message ErrorMessage {
-    // Code description
-    int32 code = 1;
+	case ErrorLevel:
+		logrus.SetLevel(logrus.ErrorLevel)
 
-    // Error description
-    string error = 2;
+	case WarnLevel:
+		logrus.SetLevel(logrus.WarnLevel)
 
-    // Message description
-    string message = 3;
+	case InfoLevel:
+		logrus.SetLevel(logrus.InfoLevel)
+
+	case DebugLevel:
+		logrus.SetLevel(logrus.DebugLevel)
+
+	case TraceLevel:
+		logrus.SetLevel(logrus.TraceLevel)
+
+	default:
+		if env.IsProduction() {
+			logrus.SetLevel(logrus.WarnLevel)
+		} else {
+			logrus.SetLevel(logrus.DebugLevel)
+		}
+	}
+
+	if env.IsLocal() {
+		logrus.SetFormatter(&logrus.TextFormatter{
+			ForceColors:            true,
+			DisableTimestamp:       true,
+			DisableLevelTruncation: true,
+			PadLevelText:           true,
+		})
+	}
+
+	stdlog.SetOutput(logrus.New().Writer())
 }

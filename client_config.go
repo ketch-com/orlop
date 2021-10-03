@@ -22,7 +22,7 @@ package orlop
 
 import (
 	"fmt"
-	"go.ketch.com/lib/orlop/version"
+	"go.ketch.com/lib/orlop/v2/version"
 	"time"
 )
 

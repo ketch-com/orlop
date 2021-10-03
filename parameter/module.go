@@ -1,4 +1,4 @@
-// Copyright (c) 2020 Ketch Kloud, Inc.
+// Copyright (c) 2021 Ketch Kloud, Inc.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -18,26 +18,12 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-syntax = "proto3";
+package parameter
 
-package orlop;
+import "go.uber.org/fx"
 
-option go_package = "go.ketch.com/lib/orlop/v2;orlop";
-
-// Redirect represents a redirection to a new location
-message Redirect {
-    // Location to redirect to
-    string location = 1;
-}
-
-// ErrorMessage represents an error message
-message ErrorMessage {
-    // Code description
-    int32 code = 1;
-
-    // Error description
-    string error = 2;
-
-    // Message description
-    string message = 3;
-}
+var Module = fx.Options(
+	fx.Provide(
+		StoreFromObjectStore,
+	),
+)

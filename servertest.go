@@ -23,8 +23,8 @@ package orlop
 import (
 	"context"
 	"github.com/go-chi/chi/v5"
-	"go.ketch.com/lib/orlop/errors"
-	"go.ketch.com/lib/orlop/log"
+	"go.ketch.com/lib/orlop/v2/errors"
+	"go.ketch.com/lib/orlop/v2/log"
 	"google.golang.org/grpc"
 	"net/http/httptest"
 	"reflect"

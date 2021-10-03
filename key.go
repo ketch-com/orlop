@@ -27,8 +27,8 @@ import (
 	"encoding/pem"
 	"github.com/golang-jwt/jwt"
 	"github.com/sirupsen/logrus"
-	"go.ketch.com/lib/orlop/errors"
-	"go.ketch.com/lib/orlop/log"
+	"go.ketch.com/lib/orlop/v2/errors"
+	"go.ketch.com/lib/orlop/v2/log"
 	"go.opentelemetry.io/otel/attribute"
 	"io/ioutil"
 )

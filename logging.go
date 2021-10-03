@@ -23,7 +23,7 @@ package orlop
 import (
 	"github.com/felixge/httpsnoop"
 	"github.com/sirupsen/logrus"
-	"go.ketch.com/lib/orlop/log"
+	"go.ketch.com/lib/orlop/v2/log"
 	"net/http"
 )
 

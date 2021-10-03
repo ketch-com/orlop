@@ -1,4 +1,4 @@
-// Copyright (c) 2020 Ketch Kloud, Inc.
+// Copyright (c) 2021 Ketch Kloud, Inc.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -18,26 +18,27 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-syntax = "proto3";
+package config
 
-package orlop;
-
-option go_package = "go.ketch.com/lib/orlop/v2;orlop";
-
-// Redirect represents a redirection to a new location
-message Redirect {
-    // Location to redirect to
-    string location = 1;
+// Enabled provides an Enabled flag
+type Enabled interface {
+	GetEnabled() bool
 }
 
-// ErrorMessage represents an error message
-message ErrorMessage {
-    // Code description
-    int32 code = 1;
+type HasEnabled struct {
+	Enabled bool
+}
 
-    // Error description
-    string error = 2;
+func (e HasEnabled) GetEnabled() bool {
+	return e.Enabled
+}
 
-    // Message description
-    string message = 3;
+func IsEnabled(in interface{}) bool {
+	if b, ok := in.(bool); ok {
+		return b
+	} else if en, ok := in.(Enabled); ok {
+		return en.GetEnabled()
+	}
+
+	return true
 }

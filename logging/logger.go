@@ -1,4 +1,4 @@
-// Copyright (c) 2020 Ketch Kloud, Inc.
+// Copyright (c) 2021 Ketch Kloud, Inc.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -18,26 +18,37 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-syntax = "proto3";
+package logging
 
-package orlop;
+import (
+	"context"
+	"time"
+)
 
-option go_package = "go.ketch.com/lib/orlop/v2;orlop";
+type Logger interface {
+	Trace(args ...interface{})
+	Tracef(format string, args ...interface{})
 
-// Redirect represents a redirection to a new location
-message Redirect {
-    // Location to redirect to
-    string location = 1;
-}
+	Debug(args ...interface{})
+	Debugf(format string, args ...interface{})
 
-// ErrorMessage represents an error message
-message ErrorMessage {
-    // Code description
-    int32 code = 1;
+	Info(args ...interface{})
+	Infof(format string, args ...interface{})
 
-    // Error description
-    string error = 2;
+	Warn(args ...interface{})
+	Warnf(format string, args ...interface{})
 
-    // Message description
-    string message = 3;
+	Error(args ...interface{})
+	Errorf(format string, args ...interface{})
+
+	Fatal(args ...interface{})
+	Fatalf(format string, args ...interface{})
+
+	Printf(format string, args ...interface{})
+
+	WithTime(t time.Time) Logger
+	WithContext(ctx context.Context) Logger
+	WithError(err error) Logger
+	WithField(key string, value interface{}) Logger
+	WithFields(fields ...interface{}) Logger
 }

@@ -26,8 +26,8 @@ import (
 	"github.com/iancoleman/strcase"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
-	"go.ketch.com/lib/orlop/errors"
-	"go.ketch.com/lib/orlop/log"
+	"go.ketch.com/lib/orlop/v2/errors"
+	"go.ketch.com/lib/orlop/v2/log"
 	"go.opentelemetry.io/contrib/instrumentation/runtime"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/exporters/prometheus"
@@ -176,7 +176,7 @@ func (r *Runner) runE(runner interface{}, cfg interface{}) func(cmd *cobra.Comma
 			resource.WithAttributes(attributes...))
 
 		c := controller.New(
-			processor.New(
+			processor.NewFactory(
 				selector.NewWithHistogramDistribution(
 					histogram.WithExplicitBoundaries(config.DefaultHistogramBoundaries),
 				),

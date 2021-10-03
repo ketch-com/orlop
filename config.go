@@ -26,7 +26,7 @@ import (
 	"encoding/hex"
 	"fmt"
 	"github.com/joho/godotenv"
-	"go.ketch.com/lib/orlop/errors"
+	"go.ketch.com/lib/orlop/v2/errors"
 	"os"
 	"reflect"
 	"strconv"

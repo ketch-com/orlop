@@ -22,7 +22,7 @@ package orlop
 
 import (
 	"context"
-	"go.ketch.com/lib/orlop/errors"
+	"go.ketch.com/lib/orlop/v2/errors"
 )
 
 // GenerateCertificates calls Vault to generate a certificate

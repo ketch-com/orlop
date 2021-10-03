@@ -1,4 +1,4 @@
-// Copyright (c) 2020 Ketch Kloud, Inc.
+// Copyright (c) 2021 Ketch Kloud, Inc.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -18,26 +18,32 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-syntax = "proto3";
+package parameter
 
-package orlop;
+import (
+	"context"
+	"go.ketch.com/lib/orlop/v2/errors"
+)
 
-option go_package = "go.ketch.com/lib/orlop/v2;orlop";
+var ErrNotFound = errors.New("not found")
 
-// Redirect represents a redirection to a new location
-message Redirect {
-    // Location to redirect to
-    string location = 1;
+// Store provide an interface to interact with a parameter store
+type Store interface {
+	List(ctx context.Context, p string) ([]string, error)
+	Read(ctx context.Context, p string) (map[string]interface{}, error)
+	Write(ctx context.Context, p string, data map[string]interface{}) (map[string]interface{}, error)
+	Delete(ctx context.Context, p string) error
 }
 
-// ErrorMessage represents an error message
-message ErrorMessage {
-    // Code description
-    int32 code = 1;
+// ObjectStore is an extension to read/write objects to parameter store
+type ObjectStore interface {
+	Store
 
-    // Error description
-    string error = 2;
+	ReadObject(ctx context.Context, p string, out interface{}) error
+	WriteObject(ctx context.Context, p string, in interface{}) error
+}
 
-    // Message description
-    string message = 3;
+// StoreFromObjectStore returns a Store given an ObjectStore
+func StoreFromObjectStore(store ObjectStore) Store {
+	return store
 }
