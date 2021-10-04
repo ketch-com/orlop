@@ -27,7 +27,7 @@ import (
 )
 
 func FxLogger(entry *logrus.Entry) fx.Option {
-	return fx.WithLogger(func () fxevent.Logger {
+	return fx.WithLogger(func() fxevent.Logger {
 		return &fxLogger{
 			entry: entry,
 		}
