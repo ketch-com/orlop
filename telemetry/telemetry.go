@@ -26,8 +26,19 @@ import (
 	"go.opentelemetry.io/otel/metric"
 	"go.opentelemetry.io/otel/metric/global"
 	"go.opentelemetry.io/otel/trace"
+	"go.uber.org/fx"
 )
 
-var tracer = otel.GetTracerProvider().Tracer(version.Name, trace.WithInstrumentationVersion(version.Version))
+func tracer() fx.Annotated {
+	return fx.Annotated{
+		Name:   version.Name,
+		Target: otel.GetTracerProvider().Tracer(version.Name, trace.WithInstrumentationVersion(version.Version)),
+	}
+}
 
-var metrics = global.GetMeterProvider().Meter(version.Name, metric.WithInstrumentationVersion(version.Version))
+func metrics() fx.Annotated {
+	return fx.Annotated{
+		Name:   version.Name,
+		Target: global.GetMeterProvider().Meter(version.Name, metric.WithInstrumentationVersion(version.Version)),
+	}
+}

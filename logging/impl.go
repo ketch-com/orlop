@@ -111,7 +111,7 @@ func (l loggerImpl) WithField(key string, value interface{}) Logger {
 
 func (l loggerImpl) WithFields(fields ...interface{}) Logger {
 	f := logrus.Fields{}
-	for n := 0; n < len(fields) - 1; n += 2 {
+	for n := 0; n < len(fields)-1; n += 2 {
 		f[fields[n].(string)] = fields[n+1]
 	}
 	return &loggerImpl{l.entry.WithFields(f)}
