@@ -21,7 +21,6 @@
 package telemetry
 
 import (
-	"go.ketch.com/lib/orlop/v2/version"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/metric"
 	"go.opentelemetry.io/otel/metric/global"
@@ -29,16 +28,16 @@ import (
 	"go.uber.org/fx"
 )
 
-func tracer() fx.Annotated {
-	return fx.Annotated{
-		Name:   version.Name,
-		Target: otel.GetTracerProvider().Tracer(version.Name, trace.WithInstrumentationVersion(version.Version)),
-	}
+type telemetryOut struct {
+	fx.Out
+
+	Tracer trace.TracerProvider
+	Meter  metric.MeterProvider
 }
 
-func metrics() fx.Annotated {
-	return fx.Annotated{
-		Name:   version.Name,
-		Target: global.GetMeterProvider().Meter(version.Name, metric.WithInstrumentationVersion(version.Version)),
+func telemetry() telemetryOut {
+	return telemetryOut{
+		Tracer: otel.GetTracerProvider(),
+		Meter:  global.GetMeterProvider(),
 	}
 }

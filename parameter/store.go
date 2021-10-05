@@ -42,8 +42,3 @@ type ObjectStore interface {
 	ReadObject(ctx context.Context, p string, out interface{}) error
 	WriteObject(ctx context.Context, p string, in interface{}) error
 }
-
-// StoreFromObjectStore returns a Store given an ObjectStore
-func StoreFromObjectStore(store ObjectStore) Store {
-	return store
-}
