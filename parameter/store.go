@@ -34,11 +34,3 @@ type Store interface {
 	Write(ctx context.Context, p string, data map[string]interface{}) (map[string]interface{}, error)
 	Delete(ctx context.Context, p string) error
 }
-
-// ObjectStore is an extension to read/write objects to parameter store
-type ObjectStore interface {
-	Store
-
-	ReadObject(ctx context.Context, p string, out interface{}) error
-	WriteObject(ctx context.Context, p string, in interface{}) error
-}
