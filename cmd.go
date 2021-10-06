@@ -176,7 +176,7 @@ func (r *Runner) runE(runner interface{}, cfg interface{}) func(cmd *cobra.Comma
 			resource.WithAttributes(attributes...))
 
 		c := controller.New(
-			processor.New(
+			processor.NewFactory(
 				selector.NewWithHistogramDistribution(
 					histogram.WithExplicitBoundaries(config.DefaultHistogramBoundaries),
 				),
