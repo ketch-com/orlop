@@ -30,7 +30,6 @@ import (
 	"go.ketch.com/lib/orlop/v2/log"
 	"go.ketch.com/lib/orlop/v2/logging"
 	"go.ketch.com/lib/orlop/v2/service"
-	"go.ketch.com/lib/orlop/v2/version"
 	"go.opentelemetry.io/contrib/instrumentation/runtime"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/exporters/prometheus"
@@ -42,7 +41,6 @@ import (
 	selector "go.opentelemetry.io/otel/sdk/metric/selector/simple"
 	"go.opentelemetry.io/otel/sdk/resource"
 	semconv "go.opentelemetry.io/otel/semconv/v1.4.0"
-	"go.opentelemetry.io/otel/trace"
 	"go.uber.org/fx"
 	stdlog "log"
 	"os"
@@ -232,9 +230,6 @@ func (r *Runner) runE(runner interface{}, cfg interface{}) func(cmd *cobra.Comma
 						FxContext(ctx),
 						fx.Supply(service.Name(r.prefix)),
 						fx.Supply(logging.Level(loglevelFlag)),
-						fx.Provide(func(tracerProvider trace.TracerProvider) trace.Tracer {
-							return tracerProvider.Tracer(version.Name, trace.WithInstrumentationVersion(version.Name))
-						}),
 						Module,
 						module,
 					)
