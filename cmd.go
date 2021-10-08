@@ -228,6 +228,7 @@ func (r *Runner) runE(runner interface{}, cfg interface{}) func(cmd *cobra.Comma
 						log.FxLogger(l),
 						FxOptions(cfg),
 						FxContext(ctx),
+						fx.Supply(cmd),
 						fx.Supply(service.Name(r.prefix)),
 						fx.Supply(logging.Level(loglevelFlag)),
 						Module,
