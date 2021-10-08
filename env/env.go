@@ -36,19 +36,31 @@ func Env(environ Environ) Environment {
 	return Environment(environ.Getenv(EnvironmentKey))
 }
 
+func Test() Environment {
+	return "test"
+}
+
+func Production() Environment {
+	return "production"
+}
+
+func Local() Environment {
+	return ""
+}
+
 // IsLocal returns true if the environment is not defined (aka local)
 func (e Environment) IsLocal() bool {
-	return e == "" || e == "local"
+	return e == Local() || e == "local"
 }
 
 // IsProduction returns true if the environment is the production environment.
 func (e Environment) IsProduction() bool {
-	return e == "prod" || e == "production"
+	return e == Production() || e == "prod"
 }
 
 // IsTest returns true if the environment is the test environment
 func (e Environment) IsTest() bool {
-	return e == "test"
+	return e == Test()
 }
 
 // String returns a string version of the environment.
