@@ -33,7 +33,9 @@ type Environment string
 
 // Env returns the environment from the environment variables
 func Env(environ Environ) Environment {
-	return Environment(environ.Getenv(EnvironmentKey))
+	e := Environment(environ.Getenv(EnvironmentKey))
+	e.Load()
+	return e
 }
 
 func Test() Environment {

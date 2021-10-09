@@ -26,6 +26,7 @@ import (
 	"github.com/iancoleman/strcase"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
+	"go.ketch.com/lib/orlop/v2/config"
 	"go.ketch.com/lib/orlop/v2/errors"
 	"go.ketch.com/lib/orlop/v2/log"
 	"go.ketch.com/lib/orlop/v2/logging"
@@ -154,7 +155,7 @@ func (r *Runner) preRunE(cmd *cobra.Command, args []string) error {
 
 func (r *Runner) runE(runner interface{}, cfg interface{}) func(cmd *cobra.Command, args []string) error {
 	return func(cmd *cobra.Command, args []string) error {
-		config := prometheus.Config{
+		promConfig := prometheus.Config{
 			DefaultHistogramBoundaries: []float64{
 				0.005,
 				0.01,
@@ -180,7 +181,7 @@ func (r *Runner) runE(runner interface{}, cfg interface{}) func(cmd *cobra.Comma
 		c := controller.New(
 			processor.NewFactory(
 				selector.NewWithHistogramDistribution(
-					histogram.WithExplicitBoundaries(config.DefaultHistogramBoundaries),
+					histogram.WithExplicitBoundaries(promConfig.DefaultHistogramBoundaries),
 				),
 				export.CumulativeExportKindSelector(),
 				processor.WithMemory(true),
@@ -188,7 +189,7 @@ func (r *Runner) runE(runner interface{}, cfg interface{}) func(cmd *cobra.Comma
 			controller.WithResource(res),
 		)
 
-		exp, err := prometheus.New(config, c)
+		exp, err := prometheus.New(promConfig, c)
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -222,12 +223,12 @@ func (r *Runner) runE(runner interface{}, cfg interface{}) func(cmd *cobra.Comma
 		}
 
 		if module, ok := runner.(fx.Option); ok {
-			if _, ok = cfg.(ProvidesFxOptions); ok {
-				runner = func(ctx context.Context, cfg ProvidesFxOptions) error {
+			if _, ok = cfg.(config.Config); ok {
+				runner = func(ctx context.Context, cfg config.Config) error {
 					app := fx.New(
-						log.FxLogger(l),
-						FxOptions(cfg),
+						logging.WithLogger(l),
 						FxContext(ctx),
+						FxOptions(cfg),
 						fx.Supply(cmd),
 						fx.Supply(service.Name(r.prefix)),
 						fx.Supply(logging.Level(loglevelFlag)),

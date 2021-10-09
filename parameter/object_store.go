@@ -9,7 +9,6 @@ import (
 	"strings"
 )
 
-
 // ObjectStore is an extension to read/write objects to parameter store
 type ObjectStore interface {
 	Store
@@ -226,4 +225,3 @@ func (c *objectStore) WriteObject(ctx context.Context, p string, in interface{})
 
 	return nil
 }
-

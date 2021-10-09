@@ -25,6 +25,7 @@ import (
 )
 
 var Module = fx.Options(
-	fx.Provide(New),
-	fx.Invoke(SetupLogging),
+	fx.Provide(
+		New,
+	),
 )

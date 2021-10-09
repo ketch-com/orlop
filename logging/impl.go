@@ -23,11 +23,14 @@ package logging
 import (
 	"context"
 	"github.com/sirupsen/logrus"
+	"go.ketch.com/lib/orlop/v2/env"
 	"go.ketch.com/lib/orlop/v2/log"
 	"time"
 )
 
-func New() (Logger, error) {
+func New(env env.Environment, loglevel Level) (Logger, error) {
+	SetupLogging(env, loglevel)
+
 	return &loggerImpl{
 		entry: log.New(),
 	}, nil

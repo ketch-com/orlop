@@ -47,6 +47,6 @@ func makeTracer(traceProvider trace.TracerProvider, name service.Name) trace.Tra
 	return traceProvider.Tracer(string(name))
 }
 
-func makeMeter(meterProvider  metric.MeterProvider, name service.Name) metric.Meter {
+func makeMeter(meterProvider metric.MeterProvider, name service.Name) metric.Meter {
 	return meterProvider.Meter(string(name))
 }

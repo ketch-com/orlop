@@ -21,3 +21,5 @@
 package service
 
 type Name string
+
+type Version string
