@@ -25,16 +25,13 @@ import (
 	"go.ketch.com/lib/orlop/v2/env"
 	"go.ketch.com/lib/orlop/v2/errors"
 	"go.ketch.com/lib/orlop/v2/service"
+	"go.uber.org/fx"
 	"reflect"
 	"strings"
 )
 
-type configSentinel interface {
-	configSentinel()
-}
-
 type Config interface {
-	configSentinel
+	Options() fx.Option
 }
 
 type providerImpl struct {

@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-package log
+package logging
 
 import (
 	"github.com/sirupsen/logrus"
@@ -26,7 +26,7 @@ import (
 	"go.uber.org/fx/fxevent"
 )
 
-func FxLogger(entry *logrus.Entry) fx.Option {
+func WithLogger(entry *logrus.Entry) fx.Option {
 	return fx.WithLogger(func() fxevent.Logger {
 		return &fxLogger{
 			entry: entry,
