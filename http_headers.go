@@ -41,18 +41,17 @@ func DefaultHTTPHeaders(options HeaderOptions) func(next http.Handler) http.Hand
 
 			// Add CORS headers
 			w.Header().Set("Access-Control-Allow-Credentials", "true")
+			w.Header().Add("Vary", "Origin")
 
 			if origin := r.Header.Get("Origin"); origin != "" {
 				if len(options.AllowedOrigins) > 0 {
 					for _, o := range options.AllowedOrigins {
 						if o == origin {
 							w.Header().Set("Access-Control-Allow-Origin", origin)
-							w.Header().Add("Vary", "Origin")
 						}
 					}
 				} else {
 					w.Header().Set("Access-Control-Allow-Origin", origin)
-					w.Header().Add("Vary", "Origin")
 				}
 				if r.Method == "OPTIONS" && r.Header.Get("Access-Control-Request-Method") != "" {
 					w.Header().Set("Access-Control-Allow-Headers", headers)
