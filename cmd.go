@@ -31,16 +31,11 @@ import (
 	"go.ketch.com/lib/orlop/v2/log"
 	"go.ketch.com/lib/orlop/v2/logging"
 	"go.ketch.com/lib/orlop/v2/service"
+	"go.ketch.com/lib/orlop/v2/telemetry"
 	"go.opentelemetry.io/contrib/instrumentation/runtime"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/exporters/prometheus"
 	"go.opentelemetry.io/otel/metric/global"
-	export "go.opentelemetry.io/otel/sdk/export/metric"
-	"go.opentelemetry.io/otel/sdk/metric/aggregator/histogram"
-	controller "go.opentelemetry.io/otel/sdk/metric/controller/basic"
-	processor "go.opentelemetry.io/otel/sdk/metric/processor/basic"
-	selector "go.opentelemetry.io/otel/sdk/metric/selector/simple"
-	"go.opentelemetry.io/otel/sdk/resource"
 	semconv "go.opentelemetry.io/otel/semconv/v1.4.0"
 	"go.uber.org/fx"
 	stdlog "log"
@@ -155,48 +150,19 @@ func (r *Runner) preRunE(cmd *cobra.Command, args []string) error {
 
 func (r *Runner) runE(runner interface{}, cfg interface{}) func(cmd *cobra.Command, args []string) error {
 	return func(cmd *cobra.Command, args []string) error {
-		promConfig := prometheus.Config{
-			DefaultHistogramBoundaries: []float64{
-				0.005,
-				0.01,
-				0.025,
-				0.05,
-				0.1,
-				0.25,
-				0.5,
-				1,
-				10,
-				2.5,
-				5,
-			},
+		promConfig := telemetry.NewPrometheusConfig()
+
+		c, err := telemetry.NewPrometheusController(cmd.Context(), promConfig)
+		if err != nil {
+			return err
 		}
-
-		res := resource.Environment()
-		attributes := res.Attributes()
-
-		res, _ = resource.New(cmd.Context(),
-			resource.WithSchemaURL(res.SchemaURL()),
-			resource.WithAttributes(attributes...))
-
-		c := controller.New(
-			processor.NewFactory(
-				selector.NewWithHistogramDistribution(
-					histogram.WithExplicitBoundaries(promConfig.DefaultHistogramBoundaries),
-				),
-				export.CumulativeExportKindSelector(),
-				processor.WithMemory(true),
-			),
-			controller.WithResource(res),
-		)
 
 		exp, err := prometheus.New(promConfig, c)
 		if err != nil {
-			log.Fatal(err)
+			return err
 		}
 
 		global.SetMeterProvider(exp.MeterProvider())
-
-		exporter = exp
 
 		envFlag, err := cmd.Flags().GetString("env")
 		if err != nil {
