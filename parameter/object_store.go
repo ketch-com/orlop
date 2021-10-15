@@ -35,7 +35,7 @@ func (c *objectStore) Read(ctx context.Context, p string) (map[string]interface{
 	return c.store.Read(ctx, p)
 }
 
-func (c *objectStore) Write(ctx context.Context, p string, data map[string]interface{}) (map[string]interface{}, error) {
+func (c *objectStore) Write(ctx context.Context, p string, data map[string]interface{}) error {
 	return c.store.Write(ctx, p, data)
 }
 
@@ -219,7 +219,7 @@ func (c *objectStore) WriteObject(ctx context.Context, p string, in interface{})
 		}
 	}
 
-	if _, err := c.store.Write(ctx, p, m); err != nil {
+	if err := c.store.Write(ctx, p, m); err != nil {
 		return err
 	}
 
