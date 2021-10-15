@@ -38,8 +38,8 @@ func (c noopStore) Read(ctx context.Context, p string) (map[string]interface{}, 
 	return nil, ErrNotFound
 }
 
-func (c noopStore) Write(ctx context.Context, p string, data map[string]interface{}) error {
-	return nil
+func (c noopStore) Write(ctx context.Context, p string, data map[string]interface{}) (map[string]interface{}, error) {
+	return make(map[string]interface{}), nil
 }
 
 func (c noopStore) Delete(ctx context.Context, p string) error {
