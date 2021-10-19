@@ -21,13 +21,29 @@
 package telemetry
 
 import (
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/exporters/prometheus"
+	"go.opentelemetry.io/otel/metric"
+	"go.opentelemetry.io/otel/metric/global"
 	"go.uber.org/fx"
 )
 
 var Module = fx.Options(
 	fx.Provide(
-		telemetry,
+		NewPrometheusConfig,
+		NewPrometheusController,
+		prometheus.New,
+
+		func(exp *prometheus.Exporter) metric.MeterProvider {
+			return exp.MeterProvider()
+		},
+
+		otel.GetTracerProvider,
 		makeTracer,
 		makeMeter,
+	),
+
+	fx.Invoke(
+		global.SetMeterProvider,
 	),
 )

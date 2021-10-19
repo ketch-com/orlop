@@ -22,26 +22,9 @@ package telemetry
 
 import (
 	"go.ketch.com/lib/orlop/v2/service"
-	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/metric"
-	"go.opentelemetry.io/otel/metric/global"
 	"go.opentelemetry.io/otel/trace"
-	"go.uber.org/fx"
 )
-
-type telemetryOut struct {
-	fx.Out
-
-	Tracer trace.TracerProvider
-	Meter  metric.MeterProvider
-}
-
-func telemetry() telemetryOut {
-	return telemetryOut{
-		Tracer: otel.GetTracerProvider(),
-		Meter:  global.GetMeterProvider(),
-	}
-}
 
 func makeTracer(traceProvider trace.TracerProvider, name service.Name) trace.Tracer {
 	return traceProvider.Tracer(string(name))
