@@ -31,11 +31,8 @@ import (
 	"go.ketch.com/lib/orlop/v2/log"
 	"go.ketch.com/lib/orlop/v2/logging"
 	"go.ketch.com/lib/orlop/v2/service"
-	"go.ketch.com/lib/orlop/v2/telemetry"
 	"go.opentelemetry.io/contrib/instrumentation/runtime"
 	"go.opentelemetry.io/otel/attribute"
-	"go.opentelemetry.io/otel/exporters/prometheus"
-	"go.opentelemetry.io/otel/metric/global"
 	semconv "go.opentelemetry.io/otel/semconv/v1.4.0"
 	"go.uber.org/fx"
 	stdlog "log"
@@ -150,20 +147,6 @@ func (r *Runner) preRunE(cmd *cobra.Command, args []string) error {
 
 func (r *Runner) runE(runner interface{}, cfg interface{}) func(cmd *cobra.Command, args []string) error {
 	return func(cmd *cobra.Command, args []string) error {
-		promConfig := telemetry.NewPrometheusConfig()
-
-		c, err := telemetry.NewPrometheusController(cmd.Context(), promConfig)
-		if err != nil {
-			return err
-		}
-
-		exp, err := prometheus.New(promConfig, c)
-		if err != nil {
-			return err
-		}
-
-		global.SetMeterProvider(exp.MeterProvider())
-
 		envFlag, err := cmd.Flags().GetString("env")
 		if err != nil {
 			return err
