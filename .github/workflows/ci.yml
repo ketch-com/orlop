@@ -15,7 +15,7 @@ jobs:
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     steps:
     - uses: actions/checkout@v2.4.0
-    - uses: actions/cache@v2.1.6
+    - uses: actions/cache@v3
       with:
         path: /home/runner/go
         key: v1-go-mod-${{ hashFiles('go.sum') }}
