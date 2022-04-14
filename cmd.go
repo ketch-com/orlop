@@ -26,7 +26,6 @@ import (
 	"github.com/iancoleman/strcase"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
-	"go.ketch.com/lib/orlop/v2/config"
 	"go.ketch.com/lib/orlop/v2/errors"
 	"go.ketch.com/lib/orlop/v2/log"
 	"go.ketch.com/lib/orlop/v2/logging"
@@ -172,25 +171,20 @@ func (r *Runner) runE(runner interface{}, cfg interface{}) func(cmd *cobra.Comma
 		}
 
 		if module, ok := runner.(fx.Option); ok {
-			if _, ok = cfg.(config.Config); ok {
-				runner = func(ctx context.Context, cfg config.Config) error {
-					app := fx.New(
-						logging.WithLogger(l),
-						FxContext(ctx),
-						FxOptions(cfg),
-						fx.Supply(cmd),
-						fx.Supply(service.Name(r.prefix)),
-						fx.Supply(logging.Level(loglevelFlag)),
-						Module,
-						module,
-					)
+			runner = func(ctx context.Context) error {
+				app := fx.New(
+					logging.WithLogger(l),
+					FxContext(ctx),
+					fx.Supply(cmd),
+					fx.Supply(service.Name(r.prefix)),
+					fx.Supply(logging.Level(loglevelFlag)),
+					Module,
+					module,
+				)
 
-					app.Run()
+				app.Run()
 
-					return app.Err()
-				}
-			} else {
-				panic("if providing an fx Module, then config must implement ProvidesFxOptions")
+				return app.Err()
 			}
 		}
 

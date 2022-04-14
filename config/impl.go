@@ -21,18 +21,15 @@
 package config
 
 import (
+	"context"
 	"fmt"
+	"reflect"
+	"strings"
+
 	"go.ketch.com/lib/orlop/v2/env"
 	"go.ketch.com/lib/orlop/v2/errors"
 	"go.ketch.com/lib/orlop/v2/service"
-	"go.uber.org/fx"
-	"reflect"
-	"strings"
 )
-
-type Config interface {
-	Options() fx.Option
-}
 
 type providerImpl struct {
 	environ env.Environ
@@ -44,14 +41,15 @@ func New(environ env.Environ) Provider {
 	}
 }
 
-func (s *providerImpl) Load(cfg Config) error {
+func (s *providerImpl) Load(_ context.Context, service string, cfg interface{}) error {
 	fields, err := reflectStruct([]string{}, cfg)
 	if err != nil {
 		return err
 	}
 
 	for name, field := range fields {
-		if v := s.environ.Getenv(name); len(v) > 0 {
+		keyName := strings.Join([]string{service, name}, "_")
+		if v := s.environ.Getenv(keyName); len(v) > 0 {
 			if err = field.set(field.v, v); err != nil {
 				return errors.Wrapf(err, "failed to set field '%s' with value '%s'", name, v)
 			}
@@ -68,7 +66,7 @@ func (s *providerImpl) Load(cfg Config) error {
 }
 
 // GetVariablesFromConfig returns the environment variables from the given config object
-func GetVariablesFromConfig(prefix service.Name, cfg Config) ([]string, error) {
+func GetVariablesFromConfig(prefix service.Name, cfg interface{}) ([]string, error) {
 	var vars []string
 
 	fields, err := reflectStruct([]string{string(prefix)}, cfg)
@@ -155,7 +153,7 @@ func toScreamingDelimited(s string, delimiter uint8, ignore uint8, screaming boo
 		}
 
 		if (v == ' ' || v == '_' || v == '-') && uint8(v) != ignore {
-			// replace space/undershyphen with delimiter
+			// replace space/underscore/hyphen with delimiter
 			n.WriteByte(delimiter)
 		} else {
 			n.WriteByte(v)

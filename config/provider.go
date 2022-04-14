@@ -20,6 +20,8 @@
 
 package config
 
+import "context"
+
 type Provider interface {
-	Load(cfg Config) error
+	Load(ctx context.Context, service string, cfg interface{}) error
 }
