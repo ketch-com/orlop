@@ -4,7 +4,7 @@ go 1.16
 
 require (
 	github.com/cespare/xxhash/v2 v2.1.2 // indirect
-	github.com/go-chi/chi/v5 v5.0.4
+	github.com/go-chi/chi/v5 v5.0.7
 	github.com/grpc-ecosystem/grpc-gateway v1.16.0
 	github.com/iancoleman/strcase v0.2.0
 	github.com/joho/godotenv v1.4.0
