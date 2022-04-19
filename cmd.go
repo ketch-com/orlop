@@ -31,16 +31,12 @@ import (
 	"go.ketch.com/lib/orlop/v2/log"
 	"go.ketch.com/lib/orlop/v2/logging"
 	"go.ketch.com/lib/orlop/v2/service"
-	"go.opentelemetry.io/contrib/instrumentation/runtime"
-	"go.opentelemetry.io/otel/attribute"
-	semconv "go.opentelemetry.io/otel/semconv/v1.4.0"
 	"go.uber.org/fx"
 	stdlog "log"
 	"os"
 	"reflect"
 	"sort"
 	"strings"
-	"time"
 )
 
 // Runner represents a command runner
@@ -138,29 +134,13 @@ func (r *Runner) preRunE(cmd *cobra.Command, args []string) error {
 	// Setup logging
 	r.SetupLogging(env, loglevelFlag)
 
-	if err := runtime.Start(runtime.WithMinimumReadMemStatsInterval(time.Second)); err != nil {
-		log.WithError(err).Fatal("could not start runtime tracing")
-	}
-
 	return r.prevPreRunE(cmd, args)
 }
 
 func (r *Runner) runE(runner interface{}, cfg interface{}) func(cmd *cobra.Command, args []string) error {
 	return func(cmd *cobra.Command, args []string) error {
-		envFlag, err := cmd.Flags().GetString("env")
-		if err != nil {
-			return err
-		}
-
-		ctx, span := tracer.Start(cmd.Context(), "Run")
-		defer span.End()
-
-		// First figure out the environment
-		span.SetAttributes(attribute.String("env", Environment(envFlag).String()))
-		span.SetAttributes(semconv.ServiceNameKey.String(r.prefix))
-
 		// Unmarshal the configuration
-		if err = Unmarshal(r.prefix, cfg); err != nil {
+		if err := Unmarshal(r.prefix, cfg); err != nil {
 			return errors.Wrap(err, "unable to unmarshal configuration")
 		}
 
@@ -196,7 +176,7 @@ func (r *Runner) runE(runner interface{}, cfg interface{}) func(cmd *cobra.Comma
 
 		// Call the runner
 		out := reflect.ValueOf(runner).Call([]reflect.Value{
-			reflect.ValueOf(log.ToContext(ctx, l)),
+			reflect.ValueOf(log.ToContext(cmd.Context(), l)),
 			reflect.ValueOf(cfg),
 		})
 
