@@ -30,16 +30,12 @@ import (
 	"go.ketch.com/lib/orlop/v2/log"
 	"go.ketch.com/lib/orlop/v2/logging"
 	"go.ketch.com/lib/orlop/v2/service"
-	"go.opentelemetry.io/contrib/instrumentation/runtime"
-	"go.opentelemetry.io/otel/attribute"
-	semconv "go.opentelemetry.io/otel/semconv/v1.4.0"
 	"go.uber.org/fx"
 	stdlog "log"
 	"os"
 	"reflect"
 	"sort"
 	"strings"
-	"time"
 )
 
 // Runner represents a command runner
@@ -138,10 +134,6 @@ func (r *Runner) preRunE(cmd *cobra.Command, args []string) error {
 
 	// Setup logging
 	r.SetupLogging(env, loglevelFlag)
-
-	if err := runtime.Start(runtime.WithMinimumReadMemStatsInterval(time.Second)); err != nil {
-		log.WithError(err).Fatal("could not start runtime tracing")
-	}
 
 	return r.prevPreRunE(cmd, args)
 }
