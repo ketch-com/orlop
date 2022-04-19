@@ -26,6 +26,8 @@ import (
 	"reflect"
 	"strings"
 
+	"github.com/iancoleman/strcase"
+
 	"go.ketch.com/lib/orlop/v2/env"
 	"go.ketch.com/lib/orlop/v2/errors"
 	"go.ketch.com/lib/orlop/v2/service"
@@ -33,32 +35,63 @@ import (
 
 type providerImpl struct {
 	environ env.Environ
+	configs map[string]interface{}
 }
 
 func New(environ env.Environ) Provider {
 	return &providerImpl{
 		environ: environ,
+		configs: make(map[string]interface{}, 0),
 	}
 }
 
-func (s *providerImpl) Load(_ context.Context, service string, cfg interface{}) error {
-	fields, err := reflectStruct([]string{}, cfg)
-	if err != nil {
-		return err
+func (s *providerImpl) Register(_ context.Context, service string, cfg interface{}) {
+	s.configs[service] = cfg
+}
+
+func (s *providerImpl) Get(_ context.Context, service string) (interface{}, error) {
+	if cfg, ok := s.configs[service]; ok {
+		return cfg, nil
 	}
 
-	for name, field := range fields {
-		keyName := strings.Join([]string{service, name}, "_")
-		if v := s.environ.Getenv(keyName); len(v) > 0 {
-			if err = field.set(field.v, v); err != nil {
-				return errors.Wrapf(err, "failed to set field '%s' with value '%s'", name, v)
+	return nil, errors.Errorf("%s config not found", service)
+}
+
+func (s *providerImpl) List(_ context.Context, prefix service.Name) ([]string, error) {
+	var vars []string
+	for k, v := range s.configs {
+		key := strcase.ToScreamingSnake(strings.Join([]string{string(prefix), k}, "_"))
+		vs, err := GetVariablesFromConfig(service.Name(key), v)
+		if err != nil {
+			return nil, err
+		}
+
+		vars = append(vars, vs...)
+	}
+
+	return vars, nil
+}
+
+func (s *providerImpl) Load(_ context.Context) error {
+	for k, v := range s.configs {
+		fields, err := reflectStruct([]string{}, v)
+		if err != nil {
+			return err
+		}
+
+		for name, field := range fields {
+			keyName := strings.Join([]string{k, name}, "_")
+			if v := s.environ.Getenv(keyName); len(v) > 0 {
+				if err = field.set(field.v, v); err != nil {
+					return errors.Wrapf(err, "failed to set field '%s' with value '%s'", name, v)
+				}
+			} else if field.tag.DefaultValue != nil {
+				if err = field.set(field.v, *field.tag.DefaultValue); err != nil {
+					return errors.Wrapf(err, "failed to set field '%s' with value '%s'", name, v)
+				}
+			} else if field.tag.Required {
+				return errors.Errorf("%s required", name)
 			}
-		} else if field.tag.DefaultValue != nil {
-			if err = field.set(field.v, *field.tag.DefaultValue); err != nil {
-				return errors.Wrapf(err, "failed to set field '%s' with value '%s'", name, v)
-			}
-		} else if field.tag.Required {
-			return errors.Errorf("%s required", name)
 		}
 	}
 

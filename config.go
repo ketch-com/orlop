@@ -307,7 +307,6 @@ func GetVariablesFromConfig(prefix string, cfg interface{}) ([]string, error) {
 
 			case reflect.String:
 				value = "# string"
-
 			}
 		}
 

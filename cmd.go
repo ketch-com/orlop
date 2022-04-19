@@ -80,9 +80,9 @@ func (r *Runner) SetupRoot(cmd *cobra.Command) *Runner {
 }
 
 // Setup sets up the Command
-func (r *Runner) Setup(cmd *cobra.Command, runner interface{}, cfg interface{}) *Runner {
+func (r *Runner) Setup(cmd *cobra.Command, runner interface{}) *Runner {
 	if cmd.RunE == nil {
-		cmd.RunE = r.runE(runner, cfg)
+		cmd.RunE = r.runE(runner)
 	}
 
 	cmd.AddCommand(&cobra.Command{
@@ -90,7 +90,9 @@ func (r *Runner) Setup(cmd *cobra.Command, runner interface{}, cfg interface{}) 
 		Short: "output the config environment variables and exits",
 		Args:  cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			vars, err := GetVariablesFromConfig(r.prefix, cfg)
+			// Config Manager List ALL
+
+			vars, err := GetVariablesFromConfig(r.prefix, &struct{}{})
 			if err != nil {
 				log.WithError(err).Fatal("could not create variables")
 			}
@@ -144,7 +146,7 @@ func (r *Runner) preRunE(cmd *cobra.Command, args []string) error {
 	return r.prevPreRunE(cmd, args)
 }
 
-func (r *Runner) runE(runner interface{}, cfg interface{}) func(cmd *cobra.Command, args []string) error {
+func (r *Runner) runE(runner interface{}) func(cmd *cobra.Command, args []string) error {
 	return func(cmd *cobra.Command, args []string) error {
 		envFlag, err := cmd.Flags().GetString("env")
 		if err != nil {
@@ -157,11 +159,6 @@ func (r *Runner) runE(runner interface{}, cfg interface{}) func(cmd *cobra.Comma
 		// First figure out the environment
 		span.SetAttributes(attribute.String("env", Environment(envFlag).String()))
 		span.SetAttributes(semconv.ServiceNameKey.String(r.prefix))
-
-		// Unmarshal the configuration
-		if err = Unmarshal(r.prefix, cfg); err != nil {
-			return errors.Wrap(err, "unable to unmarshal configuration")
-		}
 
 		l := log.New()
 
@@ -182,6 +179,9 @@ func (r *Runner) runE(runner interface{}, cfg interface{}) func(cmd *cobra.Comma
 					module,
 				)
 
+				//populate() error
+				//Load() error
+
 				app.Run()
 
 				return app.Err()
@@ -191,7 +191,6 @@ func (r *Runner) runE(runner interface{}, cfg interface{}) func(cmd *cobra.Comma
 		// Call the runner
 		out := reflect.ValueOf(runner).Call([]reflect.Value{
 			reflect.ValueOf(log.ToContext(ctx, l)),
-			reflect.ValueOf(cfg),
 		})
 
 		// Handle any result
@@ -251,14 +250,14 @@ func (r *Runner) SetupLogging(env Environment, loglevel string) {
 }
 
 // Run loads config and then executes the given runner
-func Run(prefix string, runner interface{}, cfg interface{}) {
+func Run(prefix string, runner interface{}) {
 	var cmd = &cobra.Command{
 		Use:              prefix,
 		TraverseChildren: true,
 		SilenceUsage:     true,
 	}
 
-	NewRunner(prefix).SetupRoot(cmd).Setup(cmd, runner, cfg)
+	NewRunner(prefix).SetupRoot(cmd).Setup(cmd, runner)
 
 	if err := cmd.Execute(); err != nil {
 		log.WithError(err).Fatal(err)
