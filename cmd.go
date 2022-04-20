@@ -21,22 +21,18 @@
 package orlop
 
 import (
-	"context"
 	"fmt"
 	"github.com/iancoleman/strcase"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
-	"go.ketch.com/lib/orlop/v2/errors"
+	"go.ketch.com/lib/orlop/v2/config"
 	"go.ketch.com/lib/orlop/v2/log"
 	"go.ketch.com/lib/orlop/v2/logging"
 	"go.ketch.com/lib/orlop/v2/service"
 	"go.opentelemetry.io/contrib/instrumentation/runtime"
-	"go.opentelemetry.io/otel/attribute"
-	semconv "go.opentelemetry.io/otel/semconv/v1.4.0"
 	"go.uber.org/fx"
 	stdlog "log"
 	"os"
-	"reflect"
 	"sort"
 	"strings"
 	"time"
@@ -80,7 +76,7 @@ func (r *Runner) SetupRoot(cmd *cobra.Command) *Runner {
 }
 
 // Setup sets up the Command
-func (r *Runner) Setup(cmd *cobra.Command, runner interface{}) *Runner {
+func (r *Runner) Setup(cmd *cobra.Command, runner fx.Option) *Runner {
 	if cmd.RunE == nil {
 		cmd.RunE = r.runE(runner)
 	}
@@ -91,8 +87,11 @@ func (r *Runner) Setup(cmd *cobra.Command, runner interface{}) *Runner {
 		Args:  cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			// Config Manager List ALL
+			var cfgMgr config.Provider
+			app := fx.New(Module, fx.Populate(&cfgMgr))
+			app.Run()
 
-			vars, err := GetVariablesFromConfig(r.prefix, &struct{}{})
+			vars, err := cfgMgr.List(cmd.Context(), service.Name(r.prefix))
 			if err != nil {
 				log.WithError(err).Fatal("could not create variables")
 			}
@@ -146,20 +145,8 @@ func (r *Runner) preRunE(cmd *cobra.Command, args []string) error {
 	return r.prevPreRunE(cmd, args)
 }
 
-func (r *Runner) runE(runner interface{}) func(cmd *cobra.Command, args []string) error {
+func (r *Runner) runE(module fx.Option) func(cmd *cobra.Command, args []string) error {
 	return func(cmd *cobra.Command, args []string) error {
-		envFlag, err := cmd.Flags().GetString("env")
-		if err != nil {
-			return err
-		}
-
-		ctx, span := tracer.Start(cmd.Context(), "Run")
-		defer span.End()
-
-		// First figure out the environment
-		span.SetAttributes(attribute.String("env", Environment(envFlag).String()))
-		span.SetAttributes(semconv.ServiceNameKey.String(r.prefix))
-
 		l := log.New()
 
 		loglevelFlag, err := cmd.Flags().GetString("loglevel")
@@ -167,42 +154,19 @@ func (r *Runner) runE(runner interface{}) func(cmd *cobra.Command, args []string
 			return err
 		}
 
-		if module, ok := runner.(fx.Option); ok {
-			runner = func(ctx context.Context) error {
-				app := fx.New(
-					logging.WithLogger(l),
-					FxContext(ctx),
-					fx.Supply(cmd),
-					fx.Supply(service.Name(r.prefix)),
-					fx.Supply(logging.Level(loglevelFlag)),
-					Module,
-					module,
-				)
+		app := fx.New(
+			logging.WithLogger(l),
+			FxContext(cmd.Context()),
+			fx.Supply(cmd),
+			fx.Supply(service.Name(r.prefix)),
+			fx.Supply(logging.Level(loglevelFlag)),
+			Module,
+			module,
+		)
 
-				//populate() error
-				//Load() error
+		app.Run()
 
-				app.Run()
-
-				return app.Err()
-			}
-		}
-
-		// Call the runner
-		out := reflect.ValueOf(runner).Call([]reflect.Value{
-			reflect.ValueOf(log.ToContext(ctx, l)),
-		})
-
-		// Handle any result
-		if len(out) > 0 && out[0].IsValid() && !out[0].IsNil() {
-			e := out[0].MethodByName("Error")
-			out = e.Call([]reflect.Value{})
-			if len(out) > 0 && out[0].IsValid() {
-				return errors.New(out[0].String())
-			}
-		}
-
-		return nil
+		return app.Err()
 	}
 }
 
@@ -250,7 +214,7 @@ func (r *Runner) SetupLogging(env Environment, loglevel string) {
 }
 
 // Run loads config and then executes the given runner
-func Run(prefix string, runner interface{}) {
+func Run(prefix string, runner fx.Option) {
 	var cmd = &cobra.Command{
 		Use:              prefix,
 		TraverseChildren: true,
