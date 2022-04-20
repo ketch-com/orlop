@@ -33,12 +33,8 @@ func FxContext(ctx context.Context) fx.Option {
 	return fx.Provide(func() context.Context { return ctx })
 }
 
-func Populate(ctx context.Context, prefix string, e env.Environment, module fx.Option, cfg interface{}, targets ...interface{}) error {
+func Populate(ctx context.Context, prefix string, e env.Environment, module fx.Option, targets ...interface{}) error {
 	e.Load()
-
-	if err := Unmarshal(prefix, cfg); err != nil {
-		return err
-	}
 
 	app := fx.New(
 		logging.WithLogger(log.New()),

@@ -85,7 +85,6 @@ func (r *Runner) Setup(cmd *cobra.Command, runner fx.Option) *Runner {
 		Short: "output the config environment variables and exits",
 		Args:  cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			// Config Manager List ALL
 			var cfgMgr config.Provider
 			app := fx.New(Module, fx.Populate(&cfgMgr))
 			app.Run()
@@ -157,6 +156,11 @@ func (r *Runner) runE(module fx.Option) func(cmd *cobra.Command, args []string) 
 			fx.Supply(logging.Level(loglevelFlag)),
 			Module,
 			module,
+			fx.Invoke(
+				func(provider config.Provider) {
+					provider.Load(cmd.Context())
+				},
+			),
 		)
 
 		app.Run()
