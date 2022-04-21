@@ -40,14 +40,11 @@ func TestRun(t *testing.T) {
 			},
 		),
 		fx.Invoke(
-			func(lifecycle fx.Lifecycle, config *TestConfig) {
+			func(lifecycle fx.Lifecycle, s fx.Shutdowner, config *TestConfig) {
 				lifecycle.Append(
 					fx.Hook{
 						OnStart: func(context.Context) error {
-							return nil
-						},
-						OnStop: func(context.Context) error {
-							return nil
+							return s.Shutdown()
 						},
 					},
 				)
@@ -55,10 +52,7 @@ func TestRun(t *testing.T) {
 		),
 	)
 
-	//TODO: This is not ideal
-	go Run("test", module)
-
-	time.Sleep(1 * time.Second)
+	Run("test", module, &struct{}{})
 
 	assert.True(t, cfg.Embedded.Embedded)
 	assert.Equal(t, "/pki/issue", cfg.WithDefault)

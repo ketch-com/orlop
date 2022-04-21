@@ -21,11 +21,18 @@
 package config
 
 import (
+	"context"
+
 	"go.uber.org/fx"
 )
 
 var Module = fx.Options(
 	fx.Provide(
 		New,
+	),
+	fx.Invoke(
+		func(ctx context.Context, provider Provider) error {
+			return provider.Load(ctx)
+		},
 	),
 )

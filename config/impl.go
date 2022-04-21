@@ -34,14 +34,14 @@ import (
 )
 
 type providerImpl struct {
-	environ env.Environ
 	configs map[string]interface{}
+	environ env.Environ
 }
 
 func New(environ env.Environ) Provider {
 	return &providerImpl{
-		environ: environ,
 		configs: make(map[string]interface{}, 0),
+		environ: environ,
 	}
 }
 
@@ -57,10 +57,10 @@ func (s *providerImpl) Get(_ context.Context, service string) (interface{}, erro
 	return nil, errors.Errorf("%s config not found", service)
 }
 
-func (s *providerImpl) List(_ context.Context, prefix service.Name) ([]string, error) {
+func (s *providerImpl) List(_ context.Context) ([]string, error) {
 	var vars []string
 	for k, v := range s.configs {
-		key := strcase.ToScreamingSnake(strings.Join([]string{string(prefix), k}, "_"))
+		key := strcase.ToScreamingSnake(strings.Join([]string{string(s.environ.GetPrefix()), k}, "_"))
 		vs, err := GetVariablesFromConfig(service.Name(key), v)
 		if err != nil {
 			return nil, err

@@ -89,7 +89,7 @@ func (r *Runner) Setup(cmd *cobra.Command, runner fx.Option) *Runner {
 			app := fx.New(Module, fx.Populate(&cfgMgr))
 			app.Run()
 
-			vars, err := cfgMgr.List(cmd.Context(), service.Name(r.prefix))
+			vars, err := cfgMgr.List(cmd.Context())
 			if err != nil {
 				log.WithError(err).Fatal("could not create variables")
 			}
@@ -154,13 +154,8 @@ func (r *Runner) runE(module fx.Option) func(cmd *cobra.Command, args []string) 
 			fx.Supply(cmd),
 			fx.Supply(service.Name(r.prefix)),
 			fx.Supply(logging.Level(loglevelFlag)),
-			Module,
 			module,
-			fx.Invoke(
-				func(provider config.Provider) {
-					provider.Load(cmd.Context())
-				},
-			),
+			Module,
 		)
 
 		app.Run()
@@ -213,7 +208,7 @@ func (r *Runner) SetupLogging(env Environment, loglevel string) {
 }
 
 // Run loads config and then executes the given runner
-func Run(prefix string, runner fx.Option) {
+func Run(prefix string, runner fx.Option, _ interface{}) {
 	var cmd = &cobra.Command{
 		Use:              prefix,
 		TraverseChildren: true,

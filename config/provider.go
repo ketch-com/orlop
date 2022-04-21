@@ -22,13 +22,11 @@ package config
 
 import (
 	"context"
-
-	"go.ketch.com/lib/orlop/v2/service"
 )
 
 type Provider interface {
 	Register(ctx context.Context, service string, cfg interface{})
 	Get(ctx context.Context, service string) (interface{}, error)
-	List(ctx context.Context, prefix service.Name) ([]string, error)
+	List(ctx context.Context) ([]string, error)
 	Load(ctx context.Context) error
 }

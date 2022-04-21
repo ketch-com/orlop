@@ -67,7 +67,7 @@ func Test_providerImpl_List(t *testing.T) {
 	p := New(env.NewEnviron("test"))
 	p.Register(ctx, "config", &config)
 
-	vars, err := p.List(ctx, "test")
+	vars, err := p.List(ctx)
 	require.NoError(t, err)
 
 	sort.Strings(vars)
