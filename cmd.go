@@ -154,8 +154,8 @@ func (r *Runner) runE(module fx.Option) func(cmd *cobra.Command, args []string) 
 			fx.Supply(cmd),
 			fx.Supply(service.Name(r.prefix)),
 			fx.Supply(logging.Level(loglevelFlag)),
-			module,
 			Module,
+			module,
 		)
 
 		app.Run()
