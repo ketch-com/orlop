@@ -75,7 +75,7 @@ func (r *Runner) SetupRoot(cmd *cobra.Command) *Runner {
 }
 
 // Setup sets up the Command
-func (r *Runner) Setup(cmd *cobra.Command, runner fx.Option) *Runner {
+func (r *Runner) Setup(cmd *cobra.Command, runner fx.Option, _ any) *Runner {
 	if cmd.RunE == nil {
 		cmd.RunE = r.runE(runner)
 	}
@@ -208,14 +208,14 @@ func (r *Runner) SetupLogging(env Environment, loglevel string) {
 }
 
 // Run loads config and then executes the given runner
-func Run(prefix string, runner fx.Option, _ interface{}) {
+func Run(prefix string, runner fx.Option, cfg any) {
 	var cmd = &cobra.Command{
 		Use:              prefix,
 		TraverseChildren: true,
 		SilenceUsage:     true,
 	}
 
-	NewRunner(prefix).SetupRoot(cmd).Setup(cmd, runner)
+	NewRunner(prefix).SetupRoot(cmd).Setup(cmd, runner, cfg)
 
 	if err := cmd.Execute(); err != nil {
 		log.WithError(err).Fatal(err)

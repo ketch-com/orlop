@@ -25,6 +25,12 @@ func TestRun(t *testing.T) {
 	var cfg TestConfig
 
 	var module = fx.Options(
+		fx.Supply([]config.Definition{
+			{
+				Name:   "config",
+				Config: &cfg,
+			},
+		}),
 		fx.Provide(
 			func(ctx context.Context, provider config.Provider) (*TestConfig, error) {
 				c, err := provider.Get(ctx, "config")
@@ -35,12 +41,7 @@ func TestRun(t *testing.T) {
 			},
 		),
 		fx.Invoke(
-			func(ctx context.Context, provider config.Provider) {
-				provider.Register(ctx, "config", &cfg)
-			},
-		),
-		fx.Invoke(
-			func(lifecycle fx.Lifecycle, s fx.Shutdowner, config *TestConfig) {
+			func(lifecycle fx.Lifecycle, s fx.Shutdowner) {
 				lifecycle.Append(
 					fx.Hook{
 						OnStart: func(_ context.Context) error {

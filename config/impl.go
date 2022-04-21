@@ -34,22 +34,25 @@ import (
 )
 
 type providerImpl struct {
-	configs map[string]interface{}
+	configs map[string]any
 	environ env.Environ
+	prefix  service.Name
 }
 
-func New(environ env.Environ) Provider {
+func New(environ env.Environ, prefix service.Name, p Params) Provider {
+	configs := make(map[string]any)
+	for _, c := range p.Defs {
+		configs[c.Name] = c.Config
+	}
+
 	return &providerImpl{
-		configs: make(map[string]interface{}, 0),
+		configs: configs,
 		environ: environ,
+		prefix:  prefix,
 	}
 }
 
-func (s *providerImpl) Register(_ context.Context, service string, cfg interface{}) {
-	s.configs[service] = cfg
-}
-
-func (s *providerImpl) Get(_ context.Context, service string) (interface{}, error) {
+func (s *providerImpl) Get(_ context.Context, service string) (any, error) {
 	if cfg, ok := s.configs[service]; ok {
 		return cfg, nil
 	}
@@ -60,7 +63,7 @@ func (s *providerImpl) Get(_ context.Context, service string) (interface{}, erro
 func (s *providerImpl) List(_ context.Context) ([]string, error) {
 	var vars []string
 	for k, v := range s.configs {
-		key := strcase.ToScreamingSnake(strings.Join([]string{string(s.environ.GetPrefix()), k}, "_"))
+		key := strcase.ToScreamingSnake(strings.Join([]string{string(s.prefix), k}, "_"))
 		vs, err := GetVariablesFromConfig(service.Name(key), v)
 		if err != nil {
 			return nil, err
@@ -99,7 +102,7 @@ func (s *providerImpl) Load(_ context.Context) error {
 }
 
 // GetVariablesFromConfig returns the environment variables from the given config object
-func GetVariablesFromConfig(prefix service.Name, cfg interface{}) ([]string, error) {
+func GetVariablesFromConfig(prefix service.Name, cfg any) ([]string, error) {
 	var vars []string
 
 	fields, err := reflectStruct([]string{string(prefix)}, cfg)

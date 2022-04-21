@@ -25,8 +25,7 @@ import (
 )
 
 type Provider interface {
-	Register(ctx context.Context, service string, cfg interface{})
-	Get(ctx context.Context, service string) (interface{}, error)
+	Get(ctx context.Context, service string) (any, error)
 	List(ctx context.Context) ([]string, error)
 	Load(ctx context.Context) error
 }

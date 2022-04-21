@@ -29,7 +29,6 @@ import (
 
 type Environ interface {
 	Getenv(key string) string
-	GetPrefix() service.Name
 }
 
 func NewEnviron(prefix service.Name) Environ {
@@ -44,8 +43,4 @@ type environImpl struct {
 
 func (e environImpl) Getenv(key string) string {
 	return os.Getenv(strcase.ToScreamingSnake(strings.Join([]string{string(e.prefix), key}, "_")))
-}
-
-func (e environImpl) GetPrefix() service.Name {
-	return e.prefix
 }
