@@ -11,11 +11,16 @@ type Definition struct {
 	Config any
 }
 
-func ConfigOption(name string, config any) fx.Option {
-	return fx.Supply(fx.Annotate(Definition{
-		Name:   name,
-		Config: config,
-	}, fx.ResultTags(`group:"configs"`)))
+func Option(name string, config any) fx.Option {
+	return fx.Supply(
+		fx.Annotate(
+			Definition{
+				Name:   name,
+				Config: config,
+			},
+			fx.ResultTags(`group:"configs"`),
+		),
+	)
 }
 
 type Params struct {

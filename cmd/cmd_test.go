@@ -1,4 +1,4 @@
-package orlop
+package cmd
 
 import (
 	"context"
@@ -11,6 +11,23 @@ import (
 	"go.ketch.com/lib/orlop/v2/config"
 	"go.uber.org/fx"
 )
+
+type EmbeddedConfig struct {
+	Embedded bool
+}
+
+type TestConfig struct {
+	Embedded      EmbeddedConfig `config:","`
+	WithDefault   string         `config:"def,default=/pki/issue"`
+	Required      string         `config:"req,required"`
+	SomeSlice     []string       `config:"sliced"`
+	CustomParser  time.Duration  `config:"custom,default=12345s"`
+	Map           map[string]string
+	HexEncoded    []byte
+	Base64Encoded []byte `config:",encoding=base64"`
+	Ptr           *int32
+	Unknown       int32
+}
 
 func TestRun(t *testing.T) {
 	os.Setenv("TEST_CONFIG_EMBEDDED", "true")
@@ -25,7 +42,7 @@ func TestRun(t *testing.T) {
 	var cfg TestConfig
 
 	var module = fx.Options(
-		config.ConfigOption("config", &cfg),
+		config.Option("config", &cfg),
 		fx.Provide(
 			func(ctx context.Context, provider config.Provider) (TestConfig, error) {
 				c, err := provider.Get(ctx, "config")
@@ -48,7 +65,7 @@ func TestRun(t *testing.T) {
 		),
 	)
 
-	Run("test", module, &struct{}{})
+	Run("test", module)
 
 	assert.True(t, cfg.Embedded.Embedded)
 	assert.Equal(t, "/pki/issue", cfg.WithDefault)

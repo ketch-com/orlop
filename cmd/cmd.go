@@ -18,25 +18,27 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-package orlop
+package cmd
 
 import (
 	"context"
 	"fmt"
+	stdlog "log"
+	"os"
+	"sort"
+	"strings"
+
+	"go.ketch.com/lib/orlop/v2"
+	"go.ketch.com/lib/orlop/v2/env"
+
 	"github.com/iancoleman/strcase"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"go.ketch.com/lib/orlop/v2/config"
-	"go.ketch.com/lib/orlop/v2/errors"
 	"go.ketch.com/lib/orlop/v2/log"
 	"go.ketch.com/lib/orlop/v2/logging"
 	"go.ketch.com/lib/orlop/v2/service"
 	"go.uber.org/fx"
-	stdlog "log"
-	"os"
-	"reflect"
-	"sort"
-	"strings"
 )
 
 // Runner represents a command runner
@@ -77,9 +79,9 @@ func (r *Runner) SetupRoot(cmd *cobra.Command) *Runner {
 }
 
 // Setup sets up the Command
-func (r *Runner) Setup(cmd *cobra.Command, runner interface{}, cfg interface{}) *Runner {
+func (r *Runner) Setup(cmd *cobra.Command, module fx.Option) *Runner {
 	if cmd.RunE == nil {
-		cmd.RunE = r.runE(runner, cfg)
+		cmd.RunE = r.runE(module)
 	}
 
 	cmd.AddCommand(&cobra.Command{
@@ -87,7 +89,26 @@ func (r *Runner) Setup(cmd *cobra.Command, runner interface{}, cfg interface{}) 
 		Short: "output the config environment variables and exits",
 		Args:  cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			vars, err := GetVariablesFromConfig(r.prefix, cfg)
+			var cfgMgr config.Provider
+			app := fx.New(
+				orlop.Module,
+				fx.Populate(&cfgMgr),
+				fx.Invoke(
+					func(lifecycle fx.Lifecycle, s fx.Shutdowner) {
+						lifecycle.Append(
+							fx.Hook{
+								OnStart: func(_ context.Context) error {
+									return s.Shutdown()
+								},
+							},
+						)
+					},
+				),
+				module,
+			)
+			app.Run()
+
+			vars, err := cfgMgr.List(cmd.Context())
 			if err != nil {
 				log.WithError(err).Fatal("could not create variables")
 			}
@@ -126,24 +147,19 @@ func (r *Runner) preRunE(cmd *cobra.Command, args []string) error {
 	}
 
 	// First figure out the environment
-	env := Environment(envFlag)
+	e := env.Environment(envFlag)
 
 	// Load the environment from files
-	LoadEnvironment(env, configFiles...)
+	e.Load(configFiles...)
 
 	// Setup logging
-	r.SetupLogging(env, loglevelFlag)
+	r.SetupLogging(e, loglevelFlag)
 
 	return r.prevPreRunE(cmd, args)
 }
 
-func (r *Runner) runE(runner interface{}, cfg interface{}) func(cmd *cobra.Command, args []string) error {
+func (r *Runner) runE(module fx.Option) func(cmd *cobra.Command, args []string) error {
 	return func(cmd *cobra.Command, args []string) error {
-		// Unmarshal the configuration
-		if err := Unmarshal(r.prefix, cfg); err != nil {
-			return errors.Wrap(err, "unable to unmarshal configuration")
-		}
-
 		l := log.New()
 
 		loglevelFlag, err := cmd.Flags().GetString("loglevel")
@@ -151,45 +167,19 @@ func (r *Runner) runE(runner interface{}, cfg interface{}) func(cmd *cobra.Comma
 			return err
 		}
 
-		if module, ok := runner.(fx.Option); ok {
-			if _, ok = cfg.(config.Config); ok {
-				runner = func(ctx context.Context, cfg config.Config) error {
-					app := fx.New(
-						logging.WithLogger(l),
-						FxContext(ctx),
-						FxOptions(cfg),
-						fx.Supply(cmd),
-						fx.Supply(service.Name(r.prefix)),
-						fx.Supply(logging.Level(loglevelFlag)),
-						Module,
-						module,
-					)
+		app := fx.New(
+			logging.WithLogger(l),
+			orlop.FxContext(cmd.Context()),
+			fx.Supply(cmd),
+			fx.Supply(service.Name(r.prefix)),
+			fx.Supply(logging.Level(loglevelFlag)),
+			orlop.Module,
+			module,
+		)
 
-					app.Run()
+		app.Run()
 
-					return app.Err()
-				}
-			} else {
-				panic("if providing an fx Module, then config must implement ProvidesFxOptions")
-			}
-		}
-
-		// Call the runner
-		out := reflect.ValueOf(runner).Call([]reflect.Value{
-			reflect.ValueOf(log.ToContext(cmd.Context(), l)),
-			reflect.ValueOf(cfg),
-		})
-
-		// Handle any result
-		if len(out) > 0 && out[0].IsValid() && !out[0].IsNil() {
-			e := out[0].MethodByName("Error")
-			out = e.Call([]reflect.Value{})
-			if len(out) > 0 && out[0].IsValid() {
-				return errors.New(out[0].String())
-			}
-		}
-
-		return nil
+		return app.Err()
 	}
 }
 
@@ -199,7 +189,7 @@ func (r *Runner) Getenv(key string) string {
 }
 
 // SetupLogging sets up logging for the environment and the default log level
-func (r *Runner) SetupLogging(env Environment, loglevel string) {
+func (r *Runner) SetupLogging(e env.Environment, loglevel string) {
 	switch loglevel {
 	case "fatal":
 		logrus.SetLevel(logrus.FatalLevel)
@@ -217,14 +207,14 @@ func (r *Runner) SetupLogging(env Environment, loglevel string) {
 		logrus.SetLevel(logrus.TraceLevel)
 
 	default:
-		if env.IsProduction() {
+		if e.IsProduction() {
 			logrus.SetLevel(logrus.WarnLevel)
 		} else {
 			logrus.SetLevel(logrus.DebugLevel)
 		}
 	}
 
-	if env.IsLocal() {
+	if e.IsLocal() {
 		logrus.SetFormatter(&logrus.TextFormatter{
 			ForceColors:            true,
 			DisableTimestamp:       true,
@@ -237,14 +227,14 @@ func (r *Runner) SetupLogging(env Environment, loglevel string) {
 }
 
 // Run loads config and then executes the given runner
-func Run(prefix string, runner interface{}, cfg interface{}) {
+func Run(prefix string, module fx.Option) {
 	var cmd = &cobra.Command{
 		Use:              prefix,
 		TraverseChildren: true,
 		SilenceUsage:     true,
 	}
 
-	NewRunner(prefix).SetupRoot(cmd).Setup(cmd, runner, cfg)
+	NewRunner(prefix).SetupRoot(cmd).Setup(cmd, module)
 
 	if err := cmd.Execute(); err != nil {
 		log.WithError(err).Fatal(err)
