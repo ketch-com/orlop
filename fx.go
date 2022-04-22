@@ -22,6 +22,8 @@ package orlop
 
 import (
 	"context"
+
+	"go.ketch.com/lib/orlop/v2/config"
 	"go.ketch.com/lib/orlop/v2/env"
 	"go.ketch.com/lib/orlop/v2/log"
 	"go.ketch.com/lib/orlop/v2/logging"
@@ -29,16 +31,29 @@ import (
 	"go.uber.org/fx"
 )
 
+func FxOptions(c any) fx.Option {
+	if cfg, ok := c.(config.Config); ok {
+		return cfg.Options()
+	}
+
+	return fx.Options()
+}
+
 func FxContext(ctx context.Context) fx.Option {
 	return fx.Provide(func() context.Context { return ctx })
 }
 
-func Populate(ctx context.Context, prefix string, e env.Environment, module fx.Option, targets ...interface{}) error {
+func Populate(ctx context.Context, prefix string, e env.Environment, module fx.Option, cfg config.Config, targets ...interface{}) error {
 	e.Load()
+
+	if err := Unmarshal(prefix, cfg); err != nil {
+		return err
+	}
 
 	app := fx.New(
 		logging.WithLogger(log.New()),
 		FxContext(ctx),
+		FxOptions(cfg),
 		fx.Supply(service.Name(prefix)),
 		Module,
 		module,

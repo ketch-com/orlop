@@ -26,12 +26,16 @@ import (
 	"reflect"
 	"strings"
 
-	"github.com/iancoleman/strcase"
+	"go.uber.org/fx"
 
 	"go.ketch.com/lib/orlop/v2/env"
 	"go.ketch.com/lib/orlop/v2/errors"
 	"go.ketch.com/lib/orlop/v2/service"
 )
+
+type Config interface {
+	Options() fx.Option
+}
 
 type providerImpl struct {
 	configs map[string]any
@@ -39,7 +43,7 @@ type providerImpl struct {
 	prefix  service.Name
 }
 
-func New(environ env.Environ, prefix service.Name, p Params) Provider {
+func New(p Params) Provider {
 	configs := make(map[string]any)
 	for _, c := range p.Defs {
 		configs[c.Name] = c.Config
@@ -47,8 +51,8 @@ func New(environ env.Environ, prefix service.Name, p Params) Provider {
 
 	return &providerImpl{
 		configs: configs,
-		environ: environ,
-		prefix:  prefix,
+		environ: p.Environ,
+		prefix:  p.Prefix,
 	}
 }
 
@@ -63,8 +67,7 @@ func (s *providerImpl) Get(_ context.Context, service string) (any, error) {
 func (s *providerImpl) List(_ context.Context) ([]string, error) {
 	var vars []string
 	for k, v := range s.configs {
-		key := strcase.ToScreamingSnake(strings.Join([]string{string(s.prefix), k}, "_"))
-		vs, err := GetVariablesFromConfig(service.Name(key), v)
+		vs, err := GetVariablesFromConfig(s.prefix, k, v)
 		if err != nil {
 			return nil, err
 		}
@@ -102,10 +105,10 @@ func (s *providerImpl) Load(_ context.Context) error {
 }
 
 // GetVariablesFromConfig returns the environment variables from the given config object
-func GetVariablesFromConfig(prefix service.Name, cfg any) ([]string, error) {
+func GetVariablesFromConfig(prefix service.Name, service string, cfg any) ([]string, error) {
 	var vars []string
 
-	fields, err := reflectStruct([]string{string(prefix)}, cfg)
+	fields, err := reflectStruct([]string{string(prefix), service}, cfg)
 	if err != nil {
 		return nil, err
 	}

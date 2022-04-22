@@ -25,19 +25,14 @@ func TestRun(t *testing.T) {
 	var cfg TestConfig
 
 	var module = fx.Options(
-		fx.Supply([]config.Definition{
-			{
-				Name:   "config",
-				Config: &cfg,
-			},
-		}),
+		config.ConfigOption("config", &cfg),
 		fx.Provide(
-			func(ctx context.Context, provider config.Provider) (*TestConfig, error) {
+			func(ctx context.Context, provider config.Provider) (TestConfig, error) {
 				c, err := provider.Get(ctx, "config")
 				if err != nil {
-					return nil, err
+					return TestConfig{}, err
 				}
-				return c.(*TestConfig), nil
+				return c.(TestConfig), nil
 			},
 		),
 		fx.Invoke(

@@ -40,12 +40,16 @@ func Test_providerImpl_Load(t *testing.T) {
 	os.Setenv("TEST_CONFIG_PTR", "123")
 
 	var config TestConfig
-	p := New(env.NewEnviron("test"), "test", Params{Defs: []Definition{
-		{
-			Name:   "config",
-			Config: &config,
+	p := New(Params{
+		Environ: env.NewEnviron("test"),
+		Prefix:  "test",
+		Defs: []Definition{
+			{
+				Name:   "config",
+				Config: &config,
+			},
 		},
-	}})
+	})
 
 	err := p.Load(context.Background())
 	require.NoError(t, err)
@@ -65,12 +69,16 @@ func Test_providerImpl_Load(t *testing.T) {
 func Test_providerImpl_List(t *testing.T) {
 	var config TestConfig
 
-	p := New(env.NewEnviron("test"), "test", Params{Defs: []Definition{
-		{
-			Name:   "config",
-			Config: &config,
+	p := New(Params{
+		Environ: env.NewEnviron("test"),
+		Prefix:  "test",
+		Defs: []Definition{
+			{
+				Name:   "config",
+				Config: &config,
+			},
 		},
-	}})
+	})
 
 	vars, err := p.List(context.Background())
 	require.NoError(t, err)
@@ -95,12 +103,16 @@ func Test_providerImpl_Get(t *testing.T) {
 	var config TestConfig
 	ctx := context.Background()
 
-	p := New(env.NewEnviron("test"), "test", Params{Defs: []Definition{
-		{
-			Name:   "config",
-			Config: &config,
+	p := New(Params{
+		Environ: env.NewEnviron("test"),
+		Prefix:  "test",
+		Defs: []Definition{
+			{
+				Name:   "config",
+				Config: &config,
+			},
 		},
-	}})
+	})
 
 	os.Setenv("TEST_CONFIG_EMBEDDED", "true")
 	os.Setenv("TEST_CONFIG_REQ", "imhere")

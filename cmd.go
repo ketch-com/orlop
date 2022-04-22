@@ -21,11 +21,14 @@
 package orlop
 
 import (
+	"context"
 	"fmt"
 	stdlog "log"
 	"os"
 	"sort"
 	"strings"
+
+	"go.ketch.com/lib/orlop/v2/errors"
 
 	"github.com/iancoleman/strcase"
 	"github.com/sirupsen/logrus"
@@ -75,9 +78,9 @@ func (r *Runner) SetupRoot(cmd *cobra.Command) *Runner {
 }
 
 // Setup sets up the Command
-func (r *Runner) Setup(cmd *cobra.Command, runner fx.Option, _ any) *Runner {
+func (r *Runner) Setup(cmd *cobra.Command, runner fx.Option, cfg any) *Runner {
 	if cmd.RunE == nil {
-		cmd.RunE = r.runE(runner)
+		cmd.RunE = r.runE(runner, cfg)
 	}
 
 	cmd.AddCommand(&cobra.Command{
@@ -86,7 +89,22 @@ func (r *Runner) Setup(cmd *cobra.Command, runner fx.Option, _ any) *Runner {
 		Args:  cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			var cfgMgr config.Provider
-			app := fx.New(Module, fx.Populate(&cfgMgr))
+			app := fx.New(
+				Module,
+				runner,
+				fx.Populate(&cfgMgr),
+				fx.Invoke(
+					func(lifecycle fx.Lifecycle, s fx.Shutdowner) {
+						lifecycle.Append(
+							fx.Hook{
+								OnStart: func(_ context.Context) error {
+									return s.Shutdown()
+								},
+							},
+						)
+					},
+				),
+			)
 			app.Run()
 
 			vars, err := cfgMgr.List(cmd.Context())
@@ -139,8 +157,13 @@ func (r *Runner) preRunE(cmd *cobra.Command, args []string) error {
 	return r.prevPreRunE(cmd, args)
 }
 
-func (r *Runner) runE(module fx.Option) func(cmd *cobra.Command, args []string) error {
+func (r *Runner) runE(module fx.Option, cfg any) func(cmd *cobra.Command, args []string) error {
 	return func(cmd *cobra.Command, args []string) error {
+		// Unmarshal the configuration
+		if err := Unmarshal(r.prefix, cfg); err != nil {
+			return errors.Wrap(err, "unable to unmarshal configuration")
+		}
+
 		l := log.New()
 
 		loglevelFlag, err := cmd.Flags().GetString("loglevel")
@@ -151,6 +174,7 @@ func (r *Runner) runE(module fx.Option) func(cmd *cobra.Command, args []string) 
 		app := fx.New(
 			logging.WithLogger(l),
 			FxContext(cmd.Context()),
+			FxOptions(cfg),
 			fx.Supply(cmd),
 			fx.Supply(service.Name(r.prefix)),
 			fx.Supply(logging.Level(loglevelFlag)),
