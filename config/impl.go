@@ -67,7 +67,7 @@ func (s *providerImpl) Get(_ context.Context, service string) (any, error) {
 func (s *providerImpl) List(_ context.Context) ([]string, error) {
 	var vars []string
 	for k, v := range s.configs {
-		vs, err := getVariablesFromConfig(s.prefix, k, v)
+		vs, err := s.getVariablesFromConfig(k, v)
 		if err != nil {
 			return nil, err
 		}
@@ -105,10 +105,10 @@ func (s *providerImpl) Load(_ context.Context) error {
 }
 
 // getVariablesFromConfig returns the environment variables from the given config object
-func getVariablesFromConfig(prefix service.Name, service string, cfg any) ([]string, error) {
+func (s *providerImpl) getVariablesFromConfig(service string, cfg any) ([]string, error) {
 	var vars []string
 
-	fields, err := reflectStruct([]string{string(prefix), service}, cfg)
+	fields, err := reflectStruct([]string{string(s.prefix), service}, cfg)
 	if err != nil {
 		return nil, err
 	}

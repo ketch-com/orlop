@@ -183,7 +183,7 @@ func (r *Runner) runE(module fx.Option) func(cmd *cobra.Command, args []string) 
 	}
 }
 
-// Getenv returns the value of the environment variabled named `key`
+// Getenv returns the value of the environment variable named `key`
 func (r *Runner) Getenv(key string) string {
 	return os.Getenv(strcase.ToScreamingSnake(strings.Join([]string{r.prefix, key}, "_")))
 }
