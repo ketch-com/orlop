@@ -27,5 +27,4 @@ import (
 type Provider interface {
 	Get(ctx context.Context, service string) (any, error)
 	List(ctx context.Context) ([]string, error)
-	Load(ctx context.Context) error
 }

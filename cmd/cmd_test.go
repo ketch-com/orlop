@@ -49,9 +49,12 @@ func TestRun(t *testing.T) {
 				if err != nil {
 					return TestConfig{}, err
 				}
-				return c.(TestConfig), nil
+				return *c.(*TestConfig), nil
 			},
 		),
+		fx.Invoke(func(t TestConfig) {
+			return
+		}),
 		fx.Invoke(
 			func(lifecycle fx.Lifecycle, s fx.Shutdowner) {
 				lifecycle.Append(

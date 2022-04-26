@@ -37,16 +37,24 @@ type Config interface {
 	Options() fx.Option
 }
 
+type value struct {
+	isPopulated bool
+	value       any
+}
+
 type providerImpl struct {
-	configs map[string]any
+	configs map[string]value
 	environ env.Environ
 	prefix  service.Name
 }
 
 func New(p Params) Provider {
-	configs := make(map[string]any)
+	configs := make(map[string]value)
 	for _, c := range p.Defs {
-		configs[c.Name] = c.Config
+		configs[strings.ToLower(c.Name)] = value{
+			isPopulated: false,
+			value:       c.Config,
+		}
 	}
 
 	return &providerImpl{
@@ -56,9 +64,18 @@ func New(p Params) Provider {
 	}
 }
 
-func (s *providerImpl) Get(_ context.Context, service string) (any, error) {
-	if cfg, ok := s.configs[service]; ok {
-		return cfg, nil
+func (s *providerImpl) Get(ctx context.Context, service string) (any, error) {
+	serviceName := strings.ToLower(service)
+	if cfg, ok := s.configs[serviceName]; ok {
+		if cfg.isPopulated {
+			return cfg.value, nil
+		}
+
+		err := s.load(ctx, serviceName, cfg.value)
+		if err != nil {
+			return cfg.value, err
+		}
+		return cfg.value, nil
 	}
 
 	return nil, errors.Errorf("%s config not found", service)
@@ -67,7 +84,7 @@ func (s *providerImpl) Get(_ context.Context, service string) (any, error) {
 func (s *providerImpl) List(_ context.Context) ([]string, error) {
 	var vars []string
 	for k, v := range s.configs {
-		vs, err := s.getVariablesFromConfig(k, v)
+		vs, err := s.getVariablesFromConfig(k, v.value)
 		if err != nil {
 			return nil, err
 		}
@@ -78,26 +95,24 @@ func (s *providerImpl) List(_ context.Context) ([]string, error) {
 	return vars, nil
 }
 
-func (s *providerImpl) Load(_ context.Context) error {
-	for k, v := range s.configs {
-		fields, err := reflectStruct([]string{}, v)
-		if err != nil {
-			return err
-		}
+func (s *providerImpl) load(_ context.Context, key string, value any) error {
+	fields, err := reflectStruct([]string{}, value)
+	if err != nil {
+		return err
+	}
 
-		for name, field := range fields {
-			keyName := strings.Join([]string{k, name}, "_")
-			if v := s.environ.Getenv(keyName); len(v) > 0 {
-				if err = field.set(field.v, v); err != nil {
-					return errors.Wrapf(err, "failed to set field '%s' with value '%s'", name, v)
-				}
-			} else if field.tag.DefaultValue != nil {
-				if err = field.set(field.v, *field.tag.DefaultValue); err != nil {
-					return errors.Wrapf(err, "failed to set field '%s' with value '%s'", name, v)
-				}
-			} else if field.tag.Required {
-				return errors.Errorf("%s required", name)
+	for name, field := range fields {
+		keyName := strings.Join([]string{key, name}, "_")
+		if v := s.environ.Getenv(keyName); len(v) > 0 {
+			if err = field.set(field.v, v); err != nil {
+				return errors.Wrapf(err, "failed to set field '%s' with value '%s'", name, v)
 			}
+		} else if field.tag.DefaultValue != nil {
+			if err = field.set(field.v, *field.tag.DefaultValue); err != nil {
+				return errors.Wrapf(err, "failed to set field '%s' with value '%s'", name, v)
+			}
+		} else if field.tag.Required {
+			return errors.Errorf("%s required", name)
 		}
 	}
 
