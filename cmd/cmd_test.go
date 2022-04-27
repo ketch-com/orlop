@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"context"
+	"fmt"
 	"os"
 	"testing"
 	"time"
@@ -96,6 +97,18 @@ func TestInit(t *testing.T) {
 					return TestConfig{}, err
 				}
 				return *c.(*TestConfig), nil
+			},
+		),
+		fx.Invoke(
+			func(lifecycle fx.Lifecycle, s fx.Shutdowner) {
+				lifecycle.Append(
+					fx.Hook{
+						OnStart: func(_ context.Context) error {
+							fmt.Println("I'm invoked")
+							return s.Shutdown()
+						},
+					},
+				)
 			},
 		),
 	)

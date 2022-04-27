@@ -89,7 +89,7 @@ func (r *Runner) Setup(cmd *cobra.Command, module fx.Option) *Runner {
 		Short: "output the config environment variables and exits",
 		Args:  cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			l := log.New()
+			//l := log.New()
 
 			loglevelFlag, err := cmd.Flags().GetString("loglevel")
 			if err != nil {
@@ -98,27 +98,20 @@ func (r *Runner) Setup(cmd *cobra.Command, module fx.Option) *Runner {
 
 			var cfgMgr config.Provider
 			app := fx.New(
-				logging.WithLogger(l),
+				fx.NopLogger,
 				orlop.FxContext(cmd.Context()),
 				fx.Supply(cmd),
 				fx.Supply(service.Name(r.prefix)),
 				fx.Supply(logging.Level(loglevelFlag)),
 				orlop.Module,
 				fx.Populate(&cfgMgr),
-				fx.Invoke(
-					func(lifecycle fx.Lifecycle, s fx.Shutdowner) {
-						lifecycle.Append(
-							fx.Hook{
-								OnStart: func(_ context.Context) error {
-									return s.Shutdown()
-								},
-							},
-						)
-					},
-				),
 				module,
 			)
-			app.Run()
+
+			if err := app.Start(context.Background()); err != nil {
+				panic(err)
+			}
+			defer app.Stop(context.Background())
 
 			vars, err := cfgMgr.List(cmd.Context())
 			if err != nil {

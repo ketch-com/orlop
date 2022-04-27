@@ -22,8 +22,11 @@ package parameter
 
 import "go.uber.org/fx"
 
-var Module = fx.Options(
-	fx.Provide(
-		NewObjectStore,
+var Module = fx.Module(
+	"parameter",
+	fx.Options(
+		fx.Provide(
+			NewObjectStore,
+		),
 	),
 )
