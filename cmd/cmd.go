@@ -91,6 +91,8 @@ func (r *Runner) Setup(cmd *cobra.Command, module fx.Option) *Runner {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			var cfgMgr config.Provider
 			app := fx.New(
+				orlop.FxContext(cmd.Context()),
+				fx.Supply(service.Name(r.prefix)),
 				orlop.Module,
 				fx.Populate(&cfgMgr),
 				fx.Invoke(

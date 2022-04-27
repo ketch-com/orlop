@@ -6,6 +6,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/spf13/cobra"
+
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.ketch.com/lib/orlop/v2/config"
@@ -80,4 +82,33 @@ func TestRun(t *testing.T) {
 	assert.Equal(t, []byte{0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0A, 0x0B, 0x0C, 0x0D, 0x0E, 0x0F}, cfg.HexEncoded)
 	require.NotNil(t, cfg.Ptr)
 	assert.Equal(t, int32(123), *cfg.Ptr)
+}
+
+func TestInit(t *testing.T) {
+	var cfg TestConfig
+
+	var module = fx.Options(
+		config.Option("config", &cfg),
+		fx.Provide(
+			func(ctx context.Context, provider config.Provider) (TestConfig, error) {
+				c, err := provider.Get(ctx, "config")
+				if err != nil {
+					return TestConfig{}, err
+				}
+				return *c.(*TestConfig), nil
+			},
+		),
+	)
+
+	var cmd = &cobra.Command{
+		Use:              "test",
+		TraverseChildren: true,
+		SilenceUsage:     true,
+	}
+
+	NewRunner("test").SetupRoot(cmd).Setup(cmd, module)
+
+	cmd.SetArgs([]string{"init"})
+	err := cmd.Execute()
+	require.NoError(t, err)
 }

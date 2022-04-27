@@ -102,7 +102,11 @@ func (s *providerImpl) load(_ context.Context, key string, value any) error {
 	}
 
 	for name, field := range fields {
-		keyName := strings.Join([]string{key, name}, "_")
+		keyName := name
+		if len(key) > 0 {
+			keyName = strings.Join([]string{key, name}, "_")
+		}
+
 		if v := s.environ.Getenv(keyName); len(v) > 0 {
 			if err = field.set(field.v, v); err != nil {
 				return errors.Wrapf(err, "failed to set field '%s' with value '%s'", name, v)

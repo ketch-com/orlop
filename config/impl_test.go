@@ -29,6 +29,10 @@ type TestConfig struct {
 	Unknown       int32
 }
 
+type TestString struct {
+	String string
+}
+
 func Test_providerImpl_List(t *testing.T) {
 	var config TestConfig
 
@@ -115,13 +119,19 @@ func Test_providerImpl_load(t *testing.T) {
 	os.Setenv("TEST_CONFIG_HEX_ENCODED", "0102030405060708090A0B0C0D0E0F")
 	os.Setenv("TEST_CONFIG_BASE_64_ENCODED", "AQIDBAUGBwgJCgsMDQ4P")
 	os.Setenv("TEST_CONFIG_PTR", "123")
+	os.Setenv("TEST_STRING", "string-data")
 
 	var config TestConfig
+	var data TestString
 	p := &providerImpl{
 		configs: map[string]value{
 			"config": {
 				isPopulated: false,
 				value:       &config,
+			},
+			"": {
+				isPopulated: false,
+				value:       &data,
 			},
 		},
 		environ: env.NewEnviron("test"),
@@ -141,4 +151,9 @@ func Test_providerImpl_load(t *testing.T) {
 	assert.Equal(t, []byte{0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0A, 0x0B, 0x0C, 0x0D, 0x0E, 0x0F}, config.HexEncoded)
 	require.NotNil(t, config.Ptr)
 	assert.Equal(t, int32(123), *config.Ptr)
+
+	err = p.load(context.Background(), "", &data)
+	require.NoError(t, err)
+
+	assert.Equal(t, "string-data", data.String)
 }
