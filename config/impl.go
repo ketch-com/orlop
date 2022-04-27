@@ -101,6 +101,7 @@ func (s *providerImpl) load(_ context.Context, key string, value any) error {
 		return err
 	}
 
+	key = strings.TrimSpace(key)
 	for name, field := range fields {
 		keyName := name
 		if len(key) > 0 {
@@ -127,7 +128,12 @@ func (s *providerImpl) load(_ context.Context, key string, value any) error {
 func (s *providerImpl) getVariablesFromConfig(service string, cfg any) ([]string, error) {
 	var vars []string
 
-	fields, err := reflectStruct([]string{string(s.prefix), service}, cfg)
+	prefix := []string{string(s.prefix)}
+	if len(strings.TrimSpace(service)) > 0 {
+		prefix = append(prefix, service)
+	}
+
+	fields, err := reflectStruct(prefix, cfg)
 	if err != nil {
 		return nil, err
 	}

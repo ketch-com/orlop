@@ -26,9 +26,7 @@ import (
 
 var Module = fx.Module(
 	"config",
-	fx.Options(
-		fx.Provide(
-			New,
-		),
+	fx.Provide(
+		New,
 	),
 )

@@ -2,7 +2,6 @@ package cmd
 
 import (
 	"context"
-	"fmt"
 	"os"
 	"testing"
 	"time"
@@ -32,6 +31,10 @@ type TestConfig struct {
 	Unknown       int32
 }
 
+type TestString struct {
+	String string
+}
+
 func TestRun(t *testing.T) {
 	os.Setenv("TEST_CONFIG_EMBEDDED", "true")
 	os.Setenv("TEST_CONFIG_REQ", "imhere")
@@ -41,11 +44,14 @@ func TestRun(t *testing.T) {
 	os.Setenv("TEST_CONFIG_HEX_ENCODED", "0102030405060708090A0B0C0D0E0F")
 	os.Setenv("TEST_CONFIG_BASE_64_ENCODED", "AQIDBAUGBwgJCgsMDQ4P")
 	os.Setenv("TEST_CONFIG_PTR", "123")
+	os.Setenv("TEST_STRING", "string-data")
 
 	var cfg TestConfig
+	var data TestString
 
 	var module = fx.Options(
 		config.Option("config", &cfg),
+		config.Option("", &data),
 		fx.Provide(
 			func(ctx context.Context, provider config.Provider) (TestConfig, error) {
 				c, err := provider.Get(ctx, "config")
@@ -55,7 +61,16 @@ func TestRun(t *testing.T) {
 				return *c.(*TestConfig), nil
 			},
 		),
-		fx.Invoke(func(t TestConfig) {
+		fx.Provide(
+			func(ctx context.Context, provider config.Provider) (TestString, error) {
+				c, err := provider.Get(ctx, "")
+				if err != nil {
+					return TestString{}, err
+				}
+				return *c.(*TestString), nil
+			},
+		),
+		fx.Invoke(func(t TestConfig, s TestString) {
 			return
 		}),
 		fx.Invoke(
@@ -83,13 +98,16 @@ func TestRun(t *testing.T) {
 	assert.Equal(t, []byte{0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0A, 0x0B, 0x0C, 0x0D, 0x0E, 0x0F}, cfg.HexEncoded)
 	require.NotNil(t, cfg.Ptr)
 	assert.Equal(t, int32(123), *cfg.Ptr)
+	assert.Equal(t, "string-data", data.String)
 }
 
 func TestInit(t *testing.T) {
 	var cfg TestConfig
+	var data TestString
 
 	var module = fx.Options(
 		config.Option("config", &cfg),
+		config.Option("", &data),
 		fx.Provide(
 			func(ctx context.Context, provider config.Provider) (TestConfig, error) {
 				c, err := provider.Get(ctx, "config")
@@ -104,7 +122,6 @@ func TestInit(t *testing.T) {
 				lifecycle.Append(
 					fx.Hook{
 						OnStart: func(_ context.Context) error {
-							fmt.Println("I'm invoked")
 							return s.Shutdown()
 						},
 					},

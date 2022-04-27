@@ -11,10 +11,8 @@ import (
 
 var Module = fx.Module(
 	version.Name,
-	fx.Options(
-		config.Module,
-		env.Module,
-		logging.Module,
-		parameter.Module,
-	),
+	config.Module,
+	env.Module,
+	logging.Module,
+	parameter.Module,
 )
