@@ -50,27 +50,11 @@ func TestRun(t *testing.T) {
 	var data TestString
 
 	var module = fx.Options(
-		config.Option("config", &cfg),
-		config.Option("", &data),
-		fx.Provide(
-			func(ctx context.Context, provider config.Provider) (TestConfig, error) {
-				c, err := provider.Get(ctx, "config")
-				if err != nil {
-					return TestConfig{}, err
-				}
-				return *c.(*TestConfig), nil
-			},
-		),
-		fx.Provide(
-			func(ctx context.Context, provider config.Provider) (TestString, error) {
-				c, err := provider.Get(ctx, "")
-				if err != nil {
-					return TestString{}, err
-				}
-				return *c.(*TestString), nil
-			},
-		),
+		config.Option[TestConfig]("config"),
+		config.Option[TestString](),
 		fx.Invoke(func(t TestConfig, s TestString) {
+			cfg = t
+			data = s
 			return
 		}),
 		fx.Invoke(
@@ -102,21 +86,9 @@ func TestRun(t *testing.T) {
 }
 
 func TestInit(t *testing.T) {
-	var cfg TestConfig
-	var data TestString
-
 	var module = fx.Options(
-		config.Option("config", &cfg),
-		config.Option("", &data),
-		fx.Provide(
-			func(ctx context.Context, provider config.Provider) (TestConfig, error) {
-				c, err := provider.Get(ctx, "config")
-				if err != nil {
-					return TestConfig{}, err
-				}
-				return *c.(*TestConfig), nil
-			},
-		),
+		config.Option[TestConfig]("config"),
+		config.Option[TestString](),
 		fx.Invoke(
 			func(lifecycle fx.Lifecycle, s fx.Shutdowner) {
 				lifecycle.Append(
