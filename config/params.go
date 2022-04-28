@@ -14,16 +14,16 @@ type Definition struct {
 	Config any
 }
 
-func Option[T any](name ...string) fx.Option {
-	var n, annotation string
-	if len(name) > 0 {
-		n = name[0]
-		if len(name) > 1 {
-			annotation = fmt.Sprintf(`name:"%s"`, name[1])
+func Option[T any](in ...string) fx.Option {
+	var name, annotation string
+	if len(in) > 0 {
+		name = in[0]
+		if len(in) > 1 {
+			annotation = fmt.Sprintf(`name:"%s"`, in[1])
 		}
 	}
 	fn := func(ctx context.Context, cfg Provider) (T, error) {
-		if c, err := cfg.Get(ctx, n); err != nil {
+		if c, err := cfg.Get(ctx, name); err != nil {
 			return *new(T), err
 		} else {
 			return *c.(*T), nil
@@ -44,7 +44,7 @@ func Option[T any](name ...string) fx.Option {
 		fx.Supply(
 			fx.Annotate(
 				Definition{
-					Name:   n,
+					Name:   name,
 					Config: new(T),
 				},
 				fx.ResultTags(`group:"configs"`),
