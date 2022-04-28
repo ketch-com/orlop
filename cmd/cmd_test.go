@@ -44,19 +44,40 @@ func TestRun(t *testing.T) {
 	os.Setenv("TEST_CONFIG_HEX_ENCODED", "0102030405060708090A0B0C0D0E0F")
 	os.Setenv("TEST_CONFIG_BASE_64_ENCODED", "AQIDBAUGBwgJCgsMDQ4P")
 	os.Setenv("TEST_CONFIG_PTR", "123")
+
+	os.Setenv("TEST_SECOND_EMBEDDED", "false")
+	os.Setenv("TEST_SECOND_REQ", "imherealso")
+	os.Setenv("TEST_SECOND_SLICED", "\"e\",\"f\",\"g\"")
+	os.Setenv("TEST_SECOND_CUSTOM", "5m")
+	os.Setenv("TEST_SECOND_MAP", "[\"e=f\",\"g=h\"]")
+	os.Setenv("TEST_SECOND_HEX_ENCODED", "0102030405060708090A0B0C0D0E0F")
+	os.Setenv("TEST_SECOND_BASE_64_ENCODED", "AQIDBAUGBwgJCgsMDQ4P")
+	os.Setenv("TEST_SECOND_PTR", "456")
+
 	os.Setenv("TEST_STRING", "string-data")
 
-	var cfg TestConfig
+	var cfg1, cfg2 TestConfig
 	var data TestString
+
+	type testParams struct {
+		fx.In
+
+		T1 TestConfig
+		T2 TestConfig `name:"2nd"`
+		S  TestString
+	}
 
 	var module = fx.Options(
 		config.Option[TestConfig]("config"),
+		config.Option[TestConfig]("second", "2nd"),
 		config.Option[TestString](),
-		fx.Invoke(func(t TestConfig, s TestString) {
-			cfg = t
-			data = s
-			return
-		}),
+
+		fx.Invoke(
+			func(p testParams) {
+				cfg1, cfg2, data = p.T1, p.T2, p.S
+				return
+			},
+		),
 		fx.Invoke(
 			func(lifecycle fx.Lifecycle, s fx.Shutdowner) {
 				lifecycle.Append(
@@ -72,22 +93,35 @@ func TestRun(t *testing.T) {
 
 	Run("test", module)
 
-	assert.True(t, cfg.Embedded.Embedded)
-	assert.Equal(t, "/pki/issue", cfg.WithDefault)
-	assert.Equal(t, "imhere", cfg.Required)
-	assert.NotEmpty(t, cfg.SomeSlice)
-	assert.Equal(t, []string{"a", "b", "c"}, cfg.SomeSlice)
-	assert.Equal(t, time.Minute, cfg.CustomParser)
-	assert.Equal(t, map[string]string{"a": "b", "c": "d"}, cfg.Map)
-	assert.Equal(t, []byte{0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0A, 0x0B, 0x0C, 0x0D, 0x0E, 0x0F}, cfg.HexEncoded)
-	require.NotNil(t, cfg.Ptr)
-	assert.Equal(t, int32(123), *cfg.Ptr)
+	assert.True(t, cfg1.Embedded.Embedded)
+	assert.Equal(t, "/pki/issue", cfg1.WithDefault)
+	assert.Equal(t, "imhere", cfg1.Required)
+	assert.NotEmpty(t, cfg1.SomeSlice)
+	assert.Equal(t, []string{"a", "b", "c"}, cfg1.SomeSlice)
+	assert.Equal(t, time.Minute, cfg1.CustomParser)
+	assert.Equal(t, map[string]string{"a": "b", "c": "d"}, cfg1.Map)
+	assert.Equal(t, []byte{0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0A, 0x0B, 0x0C, 0x0D, 0x0E, 0x0F}, cfg1.HexEncoded)
+	require.NotNil(t, cfg1.Ptr)
+	assert.Equal(t, int32(123), *cfg1.Ptr)
+
+	assert.False(t, cfg2.Embedded.Embedded)
+	assert.Equal(t, "/pki/issue", cfg2.WithDefault)
+	assert.Equal(t, "imherealso", cfg2.Required)
+	assert.NotEmpty(t, cfg2.SomeSlice)
+	assert.Equal(t, []string{"e", "f", "g"}, cfg2.SomeSlice)
+	assert.Equal(t, 5*time.Minute, cfg2.CustomParser)
+	assert.Equal(t, map[string]string{"e": "f", "g": "h"}, cfg2.Map)
+	assert.Equal(t, []byte{0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0A, 0x0B, 0x0C, 0x0D, 0x0E, 0x0F}, cfg2.HexEncoded)
+	require.NotNil(t, cfg2.Ptr)
+	assert.Equal(t, int32(456), *cfg2.Ptr)
+
 	assert.Equal(t, "string-data", data.String)
 }
 
 func TestInit(t *testing.T) {
 	var module = fx.Options(
 		config.Option[TestConfig]("config"),
+		config.Option[TestConfig]("second", "2nd"),
 		config.Option[TestString](),
 		fx.Invoke(
 			func(lifecycle fx.Lifecycle, s fx.Shutdowner) {
