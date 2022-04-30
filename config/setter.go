@@ -24,11 +24,12 @@ import (
 	"encoding/base64"
 	"encoding/csv"
 	"encoding/hex"
-	"go.ketch.com/lib/orlop/v2/errors"
 	"reflect"
 	"strconv"
 	"strings"
 	"time"
+
+	"go.ketch.com/lib/orlop/v2/errors"
 )
 
 type fieldSetter func(value reflect.Value, input string) error
@@ -36,7 +37,7 @@ type fieldSetter func(value reflect.Value, input string) error
 var knownSetters map[string]fieldSetter
 
 // RegisterConfigParser registers a config parser
-func RegisterConfigParser(typeName string, parser func(value reflect.Value, input string) error) {
+func RegisterConfigParser(typeName string, parser fieldSetter) {
 	knownSetters[typeName] = parser
 }
 

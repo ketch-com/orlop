@@ -22,7 +22,8 @@ package env
 
 import "go.uber.org/fx"
 
-var Module = fx.Options(
+var Module = fx.Module(
+	"env",
 	fx.Provide(
 		Env,
 		NewEnviron,

@@ -22,6 +22,7 @@ package orlop
 
 import (
 	"context"
+
 	"go.ketch.com/lib/orlop/v2/config"
 	"go.ketch.com/lib/orlop/v2/env"
 	"go.ketch.com/lib/orlop/v2/log"
@@ -30,8 +31,12 @@ import (
 	"go.uber.org/fx"
 )
 
-func FxOptions(o config.Config) fx.Option {
-	return o.Options()
+func FxOptions(c any) fx.Option {
+	if cfg, ok := c.(config.Config); ok {
+		return cfg.Options()
+	}
+
+	return fx.Options()
 }
 
 func FxContext(ctx context.Context) fx.Option {

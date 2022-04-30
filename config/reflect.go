@@ -21,9 +21,10 @@
 package config
 
 import (
-	"go.ketch.com/lib/orlop/v2/errors"
 	"reflect"
 	"strings"
+
+	"go.ketch.com/lib/orlop/v2/errors"
 )
 
 type configField struct {
