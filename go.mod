@@ -12,7 +12,7 @@ require (
 	github.com/spf13/cobra v1.4.0
 	github.com/stretchr/testify v1.7.0
 	go.uber.org/fx v1.17.1
-	google.golang.org/grpc v1.45.0
+	google.golang.org/grpc v1.46.2
 )
 
 require (
