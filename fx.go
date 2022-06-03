@@ -22,7 +22,6 @@ package orlop
 
 import (
 	"context"
-
 	"go.ketch.com/lib/orlop/v2/config"
 	"go.ketch.com/lib/orlop/v2/env"
 	"go.ketch.com/lib/orlop/v2/log"
@@ -43,22 +42,29 @@ func FxContext(ctx context.Context) fx.Option {
 	return fx.Provide(func() context.Context { return ctx })
 }
 
-func Populate(ctx context.Context, prefix string, e env.Environment, module fx.Option, cfg config.Config, targets ...interface{}) error {
+func Populate(ctx context.Context, prefix string, e env.Environment, module fx.Option, targets ...interface{}) error {
 	e.Load()
 
-	if err := Unmarshal(prefix, cfg); err != nil {
-		return err
+	var options []fx.Option
+	options = append(options, logging.WithLogger(log.New()))
+	options = append(options, FxContext(ctx))
+
+	if len(targets) > 0 {
+		if cfg, ok := targets[0].(fx.Option); ok {
+			if err := Unmarshal(prefix, cfg); err != nil {
+				return err
+			}
+
+			options = append(options, FxOptions(cfg))
+		}
 	}
 
-	app := fx.New(
-		logging.WithLogger(log.New()),
-		FxContext(ctx),
-		FxOptions(cfg),
-		fx.Supply(service.Name(prefix)),
-		Module,
-		module,
-		fx.Populate(targets...),
-	)
+	options = append(options, fx.Supply(service.Name(prefix)))
+	options = append(options, Module)
+	options = append(options, module)
+	options = append(options, fx.Populate(targets...))
+
+	app := fx.New(options...)
 
 	if err := app.Err(); err != nil {
 		return err
