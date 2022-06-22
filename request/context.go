@@ -123,7 +123,7 @@ func Values(ctx context.Context) map[string]string {
 		out[string(TenantKey)] = requestTenant
 	}
 
-	if operation := Tenant(ctx); len(operation) > 0 {
+	if operation := Operation(ctx); len(operation) > 0 {
 		out[string(OperationKey)] = operation
 	}
 
