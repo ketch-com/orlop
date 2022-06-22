@@ -34,7 +34,7 @@ func (sc coder) Unwrap() error {
 }
 
 func (sc coder) Error() string {
-	return fmt.Sprintf("[%d] %v", sc.code, sc.error)
+	return fmt.Sprintf("[%s] %v", sc.code, sc.error)
 }
 
 func (sc coder) ErrorCode() ErrorCode {
