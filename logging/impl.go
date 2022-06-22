@@ -25,6 +25,7 @@ import (
 	"github.com/sirupsen/logrus"
 	"go.ketch.com/lib/orlop/v2/env"
 	"go.ketch.com/lib/orlop/v2/log"
+	"go.ketch.com/lib/orlop/v2/request"
 	"time"
 )
 
@@ -99,8 +100,30 @@ func (l loggerImpl) WithTime(t time.Time) Logger {
 }
 
 func (l loggerImpl) WithContext(ctx context.Context) Logger {
+	entry := l.entry.WithContext(ctx)
+
+	if requestID := request.ID(ctx); len(requestID) > 0 {
+		entry = entry.WithField(string(request.IDKey), requestID)
+	}
+
+	if requestURL := request.URL(ctx); len(requestURL) > 0 {
+		entry = entry.WithField(string(request.URLKey), requestURL)
+	}
+
+	if requestTimestamp := request.Timestamp(ctx); !requestTimestamp.IsZero() {
+		entry = entry.WithField(string(request.TimestampKey), requestTimestamp)
+	}
+
+	if requestTenant := request.Tenant(ctx); len(requestTenant) > 0 {
+		entry = entry.WithField(string(request.TenantKey), requestTenant)
+	}
+
+	if operation := request.Tenant(ctx); len(operation) > 0 {
+		entry = entry.WithField(string(request.OperationKey), operation)
+	}
+
 	return &loggerImpl{
-		entry: l.entry.WithContext(ctx),
+		entry: entry,
 	}
 }
 

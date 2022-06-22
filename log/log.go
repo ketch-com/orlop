@@ -23,6 +23,7 @@ package log
 import (
 	"context"
 	"github.com/sirupsen/logrus"
+	"go.ketch.com/lib/orlop/v2/request"
 	"io"
 	"os"
 	"time"
@@ -79,7 +80,29 @@ func WithError(err error) *logrus.Entry {
 
 // WithContext returns a log Entry with the given Context
 func WithContext(ctx context.Context) *logrus.Entry {
-	return logrus.WithContext(ctx)
+	entry := logrus.WithContext(ctx)
+
+	if requestID := request.ID(ctx); len(requestID) > 0 {
+		entry = entry.WithField(string(request.IDKey), requestID)
+	}
+
+	if requestURL := request.URL(ctx); len(requestURL) > 0 {
+		entry = entry.WithField(string(request.URLKey), requestURL)
+	}
+
+	if requestTimestamp := request.Timestamp(ctx); !requestTimestamp.IsZero() {
+		entry = entry.WithField(string(request.TimestampKey), requestTimestamp)
+	}
+
+	if requestTenant := request.Tenant(ctx); len(requestTenant) > 0 {
+		entry = entry.WithField(string(request.TenantKey), requestTenant)
+	}
+
+	if operation := request.Tenant(ctx); len(operation) > 0 {
+		entry = entry.WithField(string(request.OperationKey), operation)
+	}
+
+	return entry
 }
 
 // WithTime returns a log Entry with the given Time
