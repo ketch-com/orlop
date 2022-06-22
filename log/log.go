@@ -82,24 +82,8 @@ func WithError(err error) *logrus.Entry {
 func WithContext(ctx context.Context) *logrus.Entry {
 	entry := logrus.WithContext(ctx)
 
-	if requestID := request.ID(ctx); len(requestID) > 0 {
-		entry = entry.WithField(string(request.IDKey), requestID)
-	}
-
-	if requestURL := request.URL(ctx); len(requestURL) > 0 {
-		entry = entry.WithField(string(request.URLKey), requestURL)
-	}
-
-	if requestTimestamp := request.Timestamp(ctx); !requestTimestamp.IsZero() {
-		entry = entry.WithField(string(request.TimestampKey), requestTimestamp)
-	}
-
-	if requestTenant := request.Tenant(ctx); len(requestTenant) > 0 {
-		entry = entry.WithField(string(request.TenantKey), requestTenant)
-	}
-
-	if operation := request.Tenant(ctx); len(operation) > 0 {
-		entry = entry.WithField(string(request.OperationKey), operation)
+	for k, v := range request.Values(ctx) {
+		entry = entry.WithField(k, v)
 	}
 
 	return entry

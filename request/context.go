@@ -102,3 +102,30 @@ func Operation(ctx context.Context) string {
 func WithOperation(parent context.Context, operation string) context.Context {
 	return WithValue(parent, OperationKey, operation)
 }
+
+// Values returns a map of the request values from the context
+func Values(ctx context.Context) map[string]string {
+	out := make(map[string]string)
+
+	if requestID := ID(ctx); len(requestID) > 0 {
+		out[string(IDKey)] = requestID
+	}
+
+	if requestURL := URL(ctx); len(requestURL) > 0 {
+		out[string(URLKey)] = requestURL
+	}
+
+	if requestTimestamp := Timestamp(ctx); !requestTimestamp.IsZero() {
+		out[string(TimestampKey)] = requestTimestamp.String()
+	}
+
+	if requestTenant := Tenant(ctx); len(requestTenant) > 0 {
+		out[string(TenantKey)] = requestTenant
+	}
+
+	if operation := Tenant(ctx); len(operation) > 0 {
+		out[string(OperationKey)] = operation
+	}
+
+	return out
+}
