@@ -5,10 +5,12 @@ import (
 	"time"
 )
 
-var requestIDKey = struct{}{}
-var requestURLKey = struct{}{}
-var requestTimestampKey = struct{}{}
-var requestTenantKey = struct{}{}
+var (
+	requestIDKey        = struct{}{}
+	requestURLKey       = struct{}{}
+	requestTimestampKey = struct{}{}
+	requestTenantKey    = struct{}{}
+)
 
 func ID(ctx context.Context) string {
 	if v := ctx.Value(requestIDKey); v != nil {
