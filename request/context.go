@@ -30,9 +30,10 @@ type Key string
 
 var (
 	IDKey        Key = "request_id"
+	OperationKey Key = "operation"
+	TimestampKey Key = "request_ts"
+	TenantKey    Key = "tenant"
 	URLKey       Key = "request_url"
-	TimestampKey Key = "request_timestamp"
-	TenantKey    Key = "request_tenant"
 )
 
 // Value returns the value of a request context key
@@ -90,4 +91,41 @@ func Tenant(ctx context.Context) string {
 // WithTenant returns a new context with the given request tenant
 func WithTenant(parent context.Context, requestTenant string) context.Context {
 	return WithValue(parent, TenantKey, requestTenant)
+}
+
+// Operation returns the Operation or an empty string
+func Operation(ctx context.Context) string {
+	return Value[string](ctx, OperationKey)
+}
+
+// WithOperation returns a new context with the given Operation
+func WithOperation(parent context.Context, operation string) context.Context {
+	return WithValue(parent, OperationKey, operation)
+}
+
+// Values returns a map of the request values from the context
+func Values(ctx context.Context) map[string]string {
+	out := make(map[string]string)
+
+	if requestID := ID(ctx); len(requestID) > 0 {
+		out[string(IDKey)] = requestID
+	}
+
+	if requestURL := URL(ctx); len(requestURL) > 0 {
+		out[string(URLKey)] = requestURL
+	}
+
+	if requestTimestamp := Timestamp(ctx); !requestTimestamp.IsZero() {
+		out[string(TimestampKey)] = requestTimestamp.String()
+	}
+
+	if requestTenant := Tenant(ctx); len(requestTenant) > 0 {
+		out[string(TenantKey)] = requestTenant
+	}
+
+	if operation := Operation(ctx); len(operation) > 0 {
+		out[string(OperationKey)] = operation
+	}
+
+	return out
 }

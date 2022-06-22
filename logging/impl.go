@@ -25,6 +25,7 @@ import (
 	"github.com/sirupsen/logrus"
 	"go.ketch.com/lib/orlop/v2/env"
 	"go.ketch.com/lib/orlop/v2/log"
+	"go.ketch.com/lib/orlop/v2/request"
 	"time"
 )
 
@@ -99,8 +100,14 @@ func (l loggerImpl) WithTime(t time.Time) Logger {
 }
 
 func (l loggerImpl) WithContext(ctx context.Context) Logger {
+	entry := l.entry.WithContext(ctx)
+
+	for k, v := range request.Values(ctx) {
+		entry = entry.WithField(k, v)
+	}
+
 	return &loggerImpl{
-		entry: l.entry.WithContext(ctx),
+		entry: entry,
 	}
 }
 
