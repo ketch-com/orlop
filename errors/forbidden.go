@@ -24,7 +24,7 @@ import (
 	"net/http"
 )
 
-// NotFound returns a not found error with ENOTFOUND and 404 Not Found and the given user message
-func NotFound(err error, msg string) error {
-	return WithStatusCode(WithCode(WithUserMessage(err, msg), ENOTFOUND), http.StatusNotFound)
+// Forbidden returns a Forbidden error with EFORBIDDEN and 403 Forbidden and the given user message
+func Forbidden(err error) error {
+	return WithStatusCode(WithCode(err, EFORBIDDEN), http.StatusForbidden)
 }

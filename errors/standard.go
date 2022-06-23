@@ -25,9 +25,10 @@ type ErrorCode string
 // Application error codes.
 const (
 	ECONFLICT    ErrorCode = "conflict"    // action cannot be performed - permanent
-	EINTERNAL              = "internal"    // internal error - retryable (probably)
-	EUNAVAILABLE           = "unavailable" // service is unavailable - permanent
-	EINVALID               = "invalid"     // validation failed - retryable (after fixing the input)
-	ENOTFOUND              = "not_found"   // entity does not exist - permanent
-	ETIMEOUT               = "timeout"     // operation timed out - retryable
+	EINTERNAL    ErrorCode = "internal"    // internal error - retryable (probably)
+	EUNAVAILABLE ErrorCode = "unavailable" // service is unavailable - permanent
+	EINVALID     ErrorCode = "invalid"     // validation failed - retryable (after fixing the input)
+	ENOTFOUND    ErrorCode = "not_found"   // entity does not exist - permanent
+	ETIMEOUT     ErrorCode = "timeout"     // operation timed out - retryable
+	EFORBIDDEN   ErrorCode = "forbidden"   // operation is not authorized
 )
