@@ -20,16 +20,11 @@
 
 package errors
 
-type ErrorCode string
-
-// Application error codes.
-const (
-	ECONFLICT      ErrorCode = "conflict"      // action cannot be performed - permanent
-	EINTERNAL      ErrorCode = "internal"      // internal error - retryable (probably)
-	EUNAVAILABLE   ErrorCode = "unavailable"   // service is unavailable - permanent
-	EINVALID       ErrorCode = "invalid"       // validation failed - retryable (after fixing the input)
-	ENOTFOUND      ErrorCode = "not_found"     // entity does not exist - permanent
-	ETIMEOUT       ErrorCode = "timeout"       // operation timed out - retryable
-	EFORBIDDEN     ErrorCode = "forbidden"     // operation is not authorized
-	ECONFIGURATION ErrorCode = "configuration" // configuration error - permanent
+import (
+	"net/http"
 )
+
+// Configuration returns an error with ECONFIGURATION and 501 StatusNotImplemented.
+func Configuration(err error) error {
+	return WithStatusCode(WithCode(err, ECONFIGURATION), http.StatusNotImplemented)
+}
