@@ -36,6 +36,43 @@ var (
 	URLKey       Key = "request_url"
 )
 
+var AllKeys = []Key{
+	IDKey,
+	OperationKey,
+	TimestampKey,
+	TenantKey,
+	URLKey,
+}
+
+type Setter func(ctx context.Context, v string) context.Context
+type Getter func(ctx context.Context) string
+
+var Setters = map[Key]Setter{
+	IDKey:        WithID,
+	OperationKey: WithOperation,
+	TenantKey:    WithTenant,
+	URLKey:       WithURL,
+	TimestampKey: func(ctx context.Context, v string) context.Context {
+		if t, err := time.Parse(time.RFC3339, v); err == nil {
+			return WithTimestamp(ctx, t)
+		}
+		return ctx
+	},
+}
+
+var Getters = map[Key]Getter{
+	IDKey:        ID,
+	OperationKey: Operation,
+	TenantKey:    Tenant,
+	URLKey:       URL,
+	TimestampKey: func(ctx context.Context) string {
+		if ts := Timestamp(ctx); !ts.IsZero() {
+			return ts.Format(time.RFC3339)
+		}
+		return ""
+	},
+}
+
 // Value returns the value of a request context key
 func Value[T any](ctx context.Context, key Key) T {
 	if v := ctx.Value(key); v != nil {
@@ -107,24 +144,10 @@ func WithOperation(parent context.Context, operation string) context.Context {
 func Values(ctx context.Context) map[string]string {
 	out := make(map[string]string)
 
-	if requestID := ID(ctx); len(requestID) > 0 {
-		out[string(IDKey)] = requestID
-	}
-
-	if requestURL := URL(ctx); len(requestURL) > 0 {
-		out[string(URLKey)] = requestURL
-	}
-
-	if requestTimestamp := Timestamp(ctx); !requestTimestamp.IsZero() {
-		out[string(TimestampKey)] = requestTimestamp.String()
-	}
-
-	if requestTenant := Tenant(ctx); len(requestTenant) > 0 {
-		out[string(TenantKey)] = requestTenant
-	}
-
-	if operation := Operation(ctx); len(operation) > 0 {
-		out[string(OperationKey)] = operation
+	for k, getter := range Getters {
+		if s := getter(ctx); len(s) > 0 {
+			out[string(k)] = s
+		}
 	}
 
 	return out

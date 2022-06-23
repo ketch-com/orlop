@@ -24,7 +24,7 @@ import (
 	"net/http"
 )
 
-// NotFound returnsa not found error with ENOTFOUND and 404 Not Found and the given user message
+// NotFound returns a not found error with ENOTFOUND and 404 Not Found and the given user message
 func NotFound(err error, msg string) error {
 	return WithStatusCode(WithCode(WithUserMessage(err, msg), ENOTFOUND), http.StatusNotFound)
 }
