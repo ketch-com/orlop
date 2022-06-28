@@ -31,5 +31,5 @@ func NotFound(err error, msg string) error {
 
 // IsNotFound returns true if the error is a NotFound error
 func IsNotFound(err error) bool {
-	return Code(err) == ENOTFOUND
+	return Code(err) == ENOTFOUND || StatusCode(err) == http.StatusNotFound
 }

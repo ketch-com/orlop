@@ -31,5 +31,5 @@ func Conflict(err error) error {
 
 // IsConflict returns true if the error is a conflict error
 func IsConflict(err error) bool {
-	return Code(err) == ECONFLICT
+	return Code(err) == ECONFLICT || StatusCode(err) == http.StatusConflict
 }

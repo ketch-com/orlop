@@ -31,5 +31,5 @@ func Forbidden(err error) error {
 
 // IsForbidden returns true if the error is a forbidden error
 func IsForbidden(err error) bool {
-	return Code(err) == EFORBIDDEN
+	return Code(err) == EFORBIDDEN || StatusCode(err) == http.StatusForbidden
 }

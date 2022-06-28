@@ -31,5 +31,5 @@ func Invalid(err error) error {
 
 // IsInvalid returns true if the error is an Invalid error
 func IsInvalid(err error) bool {
-	return Code(err) == EINVALID
+	return Code(err) == EINVALID || StatusCode(err) == http.StatusBadRequest
 }
