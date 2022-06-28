@@ -21,10 +21,42 @@
 package errors
 
 import (
+	"go.ketch.com/lib/orlop/v2/errors/internal"
 	"net/http"
 )
 
-// NotFound returns a not found error with ENOTFOUND and 404 Not Found and the given user message
-func NotFound(err error, msg string) error {
-	return WithStatusCode(WithCode(WithUserMessage(err, msg), ENOTFOUND), http.StatusNotFound)
+type notFoundError struct {
+	error
+}
+
+func (te notFoundError) Unwrap() error {
+	return te.error
+}
+
+func (te notFoundError) NotFound() bool {
+	return true
+}
+
+// NotFound returns a not found error
+func NotFound(err error) error {
+	return &notFoundError{err}
+}
+
+// IsNotFound returns true if the error is a NotFound error
+func IsNotFound(err error) bool {
+	var missing internal.NotFound
+	var sc internal.StatusCode
+	var ec internal.ErrorCode
+
+	if As(err, &missing) && missing.NotFound() {
+		return true
+	}
+	if As(err, &sc) && sc.StatusCode() == http.StatusNotFound {
+		return true
+	}
+	if As(err, &ec) && ec.ErrorCode() == ENOTFOUND {
+		return true
+	}
+
+	return false
 }

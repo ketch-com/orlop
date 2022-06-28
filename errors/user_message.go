@@ -22,6 +22,7 @@ package errors
 
 import (
 	"fmt"
+	"go.ketch.com/lib/orlop/v2/errors/internal"
 	"net/http"
 )
 
@@ -68,17 +69,22 @@ func WithUserMessagef(err error, format string, v ...any) error {
 // "Internal Server Error".
 // If err is nil, it returns "".
 func UserMessage(err error) string {
+	var um internal.UserMessage
+
 	if err == nil {
 		return ""
 	}
-
-	var um interface {
-		error
-		UserMessage() string
-	}
-
 	if As(err, &um) {
 		return um.UserMessage()
+	}
+	if IsTimeout(err) {
+		return "operation timed out"
+	}
+	if IsTemporary(err) {
+		return "service temporarily unavailable"
+	}
+	if IsNotFound(err) {
+		return "not found"
 	}
 
 	return http.StatusText(StatusCode(err))

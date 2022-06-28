@@ -28,3 +28,8 @@ import (
 func Configuration(err error) error {
 	return WithStatusCode(WithCode(err, ECONFIGURATION), http.StatusNotImplemented)
 }
+
+// IsConfiguration returns true if the error is a configuration error
+func IsConfiguration(err error) bool {
+	return Code(err) == ECONFIGURATION || StatusCode(err) == http.StatusNotImplemented
+}

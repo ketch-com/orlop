@@ -22,11 +22,12 @@ package errors
 
 import (
 	"fmt"
+	"go.ketch.com/lib/orlop/v2/errors/internal"
 )
 
 type coder struct {
 	error
-	code ErrorCode
+	code string
 }
 
 func (sc coder) Unwrap() error {
@@ -37,15 +38,15 @@ func (sc coder) Error() string {
 	return fmt.Sprintf("[%s] %v", sc.code, sc.error)
 }
 
-func (sc coder) ErrorCode() ErrorCode {
+func (sc coder) ErrorCode() string {
 	return sc.code
 }
 
 // WithCode adds a Coder to err's error chain.
 // Unlike pkg/errors, WithCode will wrap nil error.
-func WithCode(err error, code ErrorCode) error {
+func WithCode(err error, code string) error {
 	if err == nil {
-		err = New(string(code))
+		err = New(code)
 	}
 	return coder{err, code}
 }
@@ -56,34 +57,23 @@ func WithCode(err error, code ErrorCode) error {
 // ETIMEOUT and EUNAVAILABLE
 // respectively.
 // If err is nil, it returns empty string
-func Code(err error) (code ErrorCode) {
+func Code(err error) (code string) {
+	var ec internal.ErrorCode
+
 	if err == nil {
 		return ""
 	}
-
-	var sc interface {
-		error
-		ErrorCode() ErrorCode
+	if As(err, &ec) {
+		return ec.ErrorCode()
 	}
-
-	if As(err, &sc) {
-		return sc.ErrorCode()
-	}
-
-	var timeouter interface {
-		error
-		Timeout() bool
-	}
-	if As(err, &timeouter) && timeouter.Timeout() {
+	if IsTimeout(err) {
 		return ETIMEOUT
 	}
-
-	var temper interface {
-		error
-		Temporary() bool
-	}
-	if As(err, &temper) && temper.Temporary() {
+	if IsTemporary(err) {
 		return EUNAVAILABLE
+	}
+	if IsNotFound(err) {
+		return ENOTFOUND
 	}
 
 	return EINTERNAL

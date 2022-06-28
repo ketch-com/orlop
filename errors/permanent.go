@@ -28,3 +28,8 @@ import (
 func Permanent(err error) error {
 	return WithStatusCode(WithCode(err, EUNAVAILABLE), http.StatusServiceUnavailable)
 }
+
+// IsPermanent returns true if the error is a Permanent error
+func IsPermanent(err error) bool {
+	return Code(err) == EUNAVAILABLE || StatusCode(err) == http.StatusServiceUnavailable
+}

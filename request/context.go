@@ -36,6 +36,7 @@ var (
 	URLKey       Key = "request_url"
 )
 
+// AllKeys is a slice of all Keys
 var AllKeys = []Key{
 	IDKey,
 	OperationKey,
@@ -44,9 +45,22 @@ var AllKeys = []Key{
 	URLKey,
 }
 
+// HighCardinalityKeys is a map of high-cardinality keys
+var HighCardinalityKeys = map[Key]bool{
+	IDKey:        true,
+	OperationKey: false,
+	TimestampKey: true,
+	TenantKey:    false,
+	URLKey:       false,
+}
+
+// Setter is a function that adds a string to the context
 type Setter func(ctx context.Context, v string) context.Context
+
+// Getter is a function that returns a string from the context
 type Getter func(ctx context.Context) string
 
+// Setters is a map from the Key to a Setter for that Key
 var Setters = map[Key]Setter{
 	IDKey:        WithID,
 	OperationKey: WithOperation,
@@ -60,6 +74,7 @@ var Setters = map[Key]Setter{
 	},
 }
 
+// Getters is a map from the Key to a Getter for that Key
 var Getters = map[Key]Getter{
 	IDKey:        ID,
 	OperationKey: Operation,
@@ -141,14 +156,52 @@ func WithOperation(parent context.Context, operation string) context.Context {
 }
 
 // Values returns a map of the request values from the context
-func Values(ctx context.Context) map[string]string {
+func Values(ctx context.Context, opts ...Option) map[string]string {
+	var o options
+
+	for _, opt := range opts {
+		opt(&o)
+	}
+
 	out := make(map[string]string)
 
 	for k, getter := range Getters {
 		if s := getter(ctx); len(s) > 0 {
-			out[string(k)] = s
+			skip := false
+
+			for _, filter := range o.filters {
+				if !filter(k) {
+					skip = true
+				}
+			}
+
+			if !skip {
+				out[string(k)] = s
+			}
 		}
 	}
 
 	return out
+}
+
+// Option is a function that sets values on the options structure
+type Option func(o *options)
+
+type options struct {
+	filters []Filter
+}
+
+// Filter is a function that returns true if the given key should be included
+type Filter func(k Key) bool
+
+// WithFilter returns a filter that filters request values
+func WithFilter(f Filter) Option {
+	return func(o *options) {
+		o.filters = append(o.filters, f)
+	}
+}
+
+// SkipHighCardinalityKeysFilter returns true if the key is not high cardinality
+func SkipHighCardinalityKeysFilter(k Key) bool {
+	return !HighCardinalityKeys[k]
 }

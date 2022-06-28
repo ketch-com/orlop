@@ -28,3 +28,8 @@ import (
 func Conflict(err error) error {
 	return WithStatusCode(WithCode(err, ECONFLICT), http.StatusConflict)
 }
+
+// IsConflict returns true if the error is a conflict error
+func IsConflict(err error) bool {
+	return Code(err) == ECONFLICT || StatusCode(err) == http.StatusConflict
+}
