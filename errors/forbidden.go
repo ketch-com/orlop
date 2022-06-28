@@ -28,3 +28,8 @@ import (
 func Forbidden(err error) error {
 	return WithStatusCode(WithCode(err, EFORBIDDEN), http.StatusForbidden)
 }
+
+// IsForbidden returns true if the error is a forbidden error
+func IsForbidden(err error) bool {
+	return Code(err) == EFORBIDDEN
+}

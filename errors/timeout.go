@@ -32,7 +32,11 @@ type timeouter struct {
 }
 
 func (sc timeouter) Error() string {
-	return fmt.Sprintf("timed out after %v - %v", sc.timeout, sc.error)
+	if sc.timeout > time.Duration(0) {
+		return fmt.Sprintf("timed out after %v - %v", sc.timeout, sc.error)
+	}
+
+	return fmt.Sprintf("timed out - %v", sc.error)
 }
 
 func (sc timeouter) Unwrap() error {
@@ -44,6 +48,42 @@ func (sc timeouter) Timeout() bool {
 }
 
 // Timeout returns a timeout with ETIMEOUT, 504 Gateway Timeout and a user message "operation timed out"
-func Timeout(err error, timeout time.Duration) error {
-	return WithStatusCode(WithCode(WithUserMessage(&timeouter{err, timeout}, "operation timed out"), ETIMEOUT), http.StatusGatewayTimeout)
+func Timeout(err error, timeout ...time.Duration) error {
+	var t time.Duration
+	if len(timeout) > 0 {
+		t = timeout[0]
+	}
+	return WithStatusCode(WithCode(WithUserMessage(&timeouter{err, t}, "operation timed out"), ETIMEOUT), http.StatusGatewayTimeout)
+}
+
+// IsTimeout returns true if the error is a Timeout error
+func IsTimeout(err error) bool {
+	var timeouter interface {
+		error
+		Timeout() bool
+	}
+
+	if As(err, &timeouter) && timeouter.Timeout() {
+		return true
+	}
+
+	var sc interface {
+		error
+		StatusCode() int
+	}
+
+	if As(err, &sc) && (sc.StatusCode() == http.StatusGatewayTimeout || sc.StatusCode() == http.StatusGatewayTimeout) {
+		return true
+	}
+
+	var ec interface {
+		error
+		ErrorCode() ErrorCode
+	}
+
+	if As(err, &ec) && ec.ErrorCode() == ETIMEOUT {
+		return true
+	}
+
+	return false
 }

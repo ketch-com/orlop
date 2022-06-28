@@ -28,3 +28,8 @@ import (
 func NotFound(err error, msg string) error {
 	return WithStatusCode(WithCode(WithUserMessage(err, msg), ENOTFOUND), http.StatusNotFound)
 }
+
+// IsNotFound returns true if the error is a NotFound error
+func IsNotFound(err error) bool {
+	return Code(err) == ENOTFOUND
+}

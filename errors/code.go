@@ -61,28 +61,20 @@ func Code(err error) (code ErrorCode) {
 		return ""
 	}
 
-	var sc interface {
+	var ec interface {
 		error
 		ErrorCode() ErrorCode
 	}
 
-	if As(err, &sc) {
-		return sc.ErrorCode()
+	if As(err, &ec) {
+		return ec.ErrorCode()
 	}
 
-	var timeouter interface {
-		error
-		Timeout() bool
-	}
-	if As(err, &timeouter) && timeouter.Timeout() {
+	if IsTimeout(err) {
 		return ETIMEOUT
 	}
 
-	var temper interface {
-		error
-		Temporary() bool
-	}
-	if As(err, &temper) && temper.Temporary() {
+	if IsTemporary(err) {
 		return EUNAVAILABLE
 	}
 

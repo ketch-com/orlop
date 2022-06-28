@@ -71,19 +71,11 @@ func StatusCode(err error) (code int) {
 		return sc.StatusCode()
 	}
 
-	var timeouter interface {
-		error
-		Timeout() bool
-	}
-	if As(err, &timeouter) && timeouter.Timeout() {
+	if IsTimeout(err) {
 		return http.StatusGatewayTimeout
 	}
 
-	var temper interface {
-		error
-		Temporary() bool
-	}
-	if As(err, &temper) && temper.Temporary() {
+	if IsTemporary(err) {
 		return http.StatusServiceUnavailable
 	}
 

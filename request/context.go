@@ -44,6 +44,14 @@ var AllKeys = []Key{
 	URLKey,
 }
 
+var HighCardinalityKeys = map[Key]bool{
+	IDKey:        true,
+	OperationKey: false,
+	TimestampKey: true,
+	TenantKey:    false,
+	URLKey:       false,
+}
+
 type Setter func(ctx context.Context, v string) context.Context
 type Getter func(ctx context.Context) string
 
@@ -141,14 +149,44 @@ func WithOperation(parent context.Context, operation string) context.Context {
 }
 
 // Values returns a map of the request values from the context
-func Values(ctx context.Context) map[string]string {
+func Values(ctx context.Context, opts ...Option) map[string]string {
+	var o options
+
+	for _, opt := range opts {
+		opt(&o)
+	}
+
 	out := make(map[string]string)
 
 	for k, getter := range Getters {
 		if s := getter(ctx); len(s) > 0 {
-			out[string(k)] = s
+			skip := false
+
+			for _, filter := range o.filters {
+				if !filter(k) {
+					skip = true
+				}
+			}
+
+			if !skip {
+				out[string(k)] = s
+			}
 		}
 	}
 
 	return out
+}
+
+type Option func(o *options)
+
+type options struct {
+	filters []Filter
+}
+
+type Filter func(k Key) bool
+
+func WithFilter(f Filter) Option {
+	return func(o *options) {
+		o.filters = append(o.filters, f)
+	}
 }
