@@ -20,16 +20,12 @@
 
 package errors
 
-import (
-	"net/http"
-)
-
-// Configuration returns an error with ECONFIGURATION and 501 StatusNotImplemented.
+// Configuration returns an error with ECONFIGURATION
 func Configuration(err error) error {
-	return WithStatusCode(WithCode(err, ECONFIGURATION), http.StatusNotImplemented)
+	return WithCode(err, ECONFIGURATION)
 }
 
 // IsConfiguration returns true if the error is a configuration error
 func IsConfiguration(err error) bool {
-	return Code(err) == ECONFIGURATION || StatusCode(err) == http.StatusNotImplemented
+	return Code(err) == ECONFIGURATION
 }

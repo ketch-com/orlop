@@ -20,16 +20,12 @@
 
 package errors
 
-import (
-	"net/http"
-)
-
-// Conflict returns an error with ECONFLICT and 409 Conflict.
+// Conflict returns an error with ECONFLICT
 func Conflict(err error) error {
-	return WithStatusCode(WithCode(err, ECONFLICT), http.StatusConflict)
+	return WithCode(err, ECONFLICT)
 }
 
 // IsConflict returns true if the error is a conflict error
 func IsConflict(err error) bool {
-	return Code(err) == ECONFLICT || StatusCode(err) == http.StatusConflict
+	return Code(err) == ECONFLICT
 }

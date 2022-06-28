@@ -39,14 +39,6 @@ func (msgr messenger) UserMessage() string {
 	return msgr.msg
 }
 
-func (msgr messenger) StatusCode() int {
-	if code := StatusCode(msgr.error); code != http.StatusInternalServerError {
-		return code
-	}
-
-	return http.StatusBadRequest
-}
-
 // WithUserMessage adds a UserMessenger to err's error chain.
 // If a status code has not previously been set,
 // a default status of Bad Request (400) is added.
@@ -76,15 +68,6 @@ func UserMessage(err error) string {
 	}
 	if As(err, &um) {
 		return um.UserMessage()
-	}
-	if IsTimeout(err) {
-		return "operation timed out"
-	}
-	if IsTemporary(err) {
-		return "service temporarily unavailable"
-	}
-	if IsNotFound(err) {
-		return "not found"
 	}
 
 	return http.StatusText(StatusCode(err))
