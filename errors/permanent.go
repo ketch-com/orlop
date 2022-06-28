@@ -24,12 +24,12 @@ import (
 	"net/http"
 )
 
-// Permanent returns a permanent error with EUNAVAILABLE error code and 503 Service Unavailable.
+// Permanent returns a permanent error with EINTERNAL error code and 500 Internal Server Error.
 func Permanent(err error) error {
-	return WithStatusCode(WithCode(err, EUNAVAILABLE), http.StatusServiceUnavailable)
+	return err
 }
 
 // IsPermanent returns true if the error is a Permanent error
 func IsPermanent(err error) bool {
-	return Code(err) == EUNAVAILABLE || StatusCode(err) == http.StatusServiceUnavailable
+	return Code(err) == EINTERNAL || StatusCode(err) == http.StatusInternalServerError
 }
