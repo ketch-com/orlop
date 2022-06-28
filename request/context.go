@@ -36,6 +36,7 @@ var (
 	URLKey       Key = "request_url"
 )
 
+// AllKeys is a slice of all Keys
 var AllKeys = []Key{
 	IDKey,
 	OperationKey,
@@ -44,6 +45,7 @@ var AllKeys = []Key{
 	URLKey,
 }
 
+// HighCardinalityKeys is a map of high-cardinality keys
 var HighCardinalityKeys = map[Key]bool{
 	IDKey:        true,
 	OperationKey: false,
@@ -52,9 +54,13 @@ var HighCardinalityKeys = map[Key]bool{
 	URLKey:       false,
 }
 
+// Setter is a function that adds a string to the context
 type Setter func(ctx context.Context, v string) context.Context
+
+// Getter is a function that returns a string from the context
 type Getter func(ctx context.Context) string
 
+// Setters is a map from the Key to a Setter for that Key
 var Setters = map[Key]Setter{
 	IDKey:        WithID,
 	OperationKey: WithOperation,
@@ -68,6 +74,7 @@ var Setters = map[Key]Setter{
 	},
 }
 
+// Getters is a map from the Key to a Getter for that Key
 var Getters = map[Key]Getter{
 	IDKey:        ID,
 	OperationKey: Operation,
@@ -177,16 +184,24 @@ func Values(ctx context.Context, opts ...Option) map[string]string {
 	return out
 }
 
+// Option is a function that sets values on the options structure
 type Option func(o *options)
 
 type options struct {
 	filters []Filter
 }
 
+// Filter is a function that returns true if the given key should be included
 type Filter func(k Key) bool
 
+// WithFilter returns a filter that filters request values
 func WithFilter(f Filter) Option {
 	return func(o *options) {
 		o.filters = append(o.filters, f)
 	}
+}
+
+// SkipHighCardinalityKeysFilter returns true if the key is not high cardinality
+func SkipHighCardinalityKeysFilter(k Key) bool {
+	return !HighCardinalityKeys[k]
 }
