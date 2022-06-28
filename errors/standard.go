@@ -22,12 +22,12 @@ package errors
 
 // Application error codes.
 const (
-	ECONFLICT      = "conflict"      // action cannot be performed - permanent
-	EINTERNAL      = "internal"      // internal error - retryable (probably)
-	EUNAVAILABLE   = "unavailable"   // service is unavailable - permanent
-	EINVALID       = "invalid"       // validation failed - retryable (after fixing the input)
-	ENOTFOUND      = "not_found"     // entity does not exist - permanent
-	ETIMEOUT       = "timeout"       // operation timed out - retryable
+	ECONFLICT      = "conflict"      // action cannot be performed
+	EINTERNAL      = "internal"      // internal error
+	EUNAVAILABLE   = "unavailable"   // service is unavailable
+	EINVALID       = "invalid"       // validation failed
+	ENOTFOUND      = "not_found"     // entity does not exist
+	ETIMEOUT       = "timeout"       // operation timed out
 	EFORBIDDEN     = "forbidden"     // operation is not authorized
-	ECONFIGURATION = "configuration" // configuration error - permanent
+	ECONFIGURATION = "configuration" // configuration error
 )

@@ -21,8 +21,8 @@
 package errors
 
 import (
-	"fmt"
 	"go.ketch.com/lib/orlop/v2/errors/internal"
+	"net/http"
 )
 
 type coder struct {
@@ -32,10 +32,6 @@ type coder struct {
 
 func (sc coder) Unwrap() error {
 	return sc.error
-}
-
-func (sc coder) Error() string {
-	return fmt.Sprintf("[%s] %v", sc.code, sc.error)
 }
 
 func (sc coder) ErrorCode() string {
@@ -53,11 +49,9 @@ func WithCode(err error, code string) error {
 
 // Code returns the code associated with an error.
 // If no code is found, it returns EINTERNAL.
-// As a special case, it checks for Timeout() and Temporary() errors and returns
-// ETIMEOUT and EUNAVAILABLE
-// respectively.
 // If err is nil, it returns empty string
-func Code(err error) (code string) {
+func Code(err error) string {
+	var sc internal.StatusCode
 	var ec internal.ErrorCode
 
 	if err == nil {
@@ -66,14 +60,107 @@ func Code(err error) (code string) {
 	if As(err, &ec) {
 		return ec.ErrorCode()
 	}
-	if IsTimeout(err) {
-		return ETIMEOUT
-	}
-	if IsTemporary(err) {
-		return EUNAVAILABLE
-	}
-	if IsNotFound(err) {
-		return ENOTFOUND
+	if As(err, &sc) {
+		switch sc.StatusCode() {
+		case http.StatusBadRequest:
+			return EINVALID
+
+		case http.StatusUnauthorized:
+			return EFORBIDDEN
+
+		case http.StatusPaymentRequired:
+			return EFORBIDDEN
+
+		case http.StatusForbidden:
+			return EFORBIDDEN
+
+		case http.StatusNotFound:
+			return ENOTFOUND
+
+		case http.StatusMethodNotAllowed:
+			return EINVALID
+
+		case http.StatusNotAcceptable:
+			return EINVALID
+
+		case http.StatusProxyAuthRequired:
+			return EFORBIDDEN
+
+		case http.StatusRequestTimeout:
+			return ETIMEOUT
+
+		case http.StatusConflict:
+			return ECONFLICT
+
+		case http.StatusGone:
+			return ENOTFOUND
+
+		case http.StatusLengthRequired:
+			return EINVALID
+
+		case http.StatusPreconditionFailed:
+			return EINVALID
+
+		case http.StatusRequestEntityTooLarge:
+			return EINVALID
+
+		case http.StatusRequestURITooLong:
+			return EINVALID
+
+		case http.StatusUnsupportedMediaType:
+			return EINVALID
+
+		case http.StatusRequestedRangeNotSatisfiable:
+			return EINVALID
+
+		case http.StatusExpectationFailed:
+			return EINVALID
+
+		case http.StatusTeapot:
+			return EINVALID
+
+		case http.StatusMisdirectedRequest:
+			return EINVALID
+
+		case http.StatusUnprocessableEntity:
+			return EINVALID
+
+		case http.StatusLocked:
+			return EFORBIDDEN
+
+		case http.StatusFailedDependency:
+			return EINVALID
+
+		case http.StatusTooEarly:
+			return EINVALID
+
+		case http.StatusUpgradeRequired:
+			return EINVALID
+
+		case http.StatusPreconditionRequired:
+			return EINVALID
+
+		case http.StatusTooManyRequests:
+			return ETIMEOUT
+
+		case http.StatusRequestHeaderFieldsTooLarge:
+			return EINVALID
+
+		case http.StatusUnavailableForLegalReasons:
+			return EUNAVAILABLE
+
+		case http.StatusBadGateway:
+			return EUNAVAILABLE
+
+		case http.StatusServiceUnavailable:
+			return EUNAVAILABLE
+
+		case http.StatusGatewayTimeout:
+			return ETIMEOUT
+
+		case http.StatusHTTPVersionNotSupported:
+			return EINVALID
+		}
 	}
 
 	return EINTERNAL

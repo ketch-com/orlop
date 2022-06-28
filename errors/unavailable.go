@@ -20,16 +20,12 @@
 
 package errors
 
-import (
-	"net/http"
-)
-
-// Permanent returns a permanent error with EINTERNAL error code and 500 Internal Server Error.
-func Permanent(err error) error {
-	return err
+// Unavailable returns an error with EUNAVAILABLE
+func Unavailable(err error) error {
+	return WithCode(err, EUNAVAILABLE)
 }
 
-// IsPermanent returns true if the error is a Permanent error
-func IsPermanent(err error) bool {
-	return Code(err) == EINTERNAL || StatusCode(err) == http.StatusInternalServerError
+// IsUnavailable returns true if the error is an EUNAVAILABLE error
+func IsUnavailable(err error) bool {
+	return Code(err) == EUNAVAILABLE
 }

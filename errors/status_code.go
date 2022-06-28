@@ -21,7 +21,6 @@
 package errors
 
 import (
-	"fmt"
 	"go.ketch.com/lib/orlop/v2/errors/internal"
 	"net/http"
 )
@@ -33,10 +32,6 @@ type statusCoder struct {
 
 func (sc statusCoder) Unwrap() error {
 	return sc.error
-}
-
-func (sc statusCoder) Error() string {
-	return fmt.Sprintf("[%d] %v", sc.code, sc.error)
 }
 
 func (sc statusCoder) StatusCode() int {
@@ -54,12 +49,10 @@ func WithStatusCode(err error, code int) error {
 
 // StatusCode returns the status code associated with an error.
 // If no status code is found, it returns 500 http.StatusInternalServerError.
-// As a special case, it checks for Timeout() and Temporary() errors and returns
-// 504 http.StatusGatewayTimeout and 503 http.StatusServiceUnavailable
-// respectively.
 // If err is nil, it returns 200 http.StatusOK.
 func StatusCode(err error) (code int) {
 	var sc internal.StatusCode
+	var ec internal.ErrorCode
 
 	if err == nil {
 		return http.StatusOK
@@ -67,14 +60,26 @@ func StatusCode(err error) (code int) {
 	if As(err, &sc) {
 		return sc.StatusCode()
 	}
-	if IsTimeout(err) {
-		return http.StatusGatewayTimeout
-	}
-	if IsTemporary(err) {
-		return http.StatusServiceUnavailable
-	}
-	if IsNotFound(err) {
-		return http.StatusNotFound
+	if As(err, &ec) {
+		switch ec.ErrorCode() {
+		case ECONFLICT:
+			return http.StatusConflict
+
+		case EUNAVAILABLE:
+			return http.StatusServiceUnavailable
+
+		case EINVALID:
+			return http.StatusBadRequest
+
+		case ENOTFOUND:
+			return http.StatusNotFound
+
+		case ETIMEOUT:
+			return http.StatusRequestTimeout
+
+		case EFORBIDDEN:
+			return http.StatusForbidden
+		}
 	}
 
 	return http.StatusInternalServerError

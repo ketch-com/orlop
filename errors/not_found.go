@@ -20,43 +20,12 @@
 
 package errors
 
-import (
-	"go.ketch.com/lib/orlop/v2/errors/internal"
-	"net/http"
-)
-
-type notFoundError struct {
-	error
-}
-
-func (te notFoundError) Unwrap() error {
-	return te.error
-}
-
-func (te notFoundError) NotFound() bool {
-	return true
-}
-
-// NotFound returns a not found error
+// NotFound returns an ENOTFOUND error
 func NotFound(err error) error {
-	return &notFoundError{err}
+	return WithCode(err, ENOTFOUND)
 }
 
-// IsNotFound returns true if the error is a NotFound error
+// IsNotFound returns true if the error is an ENOTFOUND error
 func IsNotFound(err error) bool {
-	var missing internal.NotFound
-	var sc internal.StatusCode
-	var ec internal.ErrorCode
-
-	if As(err, &missing) && missing.NotFound() {
-		return true
-	}
-	if As(err, &sc) && sc.StatusCode() == http.StatusNotFound {
-		return true
-	}
-	if As(err, &ec) && ec.ErrorCode() == ENOTFOUND {
-		return true
-	}
-
-	return false
+	return Code(err) == ENOTFOUND
 }

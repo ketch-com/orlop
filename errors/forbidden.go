@@ -20,16 +20,12 @@
 
 package errors
 
-import (
-	"net/http"
-)
-
-// Forbidden returns a Forbidden error with EFORBIDDEN and 403 Forbidden and the given user message
+// Forbidden returns a Forbidden error with EFORBIDDEN
 func Forbidden(err error) error {
-	return WithStatusCode(WithCode(err, EFORBIDDEN), http.StatusForbidden)
+	return WithCode(err, EFORBIDDEN)
 }
 
 // IsForbidden returns true if the error is a forbidden error
 func IsForbidden(err error) bool {
-	return Code(err) == EFORBIDDEN || StatusCode(err) == http.StatusForbidden
+	return Code(err) == EFORBIDDEN
 }

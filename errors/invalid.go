@@ -20,16 +20,12 @@
 
 package errors
 
-import (
-	"net/http"
-)
-
-// Invalid returns an error with EINVALID and 400 Bad Request
+// Invalid returns an error with EINVALID
 func Invalid(err error) error {
-	return WithStatusCode(WithCode(err, EINVALID), http.StatusBadRequest)
+	return WithCode(err, EINVALID)
 }
 
 // IsInvalid returns true if the error is an Invalid error
 func IsInvalid(err error) bool {
-	return Code(err) == EINVALID || StatusCode(err) == http.StatusBadRequest
+	return Code(err) == EINVALID
 }
