@@ -22,6 +22,7 @@ package errors
 
 import (
 	"fmt"
+	"go.ketch.com/lib/orlop/v2/errors/internal"
 	"net/http"
 )
 
@@ -58,25 +59,22 @@ func WithStatusCode(err error, code int) error {
 // respectively.
 // If err is nil, it returns 200 http.StatusOK.
 func StatusCode(err error) (code int) {
+	var sc internal.StatusCode
+
 	if err == nil {
 		return http.StatusOK
 	}
-
-	var sc interface {
-		error
-		StatusCode() int
-	}
-
 	if As(err, &sc) {
 		return sc.StatusCode()
 	}
-
 	if IsTimeout(err) {
 		return http.StatusGatewayTimeout
 	}
-
 	if IsTemporary(err) {
 		return http.StatusServiceUnavailable
+	}
+	if IsNotFound(err) {
+		return http.StatusNotFound
 	}
 
 	return http.StatusInternalServerError

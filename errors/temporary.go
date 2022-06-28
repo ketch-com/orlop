@@ -20,50 +20,40 @@
 
 package errors
 
-import "net/http"
+import (
+	"go.ketch.com/lib/orlop/v2/errors/internal"
+	"net/http"
+)
 
 type temporaryError struct {
 	error
 }
 
-func (tc temporaryError) Unwrap() error {
-	return tc.error
+func (te temporaryError) Unwrap() error {
+	return te.error
 }
 
-func (tc temporaryError) Temporary() bool {
+func (te temporaryError) Temporary() bool {
 	return true
 }
 
 // Temporary returns a temporary error with an error code of EINTERNAL
 func Temporary(err error) error {
-	return WithCode(&temporaryError{err}, EINTERNAL)
+	return &temporaryError{err}
 }
 
 // IsTemporary returns true if the error is a Temporary error
 func IsTemporary(err error) bool {
-	var temper interface {
-		error
-		Temporary() bool
-	}
+	var temper internal.Temporary
+	var sc internal.StatusCode
+	var ec internal.ErrorCode
 
 	if As(err, &temper) && temper.Temporary() {
 		return true
 	}
-
-	var sc interface {
-		error
-		StatusCode() int
-	}
-
 	if As(err, &sc) && sc.StatusCode() == http.StatusServiceUnavailable {
 		return true
 	}
-
-	var ec interface {
-		error
-		ErrorCode() ErrorCode
-	}
-
 	if As(err, &ec) && ec.ErrorCode() == EUNAVAILABLE {
 		return true
 	}
