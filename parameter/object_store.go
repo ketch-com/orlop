@@ -5,6 +5,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"go.ketch.com/lib/orlop/v2/errors"
 	"reflect"
 	"strings"
 )
@@ -56,11 +57,11 @@ func (c *objectStore) ReadObject(ctx context.Context, p string, out interface{})
 
 	sec, err := c.store.Read(ctx, p)
 	if err != nil {
-		return err
+		return errors.NotFound(err)
 	}
 
 	if sec == nil {
-		return ErrNotFound
+		return errors.NotFound(nil)
 	}
 
 	t := v.Type()
@@ -114,7 +115,7 @@ func (c *objectStore) ReadObject(ctx context.Context, p string, out interface{})
 				if j, ok := val.(string); ok {
 					b, err := base64.StdEncoding.DecodeString(j)
 					if err != nil {
-						return err
+						return errors.Invalid(err)
 					}
 
 					f.SetBytes(b)
@@ -220,7 +221,7 @@ func (c *objectStore) WriteObject(ctx context.Context, p string, in interface{})
 	}
 
 	if _, err := c.store.Write(ctx, p, m); err != nil {
-		return err
+		return errors.Conflict(err)
 	}
 
 	return nil
