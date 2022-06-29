@@ -5,4 +5,6 @@
 // * user message - displayed to end user
 // * status code - returned to other systems
 // * error code - standard error code usable within an application
+// * source - the source of the error
+// * parameter - any parameter that caused the error
 package errors
