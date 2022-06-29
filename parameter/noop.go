@@ -22,6 +22,7 @@ package parameter
 
 import (
 	"context"
+	"go.ketch.com/lib/orlop/v2/errors"
 )
 
 type noopStore struct{}
@@ -35,7 +36,7 @@ func (c noopStore) List(ctx context.Context, p string) ([]string, error) {
 }
 
 func (c noopStore) Read(ctx context.Context, p string) (map[string]interface{}, error) {
-	return nil, ErrNotFound
+	return nil, errors.NotFound(nil)
 }
 
 func (c noopStore) Write(ctx context.Context, p string, data map[string]interface{}) (map[string]interface{}, error) {

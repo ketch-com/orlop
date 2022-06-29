@@ -22,10 +22,7 @@ package parameter
 
 import (
 	"context"
-	"go.ketch.com/lib/orlop/v2/errors"
 )
-
-var ErrNotFound = errors.New("not found")
 
 // Store provide an interface to interact with a parameter store
 type Store interface {
