@@ -22,6 +22,7 @@ package request
 
 import (
 	"context"
+	"go.ketch.com/lib/orlop/v2/errors"
 	"time"
 )
 
@@ -88,7 +89,7 @@ var Getters = map[Key]Getter{
 	},
 }
 
-// Value returns the value of a request context key
+// Value returns the value of a request context key, or a default value if the value is not set
 func Value[T any](ctx context.Context, key Key) T {
 	if v := ctx.Value(key); v != nil {
 		if r, ok := v.(T); ok {
@@ -98,6 +99,18 @@ func Value[T any](ctx context.Context, key Key) T {
 
 	var v T
 	return v
+}
+
+// RequireValue returns the value of a request context key or returns an error if the value is not set
+func RequireValue[T any](ctx context.Context, key Key, errDecorator func(error) error) (T, error) {
+	if v := ctx.Value(key); v != nil {
+		if r, ok := v.(T); ok {
+			return r, nil
+		}
+	}
+
+	var v T
+	return v, errDecorator(errors.Errorf("%v not specified", key))
 }
 
 // WithValue returns a new context with the given request value
@@ -110,6 +123,11 @@ func ID(ctx context.Context) string {
 	return Value[string](ctx, IDKey)
 }
 
+// RequireID returns the request ID or an error if not set
+func RequireID(ctx context.Context) (string, error) {
+	return RequireValue[string](ctx, IDKey, errors.Invalid)
+}
+
 // WithID returns a new context with the given request ID
 func WithID(parent context.Context, requestID string) context.Context {
 	return WithValue(parent, IDKey, requestID)
@@ -118,6 +136,11 @@ func WithID(parent context.Context, requestID string) context.Context {
 // URL returns the request URL or an empty string
 func URL(ctx context.Context) string {
 	return Value[string](ctx, URLKey)
+}
+
+// RequireURL returns the request URL or an error if not set
+func RequireURL(ctx context.Context) (string, error) {
+	return RequireValue[string](ctx, URLKey, errors.Invalid)
 }
 
 // WithURL returns a new context with the given request URL
@@ -130,6 +153,11 @@ func Timestamp(ctx context.Context) time.Time {
 	return Value[time.Time](ctx, TimestampKey)
 }
 
+// RequireTimestamp returns the request timestamp or an error if not set
+func RequireTimestamp(ctx context.Context) (time.Time, error) {
+	return RequireValue[time.Time](ctx, TimestampKey, errors.Invalid)
+}
+
 // WithTimestamp returns a new context with the given request timestamp
 func WithTimestamp(parent context.Context, requestTimestamp time.Time) context.Context {
 	return WithValue(parent, TimestampKey, requestTimestamp)
@@ -140,6 +168,11 @@ func Tenant(ctx context.Context) string {
 	return Value[string](ctx, TenantKey)
 }
 
+// RequireTenant returns the request Tenant or an error if not set
+func RequireTenant(ctx context.Context) (string, error) {
+	return RequireValue[string](ctx, TenantKey, errors.Forbidden)
+}
+
 // WithTenant returns a new context with the given request tenant
 func WithTenant(parent context.Context, requestTenant string) context.Context {
 	return WithValue(parent, TenantKey, requestTenant)
@@ -148,6 +181,11 @@ func WithTenant(parent context.Context, requestTenant string) context.Context {
 // Operation returns the Operation or an empty string
 func Operation(ctx context.Context) string {
 	return Value[string](ctx, OperationKey)
+}
+
+// RequireOperation returns the Operation or an error if not set
+func RequireOperation(ctx context.Context) (string, error) {
+	return RequireValue[string](ctx, OperationKey, errors.Invalid)
 }
 
 // WithOperation returns a new context with the given Operation
