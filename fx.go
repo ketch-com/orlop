@@ -28,6 +28,7 @@ import (
 	"go.uber.org/fx"
 )
 
+// deprecated: should not need to provide this directly anymore
 func FxOptions(c any) fx.Option {
 	if cfg, ok := c.(config.Config); ok {
 		return cfg.Options()
@@ -36,6 +37,7 @@ func FxOptions(c any) fx.Option {
 	return fx.Options()
 }
 
+// deprecated: should not need to provide this directly anymore
 func FxContext(ctx context.Context) fx.Option {
 	return fx.Provide(func() context.Context { return ctx })
 }
