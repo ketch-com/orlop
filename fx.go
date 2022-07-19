@@ -77,15 +77,14 @@ func TestModule(prefix string, module ...fx.Option) (*fx.App, error) {
 
 	env.Test().Load()
 
-	var options []fx.Option
-	options = append(options, fx.NopLogger)
-	options = append(options, fx.Provide(func() context.Context { return ctx }))
-	options = append(options, fx.Supply(service.Name(prefix)))
-	options = append(options, fx.Supply(logging.TraceLevel))
-	options = append(options, Module)
-	options = append(options, module...)
-
-	app := fx.New(options...)
+	app := fx.New(
+		fx.NopLogger,
+		fx.Provide(func() context.Context { return ctx }),
+		fx.Supply(service.Name(prefix)),
+		fx.Supply(logging.TraceLevel),
+		Module,
+		fx.Options(module...),
+	)
 
 	if err := app.Err(); err != nil {
 		return nil, err
