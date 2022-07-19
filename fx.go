@@ -24,6 +24,7 @@ import (
 	"context"
 	"go.ketch.com/lib/orlop/v2/config"
 	"go.ketch.com/lib/orlop/v2/env"
+	"go.ketch.com/lib/orlop/v2/logging"
 	"go.ketch.com/lib/orlop/v2/service"
 	"go.uber.org/fx"
 )
@@ -80,6 +81,8 @@ func TestModule(prefix string, module ...fx.Option) (*fx.App, error) {
 	options = append(options, fx.NopLogger)
 	options = append(options, fx.Provide(func() context.Context { return ctx }))
 	options = append(options, fx.Supply(service.Name(prefix)))
+	options = append(options, fx.Supply(logging.TraceLevel))
+	options = append(options, Module)
 	options = append(options, module...)
 
 	app := fx.New(options...)
