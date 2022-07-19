@@ -21,11 +21,15 @@
 package orlop
 
 // HasEnabled denotes an object provides an Enabled flag
+//
+// deprecated: HasEnabled has moved to `config.Enabled`
 type HasEnabled interface {
 	GetEnabled() bool
 }
 
 // Enabled provides an Enabled flag
+//
+// deprecated: HasEnabled has moved to `config.HasEnabled`
 type Enabled struct {
 	Enabled bool
 }

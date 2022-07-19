@@ -33,7 +33,7 @@ func (e HasEnabled) GetEnabled() bool {
 	return e.Enabled
 }
 
-func IsEnabled(in interface{}) bool {
+func IsEnabled(in any) bool {
 	if b, ok := in.(bool); ok {
 		return b
 	} else if en, ok := in.(Enabled); ok {

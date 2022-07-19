@@ -64,7 +64,7 @@ func New() *logrus.Entry {
 }
 
 // WithField returns a log Entry with the given Field
-func WithField(key string, value interface{}) *logrus.Entry {
+func WithField(key string, value any) *logrus.Entry {
 	return logrus.WithField(key, value)
 }
 
@@ -95,92 +95,92 @@ func WithTime(t time.Time) *logrus.Entry {
 }
 
 // Debug logs a debug message
-func Debug(args ...interface{}) {
+func Debug(args ...any) {
 	logrus.Debug(args...)
 }
 
 // Debugf logs a formatted debug message
-func Debugf(format string, args ...interface{}) {
+func Debugf(format string, args ...any) {
 	logrus.Debugf(format, args...)
 }
 
 // Debugln logs a debug message with a newline
-func Debugln(args ...interface{}) {
+func Debugln(args ...any) {
 	logrus.Debugln(args...)
 }
 
 // Error logs an error message
-func Error(args ...interface{}) {
+func Error(args ...any) {
 	logrus.Error(args...)
 }
 
 // Errorf logs a formatted error message
-func Errorf(format string, args ...interface{}) {
+func Errorf(format string, args ...any) {
 	logrus.Errorf(format, args...)
 }
 
 // Errorln logs a error message with a newline
-func Errorln(args ...interface{}) {
+func Errorln(args ...any) {
 	logrus.Errorln(args...)
 }
 
 // Fatal logs a fatal message
-func Fatal(args ...interface{}) {
+func Fatal(args ...any) {
 	logrus.Fatal(args...)
 }
 
 // Fatalf logs a formatted fatal message
-func Fatalf(format string, args ...interface{}) {
+func Fatalf(format string, args ...any) {
 	logrus.Fatalf(format, args...)
 }
 
 // Fatalln logs a fatal message with a newline
-func Fatalln(args ...interface{}) {
+func Fatalln(args ...any) {
 	logrus.Fatalln(args...)
 }
 
 // Info logs an informational message
-func Info(args ...interface{}) {
+func Info(args ...any) {
 	logrus.Info(args...)
 }
 
 // Infof logs a formatted informational message
-func Infof(format string, args ...interface{}) {
+func Infof(format string, args ...any) {
 	logrus.Infof(format, args...)
 }
 
 // Infoln logs an informational message with a newline
-func Infoln(args ...interface{}) {
+func Infoln(args ...any) {
 	logrus.Infoln(args...)
 }
 
 // Trace logs a trace message
-func Trace(args ...interface{}) {
+func Trace(args ...any) {
 	logrus.Trace(args...)
 }
 
 // Tracef logs a formatted trace message
-func Tracef(format string, args ...interface{}) {
+func Tracef(format string, args ...any) {
 	logrus.Tracef(format, args...)
 }
 
 // Traceln logs a trace message with a newline
-func Traceln(args ...interface{}) {
+func Traceln(args ...any) {
 	logrus.Traceln(args...)
 }
 
 // Warn logs a warning message
-func Warn(args ...interface{}) {
+func Warn(args ...any) {
 	logrus.Warn(args...)
 }
 
 // Warnf logs a formatted warning message
-func Warnf(format string, args ...interface{}) {
+func Warnf(format string, args ...any) {
 	logrus.Warnf(format, args...)
 }
 
 // Warnln logs a warn message with a newline
-func Warnln(args ...interface{}) {
+func Warnln(args ...any) {
 	logrus.Warnln(args...)
 }
 

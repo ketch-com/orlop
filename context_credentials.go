@@ -26,9 +26,13 @@ import (
 )
 
 // ContextCredentials provides credentials to the client based on the context
+//
+// deprecated: ContextCredentials not supported and will be removed soon
 type ContextCredentials struct{}
 
 // AuthToken is the context key to retrieve the Authentication token from context
+//
+// deprecated: AuthToken not supported and will be removed soon
 var AuthToken struct{}
 
 // GetRequestMetadata returns authorization metadata

@@ -35,12 +35,16 @@ import (
 )
 
 // Unmarshal reads configuration into the cfg object
-func Unmarshal(prefix string, cfg interface{}) error {
+//
+// deprecated: Unmarshal not supported and will be removed soon
+func Unmarshal(prefix string, cfg any) error {
 	return UnmarshalFromEnv(prefix, os.Environ(), cfg)
 }
 
 // UnmarshalFromEnv reads configuration into the cfg object from the env vars
-func UnmarshalFromEnv(prefix string, vars []string, cfg interface{}) error {
+//
+// deprecated: UnmarshalFromEnv not supported and will be removed soon
+func UnmarshalFromEnv(prefix string, vars []string, cfg any) error {
 	prefix = toScreamingDelimited(prefix, '_', 0, true)
 
 	env := make(map[string]string)
@@ -139,6 +143,8 @@ type fieldSetter func(value reflect.Value, input string) error
 var knownSetters map[string]fieldSetter
 
 // RegisterConfigParser registers a config parser
+//
+// deprecated: RegisterConfigParser not supported and will be removed soon
 func RegisterConfigParser(typeName string, parser func(value reflect.Value, input string) error) {
 	knownSetters[typeName] = parser
 }
@@ -149,7 +155,7 @@ type configField struct {
 	set fieldSetter
 }
 
-func reflectStruct(prefix []string, i interface{}) (map[string]*configField, error) {
+func reflectStruct(prefix []string, i any) (map[string]*configField, error) {
 	r := make(map[string]*configField)
 
 	err := reflectStructValue(prefix, r, reflect.ValueOf(i))
@@ -270,7 +276,9 @@ func reflectStructValue(prefix []string, r map[string]*configField, v reflect.Va
 }
 
 // GetVariablesFromConfig returns the environment variables from the given config object
-func GetVariablesFromConfig(prefix string, cfg interface{}) ([]string, error) {
+//
+// deprecated: GetVariablesFromConfig not supported and will be removed soon
+func GetVariablesFromConfig(prefix string, cfg any) ([]string, error) {
 	var vars []string
 
 	fields, err := reflectStruct([]string{prefix}, cfg)

@@ -33,7 +33,7 @@ type configField struct {
 	set fieldSetter
 }
 
-func reflectStruct(prefix []string, i interface{}) (map[string]*configField, error) {
+func reflectStruct(prefix []string, i any) (map[string]*configField, error) {
 	r := make(map[string]*configField)
 
 	err := reflectStructValue(prefix, r, reflect.ValueOf(i))

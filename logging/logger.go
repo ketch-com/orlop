@@ -26,29 +26,29 @@ import (
 )
 
 type Logger interface {
-	Trace(args ...interface{})
-	Tracef(format string, args ...interface{})
+	Trace(args ...any)
+	Tracef(format string, args ...any)
 
-	Debug(args ...interface{})
-	Debugf(format string, args ...interface{})
+	Debug(args ...any)
+	Debugf(format string, args ...any)
 
-	Info(args ...interface{})
-	Infof(format string, args ...interface{})
+	Info(args ...any)
+	Infof(format string, args ...any)
 
-	Warn(args ...interface{})
-	Warnf(format string, args ...interface{})
+	Warn(args ...any)
+	Warnf(format string, args ...any)
 
-	Error(args ...interface{})
-	Errorf(format string, args ...interface{})
+	Error(args ...any)
+	Errorf(format string, args ...any)
 
-	Fatal(args ...interface{})
-	Fatalf(format string, args ...interface{})
+	Fatal(args ...any)
+	Fatalf(format string, args ...any)
 
-	Printf(format string, args ...interface{})
+	Printf(format string, args ...any)
 
 	WithTime(t time.Time) Logger
 	WithContext(ctx context.Context) Logger
 	WithError(err error) Logger
-	WithField(key string, value interface{}) Logger
-	WithFields(fields ...interface{}) Logger
+	WithField(key string, value any) Logger
+	WithFields(fields ...any) Logger
 }

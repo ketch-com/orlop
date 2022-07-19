@@ -34,7 +34,7 @@ func New(message string) error {
 // Errorf formats according to a format specifier and returns the string
 // as a value that satisfies error.
 // Errorf also records the stack trace at the point it was called.
-func Errorf(format string, args ...interface{}) error {
+func Errorf(format string, args ...any) error {
 	return pkgerrors.Errorf(format, args...)
 }
 
@@ -54,7 +54,7 @@ func Wrap(err error, message string) error {
 // Wrapf returns an error annotating err with a stack trace
 // at the point Wrapf is called, and the format specifier.
 // If err is nil, Wrapf returns nil.
-func Wrapf(err error, format string, args ...interface{}) error {
+func Wrapf(err error, format string, args ...any) error {
 	return pkgerrors.Wrapf(err, format, args...)
 }
 
@@ -66,7 +66,7 @@ func WithMessage(err error, message string) error {
 
 // WithMessagef annotates err with the format specifier.
 // If err is nil, WithMessagef returns nil.
-func WithMessagef(err error, format string, args ...interface{}) error {
+func WithMessagef(err error, format string, args ...any) error {
 	return pkgerrors.WithMessagef(err, format, args...)
 }
 
@@ -92,7 +92,7 @@ func Cause(err error) error {
 // repeatedly calling Unwrap.
 //
 // An error matches target if the error's concrete value is assignable to the value
-// pointed to by target, or if the error has a method As(interface{}) bool such that
+// pointed to by target, or if the error has a method As(any) bool such that
 // As(target) returns true. In the latter case, the As method is responsible for
 // setting target.
 //
@@ -101,7 +101,7 @@ func Cause(err error) error {
 //
 // As panics if target is not a non-nil pointer to either a type that implements
 // error, or to any interface type.
-func As(err error, target interface{}) bool {
+func As(err error, target any) bool {
 	return errors.As(err, target)
 }
 

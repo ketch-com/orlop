@@ -24,12 +24,11 @@ import (
 	"context"
 	"go.ketch.com/lib/orlop/v2/config"
 	"go.ketch.com/lib/orlop/v2/env"
-	"go.ketch.com/lib/orlop/v2/log"
-	"go.ketch.com/lib/orlop/v2/logging"
 	"go.ketch.com/lib/orlop/v2/service"
 	"go.uber.org/fx"
 )
 
+// deprecated: should not need to provide this directly anymore
 func FxOptions(c any) fx.Option {
 	if cfg, ok := c.(config.Config); ok {
 		return cfg.Options()
@@ -38,45 +37,60 @@ func FxOptions(c any) fx.Option {
 	return fx.Options()
 }
 
+// deprecated: should not need to provide this directly anymore
 func FxContext(ctx context.Context) fx.Option {
 	return fx.Provide(func() context.Context { return ctx })
 }
 
-func Populate(ctx context.Context, prefix string, e env.Environment, module fx.Option, targets ...interface{}) error {
-	e.Load()
-
+// Populate is used for testing to populate specific entities for a unit test.
+//
+// deprecated: Use TestModule instead
+func Populate(ctx context.Context, prefix string, _ env.Environment, module fx.Option, targets ...any) error {
 	var options []fx.Option
-	options = append(options, logging.WithLogger(log.New()))
-	options = append(options, FxContext(ctx))
+	options = append(options, module)
 
 	if len(targets) > 0 {
-		if cfg, ok := targets[0].(fx.Option); ok {
+		if cfg, ok := targets[0].(config.Config); ok {
 			if err := Unmarshal(prefix, cfg); err != nil {
 				return err
 			}
 
-			options = append(options, FxOptions(cfg))
+			options = append(options, cfg.Options())
+			targets = targets[1:]
 		}
+
+		options = append(options, fx.Populate(targets...))
 	}
 
+	app, err := TestModule(prefix, options...)
+	if app != nil {
+		defer app.Stop(ctx)
+	}
+
+	return err
+}
+
+// TestModule returns an instantiated fx.App
+func TestModule(prefix string, module ...fx.Option) (*fx.App, error) {
+	ctx := context.Background()
+
+	env.Test().Load()
+
+	var options []fx.Option
+	options = append(options, fx.NopLogger)
+	options = append(options, fx.Provide(func() context.Context { return ctx }))
 	options = append(options, fx.Supply(service.Name(prefix)))
-	options = append(options, Module)
-	options = append(options, module)
-	options = append(options, fx.Populate(targets...))
+	options = append(options, module...)
 
 	app := fx.New(options...)
 
 	if err := app.Err(); err != nil {
-		return err
+		return nil, err
 	}
 
 	if err := app.Start(ctx); err != nil {
-		return err
+		return nil, err
 	}
 
-	if err := app.Stop(ctx); err != nil {
-		return err
-	}
-
-	return app.Err()
+	return app, app.Err()
 }
