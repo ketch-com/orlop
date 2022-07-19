@@ -21,11 +21,15 @@
 package orlop
 
 // HasFile denotes an object provides a filename
+//
+// deprecated: moved to `config.File`
 type HasFile interface {
 	GetFile() string
 }
 
 // File provides a filename
+//
+// deprecated: moved to `config.HasFile`
 type File struct {
 	File string
 }

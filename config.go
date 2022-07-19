@@ -35,11 +35,15 @@ import (
 )
 
 // Unmarshal reads configuration into the cfg object
+//
+// deprecated: Unmarshal not supported and will be removed soon
 func Unmarshal(prefix string, cfg any) error {
 	return UnmarshalFromEnv(prefix, os.Environ(), cfg)
 }
 
 // UnmarshalFromEnv reads configuration into the cfg object from the env vars
+//
+// deprecated: UnmarshalFromEnv not supported and will be removed soon
 func UnmarshalFromEnv(prefix string, vars []string, cfg any) error {
 	prefix = toScreamingDelimited(prefix, '_', 0, true)
 
@@ -139,6 +143,8 @@ type fieldSetter func(value reflect.Value, input string) error
 var knownSetters map[string]fieldSetter
 
 // RegisterConfigParser registers a config parser
+//
+// deprecated: RegisterConfigParser not supported and will be removed soon
 func RegisterConfigParser(typeName string, parser func(value reflect.Value, input string) error) {
 	knownSetters[typeName] = parser
 }
@@ -270,6 +276,8 @@ func reflectStructValue(prefix []string, r map[string]*configField, v reflect.Va
 }
 
 // GetVariablesFromConfig returns the environment variables from the given config object
+//
+// deprecated: GetVariablesFromConfig not supported and will be removed soon
 func GetVariablesFromConfig(prefix string, cfg any) ([]string, error) {
 	var vars []string
 
