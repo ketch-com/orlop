@@ -27,7 +27,7 @@ import (
 // Store provide an interface to interact with a parameter store
 type Store interface {
 	List(ctx context.Context, p string) ([]string, error)
-	Read(ctx context.Context, p string) (map[string]interface{}, error)
-	Write(ctx context.Context, p string, data map[string]interface{}) (map[string]interface{}, error)
+	Read(ctx context.Context, p string) (map[string]any, error)
+	Write(ctx context.Context, p string, data map[string]any) (map[string]any, error)
 	Delete(ctx context.Context, p string) error
 }

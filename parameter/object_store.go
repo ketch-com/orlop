@@ -14,8 +14,8 @@ import (
 type ObjectStore interface {
 	Store
 
-	ReadObject(ctx context.Context, p string, out interface{}) error
-	WriteObject(ctx context.Context, p string, in interface{}) error
+	ReadObject(ctx context.Context, p string, out any) error
+	WriteObject(ctx context.Context, p string, in any) error
 }
 
 type objectStore struct {
@@ -32,11 +32,11 @@ func (c *objectStore) List(ctx context.Context, p string) ([]string, error) {
 	return c.store.List(ctx, p)
 }
 
-func (c *objectStore) Read(ctx context.Context, p string) (map[string]interface{}, error) {
+func (c *objectStore) Read(ctx context.Context, p string) (map[string]any, error) {
 	return c.store.Read(ctx, p)
 }
 
-func (c *objectStore) Write(ctx context.Context, p string, data map[string]interface{}) (map[string]interface{}, error) {
+func (c *objectStore) Write(ctx context.Context, p string, data map[string]any) (map[string]any, error) {
 	return c.store.Write(ctx, p, data)
 }
 
@@ -45,7 +45,7 @@ func (c *objectStore) Delete(ctx context.Context, p string) error {
 }
 
 // ReadObject returns a secret at the given path
-func (c *objectStore) ReadObject(ctx context.Context, p string, out interface{}) error {
+func (c *objectStore) ReadObject(ctx context.Context, p string, out any) error {
 	v := reflect.ValueOf(out)
 	if v.Kind() != reflect.Ptr {
 		panic("out must be a pointer")
@@ -119,7 +119,7 @@ func (c *objectStore) ReadObject(ctx context.Context, p string, out interface{})
 					}
 
 					f.SetBytes(b)
-				} else if j, ok := val.([]interface{}); ok {
+				} else if j, ok := val.([]any); ok {
 					sl := reflect.MakeSlice(f.Type(), 0, len(j))
 					for _, sv := range j {
 						sl = reflect.Append(sl, reflect.ValueOf(sv))
@@ -137,8 +137,8 @@ func (c *objectStore) ReadObject(ctx context.Context, p string, out interface{})
 }
 
 // WriteObject writes secret data at the given path from an object
-func (c *objectStore) WriteObject(ctx context.Context, p string, in interface{}) error {
-	m := make(map[string]interface{})
+func (c *objectStore) WriteObject(ctx context.Context, p string, in any) error {
+	m := make(map[string]any)
 
 	v := reflect.ValueOf(in)
 	if v.Kind() != reflect.Ptr && v.Kind() != reflect.Struct {
@@ -186,11 +186,11 @@ func (c *objectStore) WriteObject(ctx context.Context, p string, in interface{})
 			if ftek == reflect.Uint8 {
 				m[name] = base64.StdEncoding.EncodeToString(f.Bytes())
 			} else {
-				var sl []interface{}
+				var sl []any
 
 				for n := 0; n < f.Len(); n++ {
 					fn := f.Index(n)
-					var fv interface{}
+					var fv any
 
 					switch ftek {
 					case reflect.String:

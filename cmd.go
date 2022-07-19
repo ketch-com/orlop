@@ -77,7 +77,7 @@ func (r *Runner) SetupRoot(cmd *cobra.Command) *Runner {
 }
 
 // Setup sets up the Command
-func (r *Runner) Setup(cmd *cobra.Command, runner interface{}, cfg interface{}) *Runner {
+func (r *Runner) Setup(cmd *cobra.Command, runner any, cfg any) *Runner {
 	if cmd.RunE == nil {
 		cmd.RunE = r.runE(runner, cfg)
 	}
@@ -137,7 +137,7 @@ func (r *Runner) preRunE(cmd *cobra.Command, args []string) error {
 	return r.prevPreRunE(cmd, args)
 }
 
-func (r *Runner) runE(runner interface{}, cfg interface{}) func(cmd *cobra.Command, args []string) error {
+func (r *Runner) runE(runner any, cfg any) func(cmd *cobra.Command, args []string) error {
 	return func(cmd *cobra.Command, args []string) error {
 		// Unmarshal the configuration
 		if err := Unmarshal(r.prefix, cfg); err != nil {
@@ -237,7 +237,7 @@ func (r *Runner) SetupLogging(env Environment, loglevel string) {
 }
 
 // Run loads config and then executes the given runner
-func Run(prefix string, runner interface{}, cfg interface{}) {
+func Run(prefix string, runner any, cfg any) {
 	var cmd = &cobra.Command{
 		Use:              prefix,
 		TraverseChildren: true,

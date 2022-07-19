@@ -41,55 +41,55 @@ type loggerImpl struct {
 	entry *logrus.Entry
 }
 
-func (l loggerImpl) Printf(format string, args ...interface{}) {
+func (l loggerImpl) Printf(format string, args ...any) {
 	l.entry.Infof(format, args...)
 }
 
-func (l loggerImpl) Trace(args ...interface{}) {
+func (l loggerImpl) Trace(args ...any) {
 	l.entry.Debug(args...)
 }
 
-func (l loggerImpl) Tracef(format string, args ...interface{}) {
+func (l loggerImpl) Tracef(format string, args ...any) {
 	l.entry.Debugf(format, args...)
 }
 
-func (l loggerImpl) Debug(args ...interface{}) {
+func (l loggerImpl) Debug(args ...any) {
 	l.entry.Debug(args...)
 }
 
-func (l loggerImpl) Debugf(format string, args ...interface{}) {
+func (l loggerImpl) Debugf(format string, args ...any) {
 	l.entry.Debugf(format, args...)
 }
 
-func (l loggerImpl) Info(args ...interface{}) {
+func (l loggerImpl) Info(args ...any) {
 	l.entry.Info(args...)
 }
 
-func (l loggerImpl) Infof(format string, args ...interface{}) {
+func (l loggerImpl) Infof(format string, args ...any) {
 	l.entry.Infof(format, args...)
 }
 
-func (l loggerImpl) Warn(args ...interface{}) {
+func (l loggerImpl) Warn(args ...any) {
 	l.entry.Warn(args...)
 }
 
-func (l loggerImpl) Warnf(format string, args ...interface{}) {
+func (l loggerImpl) Warnf(format string, args ...any) {
 	l.entry.Warnf(format, args...)
 }
 
-func (l loggerImpl) Error(args ...interface{}) {
+func (l loggerImpl) Error(args ...any) {
 	l.entry.Error(args...)
 }
 
-func (l loggerImpl) Errorf(format string, args ...interface{}) {
+func (l loggerImpl) Errorf(format string, args ...any) {
 	l.entry.Errorf(format, args...)
 }
 
-func (l loggerImpl) Fatal(args ...interface{}) {
+func (l loggerImpl) Fatal(args ...any) {
 	l.entry.Fatal(args...)
 }
 
-func (l loggerImpl) Fatalf(format string, args ...interface{}) {
+func (l loggerImpl) Fatalf(format string, args ...any) {
 	l.entry.Fatalf(format, args...)
 }
 
@@ -115,11 +115,11 @@ func (l loggerImpl) WithError(err error) Logger {
 	return &loggerImpl{l.entry.WithError(err)}
 }
 
-func (l loggerImpl) WithField(key string, value interface{}) Logger {
+func (l loggerImpl) WithField(key string, value any) Logger {
 	return &loggerImpl{l.entry.WithField(key, value)}
 }
 
-func (l loggerImpl) WithFields(fields ...interface{}) Logger {
+func (l loggerImpl) WithFields(fields ...any) Logger {
 	f := logrus.Fields{}
 	for n := 0; n < len(fields)-1; n += 2 {
 		f[fields[n].(string)] = fields[n+1]

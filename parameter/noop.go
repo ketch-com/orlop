@@ -35,12 +35,12 @@ func (c noopStore) List(ctx context.Context, p string) ([]string, error) {
 	return nil, nil
 }
 
-func (c noopStore) Read(ctx context.Context, p string) (map[string]interface{}, error) {
+func (c noopStore) Read(ctx context.Context, p string) (map[string]any, error) {
 	return nil, errors.NotFound(nil)
 }
 
-func (c noopStore) Write(ctx context.Context, p string, data map[string]interface{}) (map[string]interface{}, error) {
-	return make(map[string]interface{}), nil
+func (c noopStore) Write(ctx context.Context, p string, data map[string]any) (map[string]any, error) {
+	return make(map[string]any), nil
 }
 
 func (c noopStore) Delete(ctx context.Context, p string) error {

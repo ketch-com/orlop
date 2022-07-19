@@ -35,12 +35,12 @@ import (
 )
 
 // Unmarshal reads configuration into the cfg object
-func Unmarshal(prefix string, cfg interface{}) error {
+func Unmarshal(prefix string, cfg any) error {
 	return UnmarshalFromEnv(prefix, os.Environ(), cfg)
 }
 
 // UnmarshalFromEnv reads configuration into the cfg object from the env vars
-func UnmarshalFromEnv(prefix string, vars []string, cfg interface{}) error {
+func UnmarshalFromEnv(prefix string, vars []string, cfg any) error {
 	prefix = toScreamingDelimited(prefix, '_', 0, true)
 
 	env := make(map[string]string)
@@ -149,7 +149,7 @@ type configField struct {
 	set fieldSetter
 }
 
-func reflectStruct(prefix []string, i interface{}) (map[string]*configField, error) {
+func reflectStruct(prefix []string, i any) (map[string]*configField, error) {
 	r := make(map[string]*configField)
 
 	err := reflectStructValue(prefix, r, reflect.ValueOf(i))
@@ -270,7 +270,7 @@ func reflectStructValue(prefix []string, r map[string]*configField, v reflect.Va
 }
 
 // GetVariablesFromConfig returns the environment variables from the given config object
-func GetVariablesFromConfig(prefix string, cfg interface{}) ([]string, error) {
+func GetVariablesFromConfig(prefix string, cfg any) ([]string, error) {
 	var vars []string
 
 	fields, err := reflectStruct([]string{prefix}, cfg)
