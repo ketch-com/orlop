@@ -40,12 +40,16 @@ import (
 )
 
 // Runner represents a command runner
+//
+// deprecated: use `cmd.Runner`
 type Runner struct {
 	prefix      string
 	prevPreRunE func(cmd *cobra.Command, args []string) error
 }
 
 // NewRunner creates a new Runner
+//
+// deprecated: use `cmd.Runner.NewRunner`
 func NewRunner(prefix string) *Runner {
 	return &Runner{
 		prefix: prefix,
@@ -53,6 +57,8 @@ func NewRunner(prefix string) *Runner {
 }
 
 // SetupRoot sets up the root Command
+//
+// deprecated: use `cmd.Runner.SetupRoot`
 func (r *Runner) SetupRoot(cmd *cobra.Command) *Runner {
 	if cmd.PersistentFlags().Lookup("env") == nil {
 		cmd.PersistentFlags().String("env", strings.ToLower(r.Getenv("environment")), "specifies the environment")
@@ -77,6 +83,8 @@ func (r *Runner) SetupRoot(cmd *cobra.Command) *Runner {
 }
 
 // Setup sets up the Command
+//
+// deprecated: use `cmd.Runner.Setup`
 func (r *Runner) Setup(cmd *cobra.Command, runner any, cfg any) *Runner {
 	if cmd.RunE == nil {
 		cmd.RunE = r.runE(runner, cfg)
@@ -194,11 +202,15 @@ func (r *Runner) runE(runner any, cfg any) func(cmd *cobra.Command, args []strin
 }
 
 // Getenv returns the value of the environment variabled named `key`
+//
+// deprecated: use `cmd.Runner.Getenv`
 func (r *Runner) Getenv(key string) string {
 	return os.Getenv(strcase.ToScreamingSnake(strings.Join([]string{r.prefix, key}, "_")))
 }
 
 // SetupLogging sets up logging for the environment and the default log level
+//
+// deprecated: use `cmd.Runner.SetupLogging`
 func (r *Runner) SetupLogging(env Environment, loglevel string) {
 	switch loglevel {
 	case "fatal":
@@ -237,6 +249,8 @@ func (r *Runner) SetupLogging(env Environment, loglevel string) {
 }
 
 // Run loads config and then executes the given runner
+//
+// deprecated: use `cmd.Run`
 func Run(prefix string, runner any, cfg any) {
 	var cmd = &cobra.Command{
 		Use:              prefix,
