@@ -92,13 +92,13 @@ func (r *Runner) Setup(cmd *cobra.Command, module fx.Option) *Runner {
 			var cfgMgr config.Provider
 			app := fx.New(
 				fx.NopLogger,
-				orlop.FxContext(cmd.Context()),
+				fx.Provide(func() context.Context { return cmd.Context() }),
 				fx.Supply(cmd),
 				fx.Supply(service.Name(r.prefix)),
 				fx.Supply(logging.FatalLevel),
 				orlop.Module,
-				fx.Populate(&cfgMgr),
 				module,
+				fx.Populate(&cfgMgr),
 			)
 
 			if err := app.Start(context.Background()); err != nil {
@@ -167,7 +167,7 @@ func (r *Runner) runE(module fx.Option) func(cmd *cobra.Command, args []string) 
 
 		app := fx.New(
 			logging.WithLogger(l),
-			orlop.FxContext(cmd.Context()),
+			fx.Provide(func() context.Context { return cmd.Context() }),
 			fx.Supply(cmd),
 			fx.Supply(service.Name(r.prefix)),
 			fx.Supply(logging.Level(loglevelFlag)),
