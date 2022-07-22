@@ -22,42 +22,84 @@ package errors
 
 import (
 	"go.ketch.com/lib/orlop/v2/errors/internal"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 	"net/http"
 )
+
+// GRPCStatus() *status.Status
+// 	if errors.Is(err, context.DeadlineExceeded) {
+//		return New(codes.DeadlineExceeded, err.Error())
+//	}
+//	if errors.Is(err, context.Canceled) {
+//		return New(codes.Canceled, err.Error())
+//	}
 
 type coder struct {
 	error
 	code string
 }
 
-func (sc coder) Cause() error {
-	return sc.error
+func (c coder) Cause() error {
+	return c.error
 }
 
-func (sc coder) Unwrap() error {
-	return sc.error
+func (c coder) Unwrap() error {
+	return c.error
 }
 
-func (sc coder) ErrorCode() string {
-	return sc.code
+func (c coder) ErrorCode() string {
+	return c.code
 }
 
-func (sc coder) Timeout() bool {
-	var temp internal.Timeout
-	if As(sc.error, &temp) {
-		return temp.Timeout()
+func (c coder) Timeout() bool {
+	var to internal.Timeout
+	if As(c.error, &to) {
+		return to.Timeout()
 	}
 
-	return sc.code == ETIMEOUT
+	return c.code == ETIMEOUT
 }
 
-func (sc coder) Temporary() bool {
+func (c coder) Temporary() bool {
 	var temp internal.Temporary
-	if As(sc.error, &temp) {
+	if As(c.error, &temp) {
 		return temp.Temporary()
 	}
 
-	return sc.code == EINTERNAL || sc.code == EUNAVAILABLE || sc.code == ETIMEOUT
+	return c.code == EINTERNAL || c.code == EUNAVAILABLE || c.code == ETIMEOUT
+}
+
+func (c coder) GRPCStatus() *status.Status {
+	var code codes.Code
+
+	switch c.code {
+	case ECONFLICT:
+		code = codes.Aborted
+
+	case ECANCELED:
+		code = codes.Canceled
+
+	case EINTERNAL:
+		code = codes.Internal
+
+	case EUNAVAILABLE:
+		code = codes.Unavailable
+
+	case EINVALID:
+		code = codes.InvalidArgument
+
+	case ENOTFOUND:
+		code = codes.NotFound
+
+	case ETIMEOUT:
+		code = codes.DeadlineExceeded
+
+	default:
+		code = codes.Unknown
+	}
+
+	return status.New(code, c.Error())
 }
 
 // WithCode adds a Coder to err's error chain.

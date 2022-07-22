@@ -22,6 +22,8 @@ package errors
 
 import (
 	"go.ketch.com/lib/orlop/v2/errors/internal"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 	"net/http"
 )
 
@@ -60,6 +62,35 @@ func (sc statusCoder) Temporary() bool {
 	return sc.code == http.StatusInternalServerError || sc.code == http.StatusServiceUnavailable || sc.code == http.StatusRequestTimeout
 }
 
+func (sc statusCoder) GRPCStatus() *status.Status {
+	var code codes.Code
+
+	switch sc.code {
+	case http.StatusConflict:
+		code = codes.Aborted
+
+	case http.StatusInternalServerError:
+		code = codes.Internal
+
+	case http.StatusServiceUnavailable:
+		code = codes.Unavailable
+
+	case http.StatusBadRequest:
+		code = codes.InvalidArgument
+
+	case http.StatusNotFound:
+		code = codes.NotFound
+
+	case http.StatusRequestTimeout, http.StatusGatewayTimeout:
+		code = codes.DeadlineExceeded
+
+	default:
+		code = codes.Unknown
+	}
+
+	return status.New(code, sc.Error())
+}
+
 // WithStatusCode adds a StatusCoder to err's error chain.
 // Unlike pkg/errors, WithStatusCode will wrap nil error.
 func WithStatusCode(err error, code int) error {
@@ -86,6 +117,9 @@ func StatusCode(err error) (code int) {
 		switch ec.ErrorCode() {
 		case ECONFLICT:
 			return http.StatusConflict
+
+		case ECANCELED:
+			return http.StatusNotImplemented
 
 		case EUNAVAILABLE:
 			return http.StatusServiceUnavailable

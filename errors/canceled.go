@@ -20,15 +20,19 @@
 
 package errors
 
-// Application error codes.
-const (
-	ECONFLICT      = "conflict"      // action cannot be performed
-	EINTERNAL      = "internal"      // internal error
-	EUNAVAILABLE   = "unavailable"   // service is unavailable
-	EINVALID       = "invalid"       // validation failed
-	ENOTFOUND      = "not_found"     // entity does not exist
-	ETIMEOUT       = "timeout"       // operation timed out
-	ECANCELED      = "canceled"      // operation canceled
-	EFORBIDDEN     = "forbidden"     // operation is not authorized
-	ECONFIGURATION = "configuration" // configuration error
-)
+import "github.com/pkg/errors"
+
+// Canceledf returns a new error with ECANCELED
+func Canceledf(format string, args ...any) error {
+	return Canceled(errors.Errorf(format, args...))
+}
+
+// Canceled returns a Canceled with ECANCELED
+func Canceled(err error) error {
+	return WithCode(err, ECANCELED)
+}
+
+// IsCanceled returns true if the error is a Canceled error
+func IsCanceled(err error) bool {
+	return Code(err) == ECANCELED
+}
