@@ -20,6 +20,15 @@
 
 package errors
 
+import (
+	"github.com/pkg/errors"
+)
+
+// Unavailablef returns a new error with EUNAVAILABLE
+func Unavailablef(format string, args ...any) error {
+	return Unavailable(errors.Errorf(format, args...))
+}
+
 // Unavailable returns an error with EUNAVAILABLE
 func Unavailable(err error) error {
 	return WithCode(err, EUNAVAILABLE)

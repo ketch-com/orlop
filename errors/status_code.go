@@ -30,12 +30,34 @@ type statusCoder struct {
 	code int
 }
 
+func (sc statusCoder) Cause() error {
+	return sc.error
+}
+
 func (sc statusCoder) Unwrap() error {
 	return sc.error
 }
 
 func (sc statusCoder) StatusCode() int {
 	return sc.code
+}
+
+func (sc statusCoder) Timeout() bool {
+	var temp internal.Timeout
+	if As(sc.error, &temp) {
+		return temp.Timeout()
+	}
+
+	return sc.code == http.StatusRequestTimeout
+}
+
+func (sc statusCoder) Temporary() bool {
+	var temp internal.Temporary
+	if As(sc.error, &temp) {
+		return temp.Temporary()
+	}
+
+	return sc.code == http.StatusInternalServerError || sc.code == http.StatusServiceUnavailable || sc.code == http.StatusRequestTimeout
 }
 
 // WithStatusCode adds a StatusCoder to err's error chain.

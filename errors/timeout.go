@@ -20,6 +20,13 @@
 
 package errors
 
+import "github.com/pkg/errors"
+
+// Timeoutf returns a new error with ETIMEOUT
+func Timeoutf(format string, args ...any) error {
+	return Timeout(errors.Errorf(format, args...))
+}
+
 // Timeout returns a timeout with ETIMEOUT
 func Timeout(err error) error {
 	return WithCode(err, ETIMEOUT)

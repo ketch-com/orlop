@@ -30,12 +30,34 @@ type coder struct {
 	code string
 }
 
+func (sc coder) Cause() error {
+	return sc.error
+}
+
 func (sc coder) Unwrap() error {
 	return sc.error
 }
 
 func (sc coder) ErrorCode() string {
 	return sc.code
+}
+
+func (sc coder) Timeout() bool {
+	var temp internal.Timeout
+	if As(sc.error, &temp) {
+		return temp.Timeout()
+	}
+
+	return sc.code == ETIMEOUT
+}
+
+func (sc coder) Temporary() bool {
+	var temp internal.Temporary
+	if As(sc.error, &temp) {
+		return temp.Temporary()
+	}
+
+	return sc.code == EINTERNAL || sc.code == EUNAVAILABLE || sc.code == ETIMEOUT
 }
 
 // WithCode adds a Coder to err's error chain.

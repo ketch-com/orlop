@@ -20,6 +20,13 @@
 
 package errors
 
+import "github.com/pkg/errors"
+
+// NotFoundf returns a new error with ENOTFOUND
+func NotFoundf(format string, args ...any) error {
+	return NotFound(errors.Errorf(format, args...))
+}
+
 // NotFound returns an ENOTFOUND error
 func NotFound(err error) error {
 	return WithCode(err, ENOTFOUND)

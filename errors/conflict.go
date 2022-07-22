@@ -20,6 +20,13 @@
 
 package errors
 
+import "github.com/pkg/errors"
+
+// Conflictf returns a new error with ECONFLICT
+func Conflictf(format string, args ...any) error {
+	return Conflict(errors.Errorf(format, args...))
+}
+
 // Conflict returns an error with ECONFLICT
 func Conflict(err error) error {
 	return WithCode(err, ECONFLICT)

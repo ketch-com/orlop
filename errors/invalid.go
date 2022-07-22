@@ -20,6 +20,13 @@
 
 package errors
 
+import "github.com/pkg/errors"
+
+// Invalidf returns a new error with EINVALID
+func Invalidf(format string, args ...any) error {
+	return Invalid(errors.Errorf(format, args...))
+}
+
 // Invalid returns an error with EINVALID
 func Invalid(err error) error {
 	return WithCode(err, EINVALID)

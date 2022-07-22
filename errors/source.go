@@ -29,6 +29,10 @@ type sourcer struct {
 	source string
 }
 
+func (s sourcer) Cause() error {
+	return s.error
+}
+
 func (s sourcer) Unwrap() error {
 	return s.error
 }
