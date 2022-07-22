@@ -28,6 +28,7 @@ const (
 	EINVALID       = "invalid"       // validation failed
 	ENOTFOUND      = "not_found"     // entity does not exist
 	ETIMEOUT       = "timeout"       // operation timed out
+	ECANCELED      = "canceled"      // operation canceled
 	EFORBIDDEN     = "forbidden"     // operation is not authorized
 	ECONFIGURATION = "configuration" // configuration error
 )

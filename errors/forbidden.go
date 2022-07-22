@@ -20,6 +20,13 @@
 
 package errors
 
+import "github.com/pkg/errors"
+
+// Forbiddenf returns a new error with EFORBIDDEN
+func Forbiddenf(format string, args ...any) error {
+	return Forbidden(errors.Errorf(format, args...))
+}
+
 // Forbidden returns a Forbidden error with EFORBIDDEN
 func Forbidden(err error) error {
 	return WithCode(err, EFORBIDDEN)

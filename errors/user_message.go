@@ -31,6 +31,10 @@ type messenger struct {
 	msg string
 }
 
+func (msgr messenger) Cause() error {
+	return msgr.error
+}
+
 func (msgr messenger) Unwrap() error {
 	return msgr.error
 }

@@ -22,6 +22,8 @@ package errors
 
 import (
 	"go.ketch.com/lib/orlop/v2/errors/internal"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 	"net/http"
 )
 
@@ -30,12 +32,63 @@ type statusCoder struct {
 	code int
 }
 
+func (sc statusCoder) Cause() error {
+	return sc.error
+}
+
 func (sc statusCoder) Unwrap() error {
 	return sc.error
 }
 
 func (sc statusCoder) StatusCode() int {
 	return sc.code
+}
+
+func (sc statusCoder) Timeout() bool {
+	var temp internal.Timeout
+	if As(sc.error, &temp) {
+		return temp.Timeout()
+	}
+
+	return sc.code == http.StatusRequestTimeout
+}
+
+func (sc statusCoder) Temporary() bool {
+	var temp internal.Temporary
+	if As(sc.error, &temp) {
+		return temp.Temporary()
+	}
+
+	return sc.code == http.StatusInternalServerError || sc.code == http.StatusServiceUnavailable || sc.code == http.StatusRequestTimeout
+}
+
+func (sc statusCoder) GRPCStatus() *status.Status {
+	var code codes.Code
+
+	switch sc.code {
+	case http.StatusConflict:
+		code = codes.Aborted
+
+	case http.StatusInternalServerError:
+		code = codes.Internal
+
+	case http.StatusServiceUnavailable:
+		code = codes.Unavailable
+
+	case http.StatusBadRequest:
+		code = codes.InvalidArgument
+
+	case http.StatusNotFound:
+		code = codes.NotFound
+
+	case http.StatusRequestTimeout, http.StatusGatewayTimeout:
+		code = codes.DeadlineExceeded
+
+	default:
+		code = codes.Unknown
+	}
+
+	return status.New(code, sc.Error())
 }
 
 // WithStatusCode adds a StatusCoder to err's error chain.
@@ -64,6 +117,9 @@ func StatusCode(err error) (code int) {
 		switch ec.ErrorCode() {
 		case ECONFLICT:
 			return http.StatusConflict
+
+		case ECANCELED:
+			return http.StatusNotImplemented
 
 		case EUNAVAILABLE:
 			return http.StatusServiceUnavailable

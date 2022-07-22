@@ -22,17 +22,17 @@ package errors
 
 import "github.com/pkg/errors"
 
-// Conflictf returns a new error with ECONFLICT
-func Conflictf(format string, args ...any) error {
-	return Conflict(errors.Errorf(format, args...))
+// Canceledf returns a new error with ECANCELED
+func Canceledf(format string, args ...any) error {
+	return Canceled(errors.Errorf(format, args...))
 }
 
-// Conflict returns an error with ECONFLICT
-func Conflict(err error) error {
-	return WithCode(err, ECONFLICT)
+// Canceled returns a Canceled with ECANCELED
+func Canceled(err error) error {
+	return WithCode(err, ECANCELED)
 }
 
-// IsConflict returns true if the error is a conflict error
-func IsConflict(err error) bool {
-	return Code(err) == ECONFLICT
+// IsCanceled returns true if the error is a Canceled error
+func IsCanceled(err error) bool {
+	return Code(err) == ECANCELED
 }

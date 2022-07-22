@@ -20,6 +20,13 @@
 
 package errors
 
+import "github.com/pkg/errors"
+
+// Configurationf returns a new error with ECONFIGURATION
+func Configurationf(format string, args ...any) error {
+	return Configuration(errors.Errorf(format, args...))
+}
+
 // Configuration returns an error with ECONFIGURATION
 func Configuration(err error) error {
 	return WithCode(err, ECONFIGURATION)

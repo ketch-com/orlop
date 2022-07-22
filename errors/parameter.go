@@ -29,6 +29,10 @@ type parameter struct {
 	parameter string
 }
 
+func (s parameter) Cause() error {
+	return s.error
+}
+
 func (s parameter) Unwrap() error {
 	return s.error
 }

@@ -111,3 +111,23 @@ func As(err error, target any) bool {
 func Unwrap(err error) error {
 	return errors.Unwrap(err)
 }
+
+// Is reports whether any error in err's chain matches target.
+//
+// The chain consists of err itself followed by the sequence of errors obtained by
+// repeatedly calling Unwrap.
+//
+// An error is considered to match a target if it is equal to that target or if
+// it implements a method Is(error) bool such that Is(target) returns true.
+//
+// An error type might provide an Is method so it can be treated as equivalent
+// to an existing error. For example, if MyError defines
+//
+//	func (m MyError) Is(target error) bool { return target == fs.ErrExist }
+//
+// then Is(MyError{}, fs.ErrExist) returns true. See syscall.Errno.Is for
+// an example in the standard library. An Is method should only shallowly
+// compare err and the target and not call Unwrap on either.
+func Is(err error, target error) bool {
+	return errors.Is(err, target)
+}
