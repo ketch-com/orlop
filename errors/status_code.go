@@ -106,6 +106,7 @@ func WithStatusCode(err error, code int) error {
 func StatusCode(err error) (code int) {
 	var sc internal.StatusCode
 	var ec internal.ErrorCode
+	var gc internal.GRPCStatus
 
 	if err == nil {
 		return http.StatusOK
@@ -137,6 +138,59 @@ func StatusCode(err error) (code int) {
 			return http.StatusForbidden
 		}
 	}
+	if As(err, &gc) {
+		switch gc.GRPCStatus().Code() {
+		case codes.OK:
+			return http.StatusOK
 
+		case codes.Canceled:
+			return http.StatusConflict
+
+		case codes.Unknown:
+			return http.StatusServiceUnavailable
+
+		case codes.InvalidArgument:
+			return http.StatusBadRequest
+
+		case codes.DeadlineExceeded:
+			return http.StatusRequestTimeout
+
+		case codes.NotFound:
+			return http.StatusNotFound
+
+		case codes.AlreadyExists:
+			return http.StatusConflict
+
+		case codes.PermissionDenied:
+			return http.StatusForbidden
+
+		case codes.ResourceExhausted:
+			return http.StatusServiceUnavailable
+
+		case codes.FailedPrecondition:
+			return http.StatusPreconditionFailed
+
+		case codes.Aborted:
+			return http.StatusConflict
+
+		case codes.OutOfRange:
+			return http.StatusBadRequest
+
+		case codes.Unimplemented:
+			return http.StatusServiceUnavailable
+
+		case codes.Internal:
+			return http.StatusInternalServerError
+
+		case codes.Unavailable:
+			return http.StatusServiceUnavailable
+
+		case codes.DataLoss:
+			return http.StatusConflict
+
+		case codes.Unauthenticated:
+			return http.StatusForbidden
+		}
+	}
 	return http.StatusInternalServerError
 }
