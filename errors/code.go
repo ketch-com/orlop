@@ -117,6 +117,7 @@ func WithCode(err error, code string) error {
 func Code(err error) string {
 	var sc internal.StatusCode
 	var ec internal.ErrorCode
+	var gc internal.GRPCStatus
 
 	if err == nil {
 		return ""
@@ -224,6 +225,60 @@ func Code(err error) string {
 
 		case http.StatusHTTPVersionNotSupported:
 			return EINVALID
+		}
+	}
+	if As(err, &gc) {
+		switch gc.GRPCStatus().Code() {
+		case codes.OK:
+			return ""
+
+		case codes.Canceled:
+			return ECANCELED
+
+		case codes.Unknown:
+			return EUNAVAILABLE
+
+		case codes.InvalidArgument:
+			return EINVALID
+
+		case codes.DeadlineExceeded:
+			return ETIMEOUT
+
+		case codes.NotFound:
+			return ENOTFOUND
+
+		case codes.AlreadyExists:
+			return ECONFLICT
+
+		case codes.PermissionDenied:
+			return EFORBIDDEN
+
+		case codes.ResourceExhausted:
+			return EUNAVAILABLE
+
+		case codes.FailedPrecondition:
+			return EINVALID
+
+		case codes.Aborted:
+			return ECANCELED
+
+		case codes.OutOfRange:
+			return EINVALID
+
+		case codes.Unimplemented:
+			return EUNAVAILABLE
+
+		case codes.Internal:
+			return EINTERNAL
+
+		case codes.Unavailable:
+			return EUNAVAILABLE
+
+		case codes.DataLoss:
+			return ECONFLICT
+
+		case codes.Unauthenticated:
+			return EFORBIDDEN
 		}
 	}
 
