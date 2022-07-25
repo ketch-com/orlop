@@ -21,25 +21,20 @@
 package errors
 
 import (
-	"go.ketch.com/lib/orlop/v2/errors/internal"
-	"net/http"
+	"github.com/pkg/errors"
 )
 
-// WithStatusCode adds an err to err's error chain.
-// Unlike pkg/errors, WithStatusCode will wrap nil error.
-func WithStatusCode(err error, code int) error {
-	if code < http.StatusMultipleChoices {
-		return err
-	}
-	if err == nil {
-		err = New(http.StatusText(code))
-	}
-	return WithCode(err, internal.HttpToStandard[code])
+// Unimplementedf returns a new error with EUNIMPLEMENTED
+func Unimplementedf(format string, args ...any) error {
+	return Unimplemented(errors.Errorf(format, args...))
 }
 
-// StatusCode returns the status code associated with an error.
-// If no status code is found, it returns 500 http.StatusInternalServerError.
-// If err is nil, it returns 200 http.StatusOK.
-func StatusCode(err error) (code int) {
-	return internal.StandardToHTTP[Code(err)]
+// Unimplemented returns an error with EUNIMPLEMENTED
+func Unimplemented(err error) error {
+	return WithCode(err, EUNIMPLEMENTED)
+}
+
+// IsUnimplemented returns true if the error is an EUNIMPLEMENTED error
+func IsUnimplemented(err error) bool {
+	return Code(err) == EUNIMPLEMENTED
 }

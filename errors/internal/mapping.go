@@ -1,0 +1,112 @@
+package internal
+
+import (
+	"google.golang.org/grpc/codes"
+	"net/http"
+)
+
+var (
+	HttpToStandard = map[int]string{
+		http.StatusBadRequest:                    EINTERNAL,
+		http.StatusUnauthorized:                  EFORBIDDEN,
+		http.StatusPaymentRequired:               EFORBIDDEN,
+		http.StatusForbidden:                     EFORBIDDEN,
+		http.StatusNotFound:                      ENOTFOUND,
+		http.StatusMethodNotAllowed:              EINVALID,
+		http.StatusNotAcceptable:                 EINVALID,
+		http.StatusProxyAuthRequired:             EFORBIDDEN,
+		http.StatusRequestTimeout:                ETIMEOUT,
+		http.StatusConflict:                      ECONFLICT,
+		http.StatusGone:                          ENOTFOUND,
+		http.StatusLengthRequired:                EINVALID,
+		http.StatusPreconditionFailed:            EINVALID,
+		http.StatusRequestEntityTooLarge:         EINVALID,
+		http.StatusRequestURITooLong:             EINVALID,
+		http.StatusUnsupportedMediaType:          EINVALID,
+		http.StatusRequestedRangeNotSatisfiable:  EINVALID,
+		http.StatusExpectationFailed:             EINVALID,
+		http.StatusTeapot:                        ECONFIGURATION,
+		http.StatusMisdirectedRequest:            ECONFIGURATION,
+		http.StatusUnprocessableEntity:           EINVALID,
+		http.StatusLocked:                        ECONFLICT,
+		http.StatusFailedDependency:              EINVALID,
+		http.StatusTooEarly:                      EINVALID,
+		http.StatusUpgradeRequired:               EFORBIDDEN,
+		http.StatusPreconditionRequired:          EINVALID,
+		http.StatusTooManyRequests:               EUNAVAILABLE,
+		http.StatusRequestHeaderFieldsTooLarge:   EINVALID,
+		http.StatusUnavailableForLegalReasons:    EUNAVAILABLE,
+		http.StatusInternalServerError:           EINTERNAL,
+		http.StatusNotImplemented:                EUNIMPLEMENTED,
+		http.StatusBadGateway:                    EUNAVAILABLE,
+		http.StatusServiceUnavailable:            EUNAVAILABLE,
+		http.StatusGatewayTimeout:                ETIMEOUT,
+		http.StatusHTTPVersionNotSupported:       EINVALID,
+		http.StatusVariantAlsoNegotiates:         EINVALID,
+		http.StatusInsufficientStorage:           ECONFIGURATION,
+		http.StatusLoopDetected:                  ECONFIGURATION,
+		http.StatusNotExtended:                   EUNIMPLEMENTED,
+		http.StatusNetworkAuthenticationRequired: EFORBIDDEN,
+	}
+	StandardToHTTP = map[string]int{
+		"":             http.StatusOK,
+		ECONFLICT:      http.StatusConflict,
+		ECANCELED:      http.StatusFailedDependency,
+		EINTERNAL:      http.StatusInternalServerError,
+		EUNAVAILABLE:   http.StatusServiceUnavailable,
+		EINVALID:       http.StatusBadRequest,
+		ENOTFOUND:      http.StatusNotFound,
+		ETIMEOUT:       http.StatusRequestTimeout,
+		EFORBIDDEN:     http.StatusForbidden,
+		ECONFIGURATION: http.StatusInternalServerError,
+		EUNIMPLEMENTED: http.StatusInternalServerError,
+		"default":      http.StatusInternalServerError,
+	}
+
+	StandardToGrpc = map[string]codes.Code{
+		"":             codes.OK,
+		ECONFLICT:      codes.Aborted,
+		ECANCELED:      codes.Canceled,
+		EINTERNAL:      codes.Internal,
+		EUNAVAILABLE:   codes.Unavailable,
+		EINVALID:       codes.InvalidArgument,
+		ENOTFOUND:      codes.NotFound,
+		ETIMEOUT:       codes.DeadlineExceeded,
+		EFORBIDDEN:     codes.Unauthenticated,
+		ECONFIGURATION: codes.Internal,
+		EUNIMPLEMENTED: codes.Unimplemented,
+		"default":      codes.Unknown,
+	}
+	GrpcToStandard = map[codes.Code]string{
+		codes.OK:                 "",
+		codes.Canceled:           ECANCELED,
+		codes.Unknown:            EINTERNAL,
+		codes.InvalidArgument:    EINVALID,
+		codes.DeadlineExceeded:   ETIMEOUT,
+		codes.NotFound:           ENOTFOUND,
+		codes.AlreadyExists:      ECONFLICT,
+		codes.PermissionDenied:   EFORBIDDEN,
+		codes.ResourceExhausted:  ECONFLICT,
+		codes.FailedPrecondition: EINVALID,
+		codes.Aborted:            ECANCELED,
+		codes.OutOfRange:         EINVALID,
+		codes.Unimplemented:      EUNIMPLEMENTED,
+		codes.Internal:           EINTERNAL,
+		codes.Unavailable:        EUNAVAILABLE,
+		codes.DataLoss:           ECONFLICT,
+		codes.Unauthenticated:    EFORBIDDEN,
+	}
+
+	StandardToMessage = map[string]string{
+		ECONFLICT:      "conflict",
+		EINTERNAL:      "internal error",
+		EUNAVAILABLE:   "service unavailable",
+		EINVALID:       "invalid request",
+		ENOTFOUND:      "not found",
+		ETIMEOUT:       "timeout",
+		ECANCELED:      "canceled",
+		EFORBIDDEN:     "forbidden",
+		ECONFIGURATION: "configuration",
+		EUNIMPLEMENTED: "unimplemented",
+	}
+)
