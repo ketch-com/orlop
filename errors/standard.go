@@ -20,15 +20,18 @@
 
 package errors
 
+import "go.ketch.com/lib/orlop/v2/errors/internal"
+
 // Application error codes.
 const (
-	ECONFLICT      = "conflict"      // action cannot be performed
-	EINTERNAL      = "internal"      // internal error
-	EUNAVAILABLE   = "unavailable"   // service is unavailable
-	EINVALID       = "invalid"       // validation failed
-	ENOTFOUND      = "not_found"     // entity does not exist
-	ETIMEOUT       = "timeout"       // operation timed out
-	ECANCELED      = "canceled"      // operation canceled
-	EFORBIDDEN     = "forbidden"     // operation is not authorized
-	ECONFIGURATION = "configuration" // configuration error
+	ECONFLICT      = internal.ECONFLICT      // action cannot be performed
+	EINTERNAL      = internal.EINTERNAL      // internal error
+	EUNAVAILABLE   = internal.EUNAVAILABLE   // service is unavailable
+	EINVALID       = internal.EINVALID       // validation failed
+	ENOTFOUND      = internal.ENOTFOUND      // entity does not exist
+	ETIMEOUT       = internal.ETIMEOUT       // operation timed out
+	ECANCELED      = internal.ECANCELED      // operation canceled
+	EFORBIDDEN     = internal.EFORBIDDEN     // operation is not authorized
+	ECONFIGURATION = internal.ECONFIGURATION // configuration error
+	EUNIMPLEMENTED = internal.EUNIMPLEMENTED // unimplemented error
 )
