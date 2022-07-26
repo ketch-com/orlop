@@ -23,7 +23,6 @@ package errors
 import (
 	"fmt"
 	"go.ketch.com/lib/orlop/v2/errors/internal"
-	"net/http"
 )
 
 type messenger struct {
@@ -74,5 +73,5 @@ func UserMessage(err error) string {
 		return um.UserMessage()
 	}
 
-	return http.StatusText(StatusCode(err))
+	return err.Error()
 }
