@@ -23,7 +23,6 @@ package errors
 import (
 	"fmt"
 	"go.ketch.com/lib/orlop/v2/errors/internal"
-	"net/http"
 )
 
 type messenger struct {
@@ -65,14 +64,19 @@ func WithUserMessagef(err error, format string, v ...any) error {
 // "Internal Server Error".
 // If err is nil, it returns "".
 func UserMessage(err error) string {
-	var um internal.UserMessage
-
 	if err == nil {
 		return ""
 	}
+
+	var um internal.UserMessage
 	if As(err, &um) {
 		return um.UserMessage()
 	}
 
-	return http.StatusText(StatusCode(err))
+	var g internal.GRPCStatus
+	if As(err, &g) {
+		return g.GRPCStatus().Message()
+	}
+
+	return err.Error()
 }
