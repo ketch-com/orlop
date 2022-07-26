@@ -69,6 +69,10 @@ func (c StandardError) Status() int {
 }
 
 func (c StandardError) GRPCStatus() *status.Status {
+	if g, ok := c.error.(GRPCStatus); ok {
+		return status.New(StandardToGrpc[c.code], g.GRPCStatus().Message())
+	}
+
 	return status.New(StandardToGrpc[c.code], c.Error())
 }
 

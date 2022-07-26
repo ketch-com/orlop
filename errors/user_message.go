@@ -64,13 +64,18 @@ func WithUserMessagef(err error, format string, v ...any) error {
 // "Internal Server Error".
 // If err is nil, it returns "".
 func UserMessage(err error) string {
-	var um internal.UserMessage
-
 	if err == nil {
 		return ""
 	}
+
+	var um internal.UserMessage
 	if As(err, &um) {
 		return um.UserMessage()
+	}
+
+	var g internal.GRPCStatus
+	if As(err, &g) {
+		return g.GRPCStatus().Message()
 	}
 
 	return err.Error()
