@@ -32,9 +32,9 @@ import (
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/exporters/prometheus"
 	"go.opentelemetry.io/otel/metric/global"
-	export "go.opentelemetry.io/otel/sdk/export/metric"
 	"go.opentelemetry.io/otel/sdk/metric/aggregator/histogram"
 	controller "go.opentelemetry.io/otel/sdk/metric/controller/basic"
+	"go.opentelemetry.io/otel/sdk/metric/export/aggregation"
 	processor "go.opentelemetry.io/otel/sdk/metric/processor/basic"
 	selector "go.opentelemetry.io/otel/sdk/metric/selector/simple"
 	"go.opentelemetry.io/otel/sdk/resource"
@@ -143,7 +143,7 @@ func (r *Runner) preRunE(cmd *cobra.Command, args []string) error {
 	// Setup logging
 	r.SetupLogging(env, loglevelFlag)
 
-	if err := runtime.Start(runtime.WithMinimumReadMemStatsInterval(time.Second)); err != nil {
+	if err := runtime.Start(runtime.WithMeterProvider(global.MeterProvider()), runtime.WithMinimumReadMemStatsInterval(time.Second)); err != nil {
 		log.WithError(err).Fatal("could not start runtime tracing")
 	}
 
@@ -171,16 +171,19 @@ func (r *Runner) runE(runner interface{}, cfg interface{}) func(cmd *cobra.Comma
 		res := resource.Environment()
 		attributes := res.Attributes()
 
-		res, _ = resource.New(cmd.Context(),
+		res, err := resource.New(cmd.Context(),
 			resource.WithSchemaURL(res.SchemaURL()),
 			resource.WithAttributes(attributes...))
+		if err != nil {
+			return err
+		}
 
 		c := controller.New(
 			processor.NewFactory(
 				selector.NewWithHistogramDistribution(
 					histogram.WithExplicitBoundaries(config.DefaultHistogramBoundaries),
 				),
-				export.CumulativeExportKindSelector(),
+				aggregation.CumulativeTemporalitySelector(),
 				processor.WithMemory(true),
 			),
 			controller.WithResource(res),
