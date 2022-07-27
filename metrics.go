@@ -25,18 +25,18 @@ import (
 	"go.ketch.com/lib/orlop/log"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/exporters/prometheus"
-	"go.opentelemetry.io/otel/metric"
+	"go.opentelemetry.io/otel/metric/instrument"
 	"net/http"
 )
 
 // Metrics is middleware for handling metrics
 func Metrics(next http.Handler) http.Handler {
-	inflightRequests, err := metrics.NewInt64UpDownCounter("requests.in.flight", metric.WithUnit("requests"))
+	inflightRequests, err := metrics.SyncInt64().UpDownCounter("requests.in.flight", instrument.WithUnit("requests"))
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	requestDuration, err := metrics.NewFloat64Histogram("request.duration.seconds", metric.WithUnit("s"))
+	requestDuration, err := metrics.SyncFloat64().Histogram("request.duration.seconds", instrument.WithUnit("s"))
 	if err != nil {
 		log.Fatal(err)
 	}

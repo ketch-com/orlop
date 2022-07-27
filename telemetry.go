@@ -30,4 +30,4 @@ import (
 
 var tracer = otel.GetTracerProvider().Tracer(version.Name, trace.WithInstrumentationVersion(version.Version))
 
-var metrics = global.GetMeterProvider().Meter(version.Name, metric.WithInstrumentationVersion(version.Version))
+var metrics = global.MeterProvider().Meter(version.Name, metric.WithInstrumentationVersion(version.Version))
