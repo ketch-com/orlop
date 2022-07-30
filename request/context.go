@@ -30,11 +30,12 @@ import (
 type Key string
 
 var (
-	IDKey        Key = "request_id"
-	OperationKey Key = "operation"
-	TimestampKey Key = "request_ts"
-	TenantKey    Key = "tenant"
-	URLKey       Key = "request_url"
+	IDKey         Key = "request_id"
+	OperationKey  Key = "operation"
+	TimestampKey  Key = "request_ts"
+	TenantKey     Key = "tenant"
+	URLKey        Key = "request_url"
+	OriginatorKey Key = "request_originator"
 )
 
 // AllKeys is a slice of all Keys
@@ -44,15 +45,17 @@ var AllKeys = []Key{
 	TimestampKey,
 	TenantKey,
 	URLKey,
+	OriginatorKey,
 }
 
 // HighCardinalityKeys is a map of high-cardinality keys
 var HighCardinalityKeys = map[Key]bool{
-	IDKey:        true,
-	OperationKey: false,
-	TimestampKey: true,
-	TenantKey:    false,
-	URLKey:       false,
+	IDKey:         true,
+	OperationKey:  false,
+	TimestampKey:  true,
+	TenantKey:     false,
+	URLKey:        false,
+	OriginatorKey: false,
 }
 
 // Setter is a function that adds a string to the context
@@ -63,10 +66,11 @@ type Getter func(ctx context.Context) string
 
 // Setters is a map from the Key to a Setter for that Key
 var Setters = map[Key]Setter{
-	IDKey:        WithID,
-	OperationKey: WithOperation,
-	TenantKey:    WithTenant,
-	URLKey:       WithURL,
+	IDKey:         WithID,
+	OperationKey:  WithOperation,
+	TenantKey:     WithTenant,
+	URLKey:        WithURL,
+	OriginatorKey: WithOriginator,
 	TimestampKey: func(ctx context.Context, v string) context.Context {
 		if t, err := time.Parse(time.RFC3339, v); err == nil {
 			return WithTimestamp(ctx, t)
@@ -77,10 +81,11 @@ var Setters = map[Key]Setter{
 
 // Getters is a map from the Key to a Getter for that Key
 var Getters = map[Key]Getter{
-	IDKey:        ID,
-	OperationKey: Operation,
-	TenantKey:    Tenant,
-	URLKey:       URL,
+	IDKey:         ID,
+	OperationKey:  Operation,
+	TenantKey:     Tenant,
+	URLKey:        URL,
+	OriginatorKey: Originator,
 	TimestampKey: func(ctx context.Context) string {
 		if ts := Timestamp(ctx); !ts.IsZero() {
 			return ts.Format(time.RFC3339)
@@ -131,6 +136,21 @@ func RequireID(ctx context.Context) (string, error) {
 // WithID returns a new context with the given request ID
 func WithID(parent context.Context, requestID string) context.Context {
 	return WithValue(parent, IDKey, requestID)
+}
+
+// Originator returns the request originator or an empty string
+func Originator(ctx context.Context) string {
+	return Value[string](ctx, OriginatorKey)
+}
+
+// RequireOriginator returns the request originator or an error if not set
+func RequireOriginator(ctx context.Context) (string, error) {
+	return RequireValue[string](ctx, OriginatorKey, errors.Invalid)
+}
+
+// WithOriginator returns a new context with the given request originator
+func WithOriginator(parent context.Context, originator string) context.Context {
+	return WithValue(parent, OriginatorKey, originator)
 }
 
 // URL returns the request URL or an empty string
