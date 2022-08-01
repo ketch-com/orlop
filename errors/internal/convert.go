@@ -6,5 +6,5 @@ type Converter func(err error) (error, bool)
 var Converters []Converter
 
 func RegisterConverter(converter func(err error) (error, bool)) {
-	Converters = append(Converters, converter)
+	Converters = append([]Converter{converter}, Converters...)
 }

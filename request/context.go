@@ -30,12 +30,12 @@ import (
 type Key string
 
 var (
-	IDKey         Key = "request_id"
+	IDKey         Key = "requestId"
 	OperationKey  Key = "operation"
-	TimestampKey  Key = "request_ts"
+	TimestampKey  Key = "requestTS"
 	TenantKey     Key = "tenant"
-	URLKey        Key = "request_url"
-	OriginatorKey Key = "request_originator"
+	URLKey        Key = "requestUrl"
+	OriginatorKey Key = "requestOriginator"
 )
 
 // AllKeys is a slice of all Keys
