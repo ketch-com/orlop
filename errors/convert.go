@@ -98,11 +98,12 @@ func convertInterfaces(err error) (error, bool) {
 		return WithCode(err, internal.GrpcToStandard[gc.GRPCStatus().Code()]), true
 
 	case As(err, &to):
-		return Timeout(err), true
-
-	default:
-		return nil, false
+		if to.Timeout() {
+			return Timeout(err), true
+		}
 	}
+
+	return nil, false
 }
 
 func init() {
