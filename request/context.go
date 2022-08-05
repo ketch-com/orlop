@@ -23,6 +23,7 @@ package request
 import (
 	"context"
 	"go.ketch.com/lib/orlop/v2/errors"
+	"strings"
 	"time"
 )
 
@@ -185,7 +186,9 @@ func WithTimestamp(parent context.Context, requestTimestamp time.Time) context.C
 
 // Tenant returns the request Tenant or an empty string
 func Tenant(ctx context.Context) string {
-	return Value[string](ctx, TenantKey)
+	tenant := Value[string](ctx, TenantKey)
+	parts := strings.Split(tenant, ";")
+	return parts[0]
 }
 
 // RequireTenant returns the request Tenant or an error if not set
