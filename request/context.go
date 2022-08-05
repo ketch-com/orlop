@@ -55,7 +55,7 @@ var HighCardinalityKeys = map[Key]bool{
 	OperationKey:  false,
 	TimestampKey:  true,
 	TenantKey:     false,
-	URLKey:        false,
+	URLKey:        true,
 	OriginatorKey: false,
 }
 
