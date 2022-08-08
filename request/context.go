@@ -264,5 +264,10 @@ func WithFilter(f Filter) Option {
 
 // SkipHighCardinalityKeysFilter returns true if the key is not high cardinality
 func SkipHighCardinalityKeysFilter(k Key) bool {
-	return !HighCardinalityKeys[k]
+	if v, ok := HighCardinalityKeys[k]; ok {
+		return !v
+	}
+
+	// If we don't know about the key, assume it is "high cardinality"
+	return false
 }
