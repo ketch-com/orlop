@@ -56,7 +56,7 @@ var (
 		EUNAVAILABLE:   http.StatusServiceUnavailable,
 		EINVALID:       http.StatusBadRequest,
 		ENOTFOUND:      http.StatusNotFound,
-		ETIMEOUT:       http.StatusRequestTimeout,
+		ETIMEOUT:       http.StatusGatewayTimeout,
 		EFORBIDDEN:     http.StatusForbidden,
 		ECONFIGURATION: http.StatusInternalServerError,
 		EUNIMPLEMENTED: http.StatusInternalServerError,
