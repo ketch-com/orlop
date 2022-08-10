@@ -20,7 +20,10 @@
 
 package orlop
 
-import "context"
+import (
+	"context"
+	"go.ketch.com/lib/orlop/v2/errors"
+)
 
 // Identity returns the given input
 func Identity[T any](in T) T {
@@ -45,6 +48,22 @@ func IdentityContextError[T any](_ context.Context, in T) (T, error) {
 // IgnoreError returns the given input and ignores the error (use at your own peril
 func IgnoreError[T any](in T, _ error) T {
 	return in
+}
+
+// IgnoreValue returns just the error, ignoring the value
+func IgnoreValue[T any](_ T, err error) error {
+	return err
+}
+
+// RequireValue requires a non-nil value, raising an error if not returned
+func RequireValue[T comparable](name string) func(value T, err error) error {
+	return func(value T, err error) error {
+		var empty T
+		if value == empty {
+			return errors.Invalidf("%s is required", name)
+		}
+		return err
+	}
 }
 
 // PanicOnError panics on error and returns the given input if not an error
