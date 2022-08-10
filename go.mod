@@ -9,7 +9,7 @@ require (
 	github.com/sirupsen/logrus v1.9.0
 	github.com/spf13/cobra v1.5.0
 	github.com/stretchr/testify v1.8.0
-	go.uber.org/fx v1.18.0
+	go.uber.org/fx v1.18.1
 	google.golang.org/grpc v1.48.0
 )
 
