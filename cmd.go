@@ -23,7 +23,6 @@ package orlop
 import (
 	"context"
 	"fmt"
-	"github.com/iancoleman/strcase"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"go.ketch.com/lib/orlop/v2/config"
@@ -33,7 +32,6 @@ import (
 	"go.ketch.com/lib/orlop/v2/service"
 	"go.uber.org/fx"
 	stdlog "log"
-	"os"
 	"reflect"
 	"sort"
 	"strings"
@@ -205,7 +203,7 @@ func (r *Runner) runE(runner any, cfg any) func(cmd *cobra.Command, args []strin
 //
 // deprecated: use `cmd.Runner.Getenv`
 func (r *Runner) Getenv(key string) string {
-	return os.Getenv(strcase.ToScreamingSnake(strings.Join([]string{r.prefix, key}, "_")))
+	return config.GetEnv(r.prefix, key)
 }
 
 // SetupLogging sets up logging for the environment and the default log level

@@ -70,9 +70,6 @@ func reflectStructValue(prefix []string, r map[string]*configField, v reflect.Va
 			continue
 		}
 
-		replacer := strings.NewReplacer("-", "_", ".", "_")
-		key := toScreamingDelimited(replacer.Replace(strings.Join(append(prefix, *tag.Name), "_")), '_', 0, true)
-
 		for ft.Kind() == reflect.Ptr {
 			ft = ft.Elem()
 		}
@@ -142,6 +139,8 @@ func reflectStructValue(prefix []string, r map[string]*configField, v reflect.Va
 				setter = pointerFieldSetter(setter)
 			}
 
+			key := GetPrefixKey(strings.Join(prefix, "_"), *tag.Name)
+			
 			r[key] = &configField{
 				tag: tag,
 				v:   f,
