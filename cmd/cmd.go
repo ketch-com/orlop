@@ -24,14 +24,12 @@ import (
 	"context"
 	"fmt"
 	stdlog "log"
-	"os"
 	"sort"
 	"strings"
 
 	"go.ketch.com/lib/orlop/v2"
 	"go.ketch.com/lib/orlop/v2/env"
 
-	"github.com/iancoleman/strcase"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"go.ketch.com/lib/orlop/v2/config"
@@ -183,7 +181,7 @@ func (r *Runner) runE(module fx.Option) func(cmd *cobra.Command, args []string) 
 
 // Getenv returns the value of the environment variable named `key`
 func (r *Runner) Getenv(key string) string {
-	return os.Getenv(strcase.ToScreamingSnake(strings.Join([]string{r.prefix, key}, "_")))
+	return config.GetEnv(r.prefix, key)
 }
 
 // SetupLogging sets up logging for the environment and the default log level

@@ -23,6 +23,7 @@ package config
 import (
 	"context"
 	"fmt"
+	"os"
 	"reflect"
 	"strings"
 
@@ -175,6 +176,15 @@ func (s *providerImpl) getVariablesFromConfig(service string, cfg any) ([]string
 	}
 
 	return vars, nil
+}
+
+func GetEnv(prefix string, key string) string {
+	return os.Getenv(GetPrefixKey(prefix, key))
+}
+
+func GetPrefixKey(prefix string, key string) string {
+	replacer := strings.NewReplacer("-", "_", ".", "_")
+	return toScreamingDelimited(replacer.Replace(strings.Join([]string{prefix, key}, "_")), '_', 0, true)
 }
 
 func toScreamingDelimited(s string, delimiter uint8, ignore uint8, screaming bool) string {
