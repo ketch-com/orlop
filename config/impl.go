@@ -184,7 +184,14 @@ func GetEnv(prefix string, key string) string {
 
 func GetPrefixKey(prefix string, key string) string {
 	replacer := strings.NewReplacer("-", "_", ".", "_")
-	return toScreamingDelimited(replacer.Replace(strings.Join([]string{prefix, key}, "_")), '_', 0, true)
+	var parts []string
+	if len(prefix) > 0 {
+		parts = append(parts, prefix)
+	}
+	if len(key) > 0 {
+		parts = append(parts, key)
+	}
+	return toScreamingDelimited(replacer.Replace(strings.Join(parts, "_")), '_', 0, true)
 }
 
 func toScreamingDelimited(s string, delimiter uint8, ignore uint8, screaming bool) string {
