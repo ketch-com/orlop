@@ -140,7 +140,7 @@ func reflectStructValue(prefix []string, r map[string]*configField, v reflect.Va
 			}
 
 			key := GetPrefixKey(strings.Join(prefix, "_"), *tag.Name)
-			
+
 			r[key] = &configField{
 				tag: tag,
 				v:   f,

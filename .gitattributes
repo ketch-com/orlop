@@ -1,0 +1,4 @@
+mocks/** -diff linguist-generated=true
+./generate.go -diff linguist-generated=true
+./tools.go -diff linguist-generated=true
+scripts/*.sh -diff linguist-generated=true

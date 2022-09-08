@@ -37,7 +37,7 @@ type Environ_Getenv_Call struct {
 }
 
 // Getenv is a helper method to define mock.On call
-//  - key string
+//   - key string
 func (_e *Environ_Expecter) Getenv(key interface{}) *Environ_Getenv_Call {
 	return &Environ_Getenv_Call{Call: _e.mock.On("Getenv", key)}
 }

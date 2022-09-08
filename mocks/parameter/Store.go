@@ -41,8 +41,8 @@ type Store_Delete_Call struct {
 }
 
 // Delete is a helper method to define mock.On call
-//  - ctx context.Context
-//  - p string
+//   - ctx context.Context
+//   - p string
 func (_e *Store_Expecter) Delete(ctx interface{}, p interface{}) *Store_Delete_Call {
 	return &Store_Delete_Call{Call: _e.mock.On("Delete", ctx, p)}
 }
@@ -88,8 +88,8 @@ type Store_List_Call struct {
 }
 
 // List is a helper method to define mock.On call
-//  - ctx context.Context
-//  - p string
+//   - ctx context.Context
+//   - p string
 func (_e *Store_Expecter) List(ctx interface{}, p interface{}) *Store_List_Call {
 	return &Store_List_Call{Call: _e.mock.On("List", ctx, p)}
 }
@@ -135,8 +135,8 @@ type Store_Read_Call struct {
 }
 
 // Read is a helper method to define mock.On call
-//  - ctx context.Context
-//  - p string
+//   - ctx context.Context
+//   - p string
 func (_e *Store_Expecter) Read(ctx interface{}, p interface{}) *Store_Read_Call {
 	return &Store_Read_Call{Call: _e.mock.On("Read", ctx, p)}
 }
@@ -182,9 +182,9 @@ type Store_Write_Call struct {
 }
 
 // Write is a helper method to define mock.On call
-//  - ctx context.Context
-//  - p string
-//  - data map[string]interface{}
+//   - ctx context.Context
+//   - p string
+//   - data map[string]interface{}
 func (_e *Store_Expecter) Write(ctx interface{}, p interface{}, data interface{}) *Store_Write_Call {
 	return &Store_Write_Call{Call: _e.mock.On("Write", ctx, p, data)}
 }

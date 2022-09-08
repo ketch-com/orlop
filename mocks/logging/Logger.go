@@ -37,7 +37,7 @@ type Logger_Debug_Call struct {
 }
 
 // Debug is a helper method to define mock.On call
-//  - args ...interface{}
+//   - args ...interface{}
 func (_e *Logger_Expecter) Debug(args ...interface{}) *Logger_Debug_Call {
 	return &Logger_Debug_Call{Call: _e.mock.On("Debug",
 		append([]interface{}{}, args...)...)}
@@ -75,8 +75,8 @@ type Logger_Debugf_Call struct {
 }
 
 // Debugf is a helper method to define mock.On call
-//  - format string
-//  - args ...interface{}
+//   - format string
+//   - args ...interface{}
 func (_e *Logger_Expecter) Debugf(format interface{}, args ...interface{}) *Logger_Debugf_Call {
 	return &Logger_Debugf_Call{Call: _e.mock.On("Debugf",
 		append([]interface{}{format}, args...)...)}
@@ -113,7 +113,7 @@ type Logger_Error_Call struct {
 }
 
 // Error is a helper method to define mock.On call
-//  - args ...interface{}
+//   - args ...interface{}
 func (_e *Logger_Expecter) Error(args ...interface{}) *Logger_Error_Call {
 	return &Logger_Error_Call{Call: _e.mock.On("Error",
 		append([]interface{}{}, args...)...)}
@@ -151,8 +151,8 @@ type Logger_Errorf_Call struct {
 }
 
 // Errorf is a helper method to define mock.On call
-//  - format string
-//  - args ...interface{}
+//   - format string
+//   - args ...interface{}
 func (_e *Logger_Expecter) Errorf(format interface{}, args ...interface{}) *Logger_Errorf_Call {
 	return &Logger_Errorf_Call{Call: _e.mock.On("Errorf",
 		append([]interface{}{format}, args...)...)}
@@ -189,7 +189,7 @@ type Logger_Fatal_Call struct {
 }
 
 // Fatal is a helper method to define mock.On call
-//  - args ...interface{}
+//   - args ...interface{}
 func (_e *Logger_Expecter) Fatal(args ...interface{}) *Logger_Fatal_Call {
 	return &Logger_Fatal_Call{Call: _e.mock.On("Fatal",
 		append([]interface{}{}, args...)...)}
@@ -227,8 +227,8 @@ type Logger_Fatalf_Call struct {
 }
 
 // Fatalf is a helper method to define mock.On call
-//  - format string
-//  - args ...interface{}
+//   - format string
+//   - args ...interface{}
 func (_e *Logger_Expecter) Fatalf(format interface{}, args ...interface{}) *Logger_Fatalf_Call {
 	return &Logger_Fatalf_Call{Call: _e.mock.On("Fatalf",
 		append([]interface{}{format}, args...)...)}
@@ -265,7 +265,7 @@ type Logger_Info_Call struct {
 }
 
 // Info is a helper method to define mock.On call
-//  - args ...interface{}
+//   - args ...interface{}
 func (_e *Logger_Expecter) Info(args ...interface{}) *Logger_Info_Call {
 	return &Logger_Info_Call{Call: _e.mock.On("Info",
 		append([]interface{}{}, args...)...)}
@@ -303,8 +303,8 @@ type Logger_Infof_Call struct {
 }
 
 // Infof is a helper method to define mock.On call
-//  - format string
-//  - args ...interface{}
+//   - format string
+//   - args ...interface{}
 func (_e *Logger_Expecter) Infof(format interface{}, args ...interface{}) *Logger_Infof_Call {
 	return &Logger_Infof_Call{Call: _e.mock.On("Infof",
 		append([]interface{}{format}, args...)...)}
@@ -342,8 +342,8 @@ type Logger_Printf_Call struct {
 }
 
 // Printf is a helper method to define mock.On call
-//  - format string
-//  - args ...interface{}
+//   - format string
+//   - args ...interface{}
 func (_e *Logger_Expecter) Printf(format interface{}, args ...interface{}) *Logger_Printf_Call {
 	return &Logger_Printf_Call{Call: _e.mock.On("Printf",
 		append([]interface{}{format}, args...)...)}
@@ -380,7 +380,7 @@ type Logger_Trace_Call struct {
 }
 
 // Trace is a helper method to define mock.On call
-//  - args ...interface{}
+//   - args ...interface{}
 func (_e *Logger_Expecter) Trace(args ...interface{}) *Logger_Trace_Call {
 	return &Logger_Trace_Call{Call: _e.mock.On("Trace",
 		append([]interface{}{}, args...)...)}
@@ -418,8 +418,8 @@ type Logger_Tracef_Call struct {
 }
 
 // Tracef is a helper method to define mock.On call
-//  - format string
-//  - args ...interface{}
+//   - format string
+//   - args ...interface{}
 func (_e *Logger_Expecter) Tracef(format interface{}, args ...interface{}) *Logger_Tracef_Call {
 	return &Logger_Tracef_Call{Call: _e.mock.On("Tracef",
 		append([]interface{}{format}, args...)...)}
@@ -456,7 +456,7 @@ type Logger_Warn_Call struct {
 }
 
 // Warn is a helper method to define mock.On call
-//  - args ...interface{}
+//   - args ...interface{}
 func (_e *Logger_Expecter) Warn(args ...interface{}) *Logger_Warn_Call {
 	return &Logger_Warn_Call{Call: _e.mock.On("Warn",
 		append([]interface{}{}, args...)...)}
@@ -494,8 +494,8 @@ type Logger_Warnf_Call struct {
 }
 
 // Warnf is a helper method to define mock.On call
-//  - format string
-//  - args ...interface{}
+//   - format string
+//   - args ...interface{}
 func (_e *Logger_Expecter) Warnf(format interface{}, args ...interface{}) *Logger_Warnf_Call {
 	return &Logger_Warnf_Call{Call: _e.mock.On("Warnf",
 		append([]interface{}{format}, args...)...)}
@@ -541,7 +541,7 @@ type Logger_WithContext_Call struct {
 }
 
 // WithContext is a helper method to define mock.On call
-//  - ctx context.Context
+//   - ctx context.Context
 func (_e *Logger_Expecter) WithContext(ctx interface{}) *Logger_WithContext_Call {
 	return &Logger_WithContext_Call{Call: _e.mock.On("WithContext", ctx)}
 }
@@ -580,7 +580,7 @@ type Logger_WithError_Call struct {
 }
 
 // WithError is a helper method to define mock.On call
-//  - err error
+//   - err error
 func (_e *Logger_Expecter) WithError(err interface{}) *Logger_WithError_Call {
 	return &Logger_WithError_Call{Call: _e.mock.On("WithError", err)}
 }
@@ -619,8 +619,8 @@ type Logger_WithField_Call struct {
 }
 
 // WithField is a helper method to define mock.On call
-//  - key string
-//  - value interface{}
+//   - key string
+//   - value interface{}
 func (_e *Logger_Expecter) WithField(key interface{}, value interface{}) *Logger_WithField_Call {
 	return &Logger_WithField_Call{Call: _e.mock.On("WithField", key, value)}
 }
@@ -661,7 +661,7 @@ type Logger_WithFields_Call struct {
 }
 
 // WithFields is a helper method to define mock.On call
-//  - fields ...interface{}
+//   - fields ...interface{}
 func (_e *Logger_Expecter) WithFields(fields ...interface{}) *Logger_WithFields_Call {
 	return &Logger_WithFields_Call{Call: _e.mock.On("WithFields",
 		append([]interface{}{}, fields...)...)}
@@ -707,7 +707,7 @@ type Logger_WithTime_Call struct {
 }
 
 // WithTime is a helper method to define mock.On call
-//  - t time.Time
+//   - t time.Time
 func (_e *Logger_Expecter) WithTime(t interface{}) *Logger_WithTime_Call {
 	return &Logger_WithTime_Call{Call: _e.mock.On("WithTime", t)}
 }
