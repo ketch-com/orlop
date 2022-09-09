@@ -50,8 +50,8 @@ type Provider_Get_Call struct {
 }
 
 // Get is a helper method to define mock.On call
-//  - ctx context.Context
-//  - service string
+//   - ctx context.Context
+//   - service string
 func (_e *Provider_Expecter) Get(ctx interface{}, service interface{}) *Provider_Get_Call {
 	return &Provider_Get_Call{Call: _e.mock.On("Get", ctx, service)}
 }
@@ -97,7 +97,7 @@ type Provider_List_Call struct {
 }
 
 // List is a helper method to define mock.On call
-//  - ctx context.Context
+//   - ctx context.Context
 func (_e *Provider_Expecter) List(ctx interface{}) *Provider_List_Call {
 	return &Provider_List_Call{Call: _e.mock.On("List", ctx)}
 }

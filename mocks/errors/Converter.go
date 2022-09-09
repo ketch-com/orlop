@@ -44,7 +44,7 @@ type Converter_Execute_Call struct {
 }
 
 // Execute is a helper method to define mock.On call
-//  - err error
+//   - err error
 func (_e *Converter_Expecter) Execute(err interface{}) *Converter_Execute_Call {
 	return &Converter_Execute_Call{Call: _e.mock.On("Execute", err)}
 }

@@ -41,8 +41,8 @@ type ObjectStore_Delete_Call struct {
 }
 
 // Delete is a helper method to define mock.On call
-//  - ctx context.Context
-//  - p string
+//   - ctx context.Context
+//   - p string
 func (_e *ObjectStore_Expecter) Delete(ctx interface{}, p interface{}) *ObjectStore_Delete_Call {
 	return &ObjectStore_Delete_Call{Call: _e.mock.On("Delete", ctx, p)}
 }
@@ -88,8 +88,8 @@ type ObjectStore_List_Call struct {
 }
 
 // List is a helper method to define mock.On call
-//  - ctx context.Context
-//  - p string
+//   - ctx context.Context
+//   - p string
 func (_e *ObjectStore_Expecter) List(ctx interface{}, p interface{}) *ObjectStore_List_Call {
 	return &ObjectStore_List_Call{Call: _e.mock.On("List", ctx, p)}
 }
@@ -135,8 +135,8 @@ type ObjectStore_Read_Call struct {
 }
 
 // Read is a helper method to define mock.On call
-//  - ctx context.Context
-//  - p string
+//   - ctx context.Context
+//   - p string
 func (_e *ObjectStore_Expecter) Read(ctx interface{}, p interface{}) *ObjectStore_Read_Call {
 	return &ObjectStore_Read_Call{Call: _e.mock.On("Read", ctx, p)}
 }
@@ -173,9 +173,9 @@ type ObjectStore_ReadObject_Call struct {
 }
 
 // ReadObject is a helper method to define mock.On call
-//  - ctx context.Context
-//  - p string
-//  - out interface{}
+//   - ctx context.Context
+//   - p string
+//   - out interface{}
 func (_e *ObjectStore_Expecter) ReadObject(ctx interface{}, p interface{}, out interface{}) *ObjectStore_ReadObject_Call {
 	return &ObjectStore_ReadObject_Call{Call: _e.mock.On("ReadObject", ctx, p, out)}
 }
@@ -221,9 +221,9 @@ type ObjectStore_Write_Call struct {
 }
 
 // Write is a helper method to define mock.On call
-//  - ctx context.Context
-//  - p string
-//  - data map[string]interface{}
+//   - ctx context.Context
+//   - p string
+//   - data map[string]interface{}
 func (_e *ObjectStore_Expecter) Write(ctx interface{}, p interface{}, data interface{}) *ObjectStore_Write_Call {
 	return &ObjectStore_Write_Call{Call: _e.mock.On("Write", ctx, p, data)}
 }
@@ -260,9 +260,9 @@ type ObjectStore_WriteObject_Call struct {
 }
 
 // WriteObject is a helper method to define mock.On call
-//  - ctx context.Context
-//  - p string
-//  - in interface{}
+//   - ctx context.Context
+//   - p string
+//   - in interface{}
 func (_e *ObjectStore_Expecter) WriteObject(ctx interface{}, p interface{}, in interface{}) *ObjectStore_WriteObject_Call {
 	return &ObjectStore_WriteObject_Call{Call: _e.mock.On("WriteObject", ctx, p, in)}
 }

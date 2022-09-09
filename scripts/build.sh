@@ -10,14 +10,10 @@ if [ -f "./features/shipbuilder/.env" ]; then
   . ./features/shipbuilder/.env
 fi
 
-if [ -z "$*" ]; then
-  what="$shipbuilder_generate"
-else
-  what="$*"
-fi
+what="${shipbuilder_build:-node go}"
 
 for i in $what; do
-  if [ -f "./scripts/gen$i.sh" ]; then
-    . "./scripts/gen$i.sh"
+  if [ -f "./scripts/build$i.sh" ]; then
+    . "./scripts/build$i.sh" $@
   fi
 done
