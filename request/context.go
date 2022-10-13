@@ -271,3 +271,14 @@ func SkipHighCardinalityKeysFilter(k Key) bool {
 	// If we don't know about the key, assume it is "high cardinality"
 	return false
 }
+
+func Clone(ctx context.Context) context.Context {
+	newCtx := context.Background()
+
+	for _, k := range AllKeys {
+		v := ctx.Value(k)
+		newCtx = context.WithValue(newCtx, k, v)
+	}
+
+	return newCtx
+}
