@@ -65,7 +65,7 @@ var (
 
 	StandardToGrpc = map[string]codes.Code{
 		"":             codes.OK,
-		ECONFLICT:      codes.Aborted,
+		ECONFLICT:      codes.AlreadyExists,
 		ECANCELED:      codes.Canceled,
 		EINTERNAL:      codes.Internal,
 		EUNAVAILABLE:   codes.Unavailable,
