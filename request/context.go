@@ -33,30 +33,29 @@ type Key string
 var (
 	IDKey         Key = "requestId"
 	OperationKey  Key = "operation"
-	TimestampKey  Key = "requestTS"
-	TenantKey     Key = "tenant"
-	URLKey        Key = "requestUrl"
 	OriginatorKey Key = "requestOriginator"
+	TenantKey     Key = "tenant"
+	TimestampKey  Key = "requestTS"
+	URLKey        Key = "requestUrl"
+	UserKey       Key = "userId"
 )
 
 // AllKeys is a slice of all Keys
 var AllKeys = []Key{
 	IDKey,
 	OperationKey,
-	TimestampKey,
-	TenantKey,
-	URLKey,
 	OriginatorKey,
+	TenantKey,
+	TimestampKey,
+	URLKey,
+	UserKey,
 }
 
-// HighCardinalityKeys is a map of high-cardinality keys
-var HighCardinalityKeys = map[Key]bool{
-	IDKey:         true,
-	OperationKey:  false,
-	TimestampKey:  true,
-	TenantKey:     false,
-	URLKey:        true,
-	OriginatorKey: false,
+// LowCardinalityKeys is a map of high-cardinality keys
+var LowCardinalityKeys = map[Key]bool{
+	OperationKey:  true,
+	OriginatorKey: true,
+	TenantKey:     true,
 }
 
 // Setter is a function that adds a string to the context
@@ -69,9 +68,10 @@ type Getter func(ctx context.Context) string
 var Setters = map[Key]Setter{
 	IDKey:         WithID,
 	OperationKey:  WithOperation,
+	OriginatorKey: WithOriginator,
 	TenantKey:     WithTenant,
 	URLKey:        WithURL,
-	OriginatorKey: WithOriginator,
+	UserKey:       WithUser,
 	TimestampKey: func(ctx context.Context, v string) context.Context {
 		if t, err := time.Parse(time.RFC3339, v); err == nil {
 			return WithTimestamp(ctx, t)
@@ -84,9 +84,10 @@ var Setters = map[Key]Setter{
 var Getters = map[Key]Getter{
 	IDKey:         ID,
 	OperationKey:  Operation,
+	OriginatorKey: Originator,
 	TenantKey:     Tenant,
 	URLKey:        URL,
-	OriginatorKey: Originator,
+	UserKey:       User,
 	TimestampKey: func(ctx context.Context) string {
 		if ts := Timestamp(ctx); !ts.IsZero() {
 			return ts.Format(time.RFC3339)
@@ -132,6 +133,21 @@ func ID(ctx context.Context) string {
 // RequireID returns the request ID or an error if not set
 func RequireID(ctx context.Context) (string, error) {
 	return RequireValue[string](ctx, IDKey, errors.Invalid)
+}
+
+// WithUser returns a new context with the given user ID
+func WithUser(parent context.Context, userID string) context.Context {
+	return WithValue(parent, UserKey, userID)
+}
+
+// User returns the User ID or an empty string
+func User(ctx context.Context) string {
+	return Value[string](ctx, UserKey)
+}
+
+// RequireUser returns the request User or an error if not set
+func RequireUser(ctx context.Context) (string, error) {
+	return RequireValue[string](ctx, UserKey, errors.Forbidden)
 }
 
 // WithID returns a new context with the given request ID
@@ -262,10 +278,10 @@ func WithFilter(f Filter) Option {
 	}
 }
 
-// SkipHighCardinalityKeysFilter returns true if the key is not high cardinality
+// SkipHighCardinalityKeysFilter returns true if the key is low cardinality
 func SkipHighCardinalityKeysFilter(k Key) bool {
-	if v, ok := HighCardinalityKeys[k]; ok {
-		return !v
+	if v, ok := LowCardinalityKeys[k]; ok {
+		return v
 	}
 
 	// If we don't know about the key, assume it is "high cardinality"
