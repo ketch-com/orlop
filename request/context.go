@@ -62,7 +62,7 @@ var LowCardinalityKeys = map[Key]bool{
 type Setter func(ctx context.Context, v string) context.Context
 
 // Getter is a function that returns a string from the context
-type Getter func(ctx context.Context) string
+type Getter func(ctx Context) string
 
 // Setters is a map from the Key to a Setter for that Key
 var Setters = map[Key]Setter{
@@ -88,7 +88,7 @@ var Getters = map[Key]Getter{
 	TenantKey:     Tenant,
 	URLKey:        URL,
 	UserKey:       User,
-	TimestampKey: func(ctx context.Context) string {
+	TimestampKey: func(ctx Context) string {
 		if ts := Timestamp(ctx); !ts.IsZero() {
 			return ts.Format(time.RFC3339)
 		}
@@ -96,8 +96,12 @@ var Getters = map[Key]Getter{
 	},
 }
 
+type Context interface {
+	Value(key any) any
+}
+
 // Value returns the value of a request context key, or a default value if the value is not set
-func Value[T any](ctx context.Context, key Key) T {
+func Value[T any](ctx Context, key Key) T {
 	if v := ctx.Value(key); v != nil {
 		if r, ok := v.(T); ok {
 			return r
@@ -109,7 +113,7 @@ func Value[T any](ctx context.Context, key Key) T {
 }
 
 // RequireValue returns the value of a request context key or returns an error if the value is not set
-func RequireValue[T any](ctx context.Context, key Key, errDecorator func(error) error) (T, error) {
+func RequireValue[T any](ctx Context, key Key, errDecorator func(error) error) (T, error) {
 	if v := ctx.Value(key); v != nil {
 		if r, ok := v.(T); ok {
 			return r, nil
@@ -126,12 +130,12 @@ func WithValue[T any](parent context.Context, key Key, v T) context.Context {
 }
 
 // ID returns the request ID or an empty string
-func ID(ctx context.Context) string {
+func ID(ctx Context) string {
 	return Value[string](ctx, IDKey)
 }
 
 // RequireID returns the request ID or an error if not set
-func RequireID(ctx context.Context) (string, error) {
+func RequireID(ctx Context) (string, error) {
 	return RequireValue[string](ctx, IDKey, errors.Invalid)
 }
 
@@ -141,12 +145,12 @@ func WithUser(parent context.Context, userID string) context.Context {
 }
 
 // User returns the User ID or an empty string
-func User(ctx context.Context) string {
+func User(ctx Context) string {
 	return Value[string](ctx, UserKey)
 }
 
 // RequireUser returns the request User or an error if not set
-func RequireUser(ctx context.Context) (string, error) {
+func RequireUser(ctx Context) (string, error) {
 	return RequireValue[string](ctx, UserKey, errors.Forbidden)
 }
 
@@ -156,12 +160,12 @@ func WithID(parent context.Context, requestID string) context.Context {
 }
 
 // Originator returns the request originator or an empty string
-func Originator(ctx context.Context) string {
+func Originator(ctx Context) string {
 	return Value[string](ctx, OriginatorKey)
 }
 
 // RequireOriginator returns the request originator or an error if not set
-func RequireOriginator(ctx context.Context) (string, error) {
+func RequireOriginator(ctx Context) (string, error) {
 	return RequireValue[string](ctx, OriginatorKey, errors.Invalid)
 }
 
@@ -171,12 +175,12 @@ func WithOriginator(parent context.Context, originator string) context.Context {
 }
 
 // URL returns the request URL or an empty string
-func URL(ctx context.Context) string {
+func URL(ctx Context) string {
 	return Value[string](ctx, URLKey)
 }
 
 // RequireURL returns the request URL or an error if not set
-func RequireURL(ctx context.Context) (string, error) {
+func RequireURL(ctx Context) (string, error) {
 	return RequireValue[string](ctx, URLKey, errors.Invalid)
 }
 
@@ -186,12 +190,12 @@ func WithURL(parent context.Context, requestURL string) context.Context {
 }
 
 // Timestamp returns the request timestamp or an empty time.Time
-func Timestamp(ctx context.Context) time.Time {
+func Timestamp(ctx Context) time.Time {
 	return Value[time.Time](ctx, TimestampKey)
 }
 
 // RequireTimestamp returns the request timestamp or an error if not set
-func RequireTimestamp(ctx context.Context) (time.Time, error) {
+func RequireTimestamp(ctx Context) (time.Time, error) {
 	return RequireValue[time.Time](ctx, TimestampKey, errors.Invalid)
 }
 
@@ -201,14 +205,14 @@ func WithTimestamp(parent context.Context, requestTimestamp time.Time) context.C
 }
 
 // Tenant returns the request Tenant or an empty string
-func Tenant(ctx context.Context) string {
+func Tenant(ctx Context) string {
 	tenant := Value[string](ctx, TenantKey)
 	parts := strings.Split(tenant, ";")
 	return parts[0]
 }
 
 // RequireTenant returns the request Tenant or an error if not set
-func RequireTenant(ctx context.Context) (string, error) {
+func RequireTenant(ctx Context) (string, error) {
 	return RequireValue[string](ctx, TenantKey, errors.Forbidden)
 }
 
@@ -218,12 +222,12 @@ func WithTenant(parent context.Context, requestTenant string) context.Context {
 }
 
 // Operation returns the Operation or an empty string
-func Operation(ctx context.Context) string {
+func Operation(ctx Context) string {
 	return Value[string](ctx, OperationKey)
 }
 
 // RequireOperation returns the Operation or an error if not set
-func RequireOperation(ctx context.Context) (string, error) {
+func RequireOperation(ctx Context) (string, error) {
 	return RequireValue[string](ctx, OperationKey, errors.Invalid)
 }
 
@@ -233,7 +237,7 @@ func WithOperation(parent context.Context, operation string) context.Context {
 }
 
 // Values returns a map of the request values from the context
-func Values(ctx context.Context, opts ...Option) map[string]string {
+func Values(ctx Context, opts ...Option) map[string]string {
 	var o options
 
 	for _, opt := range opts {
