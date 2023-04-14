@@ -31,6 +31,7 @@ import (
 
 	"go.ketch.com/lib/orlop/v2/env"
 	"go.ketch.com/lib/orlop/v2/errors"
+	"go.ketch.com/lib/orlop/v2/log"
 	"go.ketch.com/lib/orlop/v2/service"
 )
 
@@ -76,6 +77,7 @@ func (s *providerImpl) Get(ctx context.Context, service string) (any, error) {
 		if err != nil {
 			return cfg.value, err
 		}
+
 		return cfg.value, nil
 	}
 
@@ -102,6 +104,8 @@ func (s *providerImpl) load(_ context.Context, key string, value any) error {
 		return err
 	}
 
+	notSecretFields := make(map[string]string)
+
 	key = strings.TrimSpace(key)
 	for name, field := range fields {
 		keyName := name
@@ -110,6 +114,9 @@ func (s *providerImpl) load(_ context.Context, key string, value any) error {
 		}
 
 		if v := s.environ.Getenv(keyName); len(v) > 0 {
+			if field.tag.NotSecret {
+				notSecretFields[name] = v
+			}
 			if err = field.set(field.v, v); err != nil {
 				return errors.Wrapf(err, "failed to set field '%s' with value '%s'", name, v)
 			}
@@ -120,6 +127,14 @@ func (s *providerImpl) load(_ context.Context, key string, value any) error {
 		} else if field.tag.Required {
 			return errors.Errorf("%s required", name)
 		}
+	}
+
+	if len(notSecretFields) > 0 {
+		if len(key) == 0 {
+			key = "root"
+		}
+
+		log.WithField("key", key).WithField("config", notSecretFields).Trace("loaded config")
 	}
 
 	return nil
