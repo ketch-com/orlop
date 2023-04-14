@@ -30,6 +30,7 @@ type configTag struct {
 	Encoding     *string
 	DefaultValue *string
 	Required     bool
+	NotSecret    bool
 }
 
 func (t configTag) String() string {
@@ -47,6 +48,9 @@ func (t configTag) String() string {
 		s = append(s, "required")
 	} else {
 		s = append(s, "optional")
+	}
+	if t.NotSecret {
+		s = append(s, "not_secret")
 	}
 
 	return strings.Join(s, ", ")
@@ -71,6 +75,9 @@ func parseConfigTag(tag string) *configTag {
 
 		case "required":
 			t.Required = true
+
+		case "not_secret":
+			t.NotSecret = true
 
 		case "encoding":
 			switch elemParts[1] {
