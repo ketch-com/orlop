@@ -37,7 +37,7 @@ func ToContext(ctx context.Context, logger *logrus.Entry) context.Context {
 }
 
 // FromContext retrieves the logger for the provided context
-func FromContext(ctx context.Context) *logrus.Entry {
+func FromContext(ctx Context) *logrus.Entry {
 	l := ctx.Value(loggerValue)
 	if l != nil {
 		if logger, ok := l.(*logrus.Entry); ok {
@@ -79,8 +79,12 @@ func WithError(err error) *logrus.Entry {
 }
 
 // WithContext returns a log Entry with the given Context
-func WithContext(ctx context.Context) *logrus.Entry {
-	entry := logrus.WithContext(ctx)
+func WithContext(ctx Context) *logrus.Entry {
+	entry := New()
+
+	if c, ok := ctx.(context.Context); ok {
+		entry = logrus.WithContext(c)
+	}
 
 	for k, v := range request.Values(ctx) {
 		entry = entry.WithField(k, v)
