@@ -31,6 +31,7 @@ import (
 type Key string
 
 var (
+	ConnectionKey Key = "connection"
 	IDKey         Key = "requestId"
 	OperationKey  Key = "operation"
 	OriginatorKey Key = "requestOriginator"
@@ -42,6 +43,7 @@ var (
 
 // AllKeys is a slice of all Keys
 var AllKeys = []Key{
+	ConnectionKey,
 	IDKey,
 	OperationKey,
 	OriginatorKey,
@@ -66,6 +68,7 @@ type Getter func(ctx Context) string
 
 // Setters is a map from the Key to a Setter for that Key
 var Setters = map[Key]Setter{
+	ConnectionKey: WithConnection,
 	IDKey:         WithID,
 	OperationKey:  WithOperation,
 	OriginatorKey: WithOriginator,
@@ -82,6 +85,7 @@ var Setters = map[Key]Setter{
 
 // Getters is a map from the Key to a Getter for that Key
 var Getters = map[Key]Getter{
+	ConnectionKey: Connection,
 	IDKey:         ID,
 	OperationKey:  Operation,
 	OriginatorKey: Originator,
@@ -129,6 +133,26 @@ func WithValue[T any](parent context.Context, key Key, v T) context.Context {
 	return context.WithValue(parent, key, v)
 }
 
+// WithConnection returns a new context with the given request Connection
+func WithConnection(parent context.Context, connectionID string) context.Context {
+	return WithValue(parent, ConnectionKey, connectionID)
+}
+
+// Connection returns the request ID or an empty string
+func Connection(ctx Context) string {
+	return Value[string](ctx, ConnectionKey)
+}
+
+// RequireConnection returns the request ID or an error if not set
+func RequireConnection(ctx Context) (string, error) {
+	return RequireValue[string](ctx, ConnectionKey, errors.Invalid)
+}
+
+// WithID returns a new context with the given request ID
+func WithID(parent context.Context, requestID string) context.Context {
+	return WithValue(parent, IDKey, requestID)
+}
+
 // ID returns the request ID or an empty string
 func ID(ctx Context) string {
 	return Value[string](ctx, IDKey)
@@ -152,11 +176,6 @@ func User(ctx Context) string {
 // RequireUser returns the request User or an error if not set
 func RequireUser(ctx Context) (string, error) {
 	return RequireValue[string](ctx, UserKey, errors.Forbidden)
-}
-
-// WithID returns a new context with the given request ID
-func WithID(parent context.Context, requestID string) context.Context {
-	return WithValue(parent, IDKey, requestID)
 }
 
 // Originator returns the request originator or an empty string
