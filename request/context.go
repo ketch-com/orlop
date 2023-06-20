@@ -22,23 +22,25 @@ package request
 
 import (
 	"context"
-	"go.ketch.com/lib/orlop/v2/errors"
 	"strings"
 	"time"
+
+	"go.ketch.com/lib/orlop/v2/errors"
 )
 
 // Key is the key of a request property in context
 type Key string
 
 var (
-	ConnectionKey Key = "connection"
-	IDKey         Key = "requestId"
-	OperationKey  Key = "operation"
-	OriginatorKey Key = "requestOriginator"
-	TenantKey     Key = "tenant"
-	TimestampKey  Key = "requestTS"
-	URLKey        Key = "requestUrl"
-	UserKey       Key = "userId"
+	ConnectionKey  Key = "connection"
+	IDKey          Key = "requestId"
+	OperationKey   Key = "operation"
+	OriginatorKey  Key = "requestOriginator"
+	TenantKey      Key = "tenant"
+	TimestampKey   Key = "requestTS"
+	URLKey         Key = "requestUrl"
+	UserKey        Key = "userId"
+	IntegrationKey Key = "integration"
 )
 
 // AllKeys is a slice of all Keys
@@ -51,6 +53,7 @@ var AllKeys = []Key{
 	TimestampKey,
 	URLKey,
 	UserKey,
+	IntegrationKey,
 }
 
 // LowCardinalityKeys is a map of high-cardinality keys
@@ -68,13 +71,14 @@ type Getter func(ctx Context) string
 
 // Setters is a map from the Key to a Setter for that Key
 var Setters = map[Key]Setter{
-	ConnectionKey: WithConnection,
-	IDKey:         WithID,
-	OperationKey:  WithOperation,
-	OriginatorKey: WithOriginator,
-	TenantKey:     WithTenant,
-	URLKey:        WithURL,
-	UserKey:       WithUser,
+	ConnectionKey:  WithConnection,
+	IDKey:          WithID,
+	OperationKey:   WithOperation,
+	OriginatorKey:  WithOriginator,
+	TenantKey:      WithTenant,
+	URLKey:         WithURL,
+	UserKey:        WithUser,
+	IntegrationKey: WithIntegration,
 	TimestampKey: func(ctx context.Context, v string) context.Context {
 		if t, err := time.Parse(time.RFC3339, v); err == nil {
 			return WithTimestamp(ctx, t)
@@ -85,13 +89,14 @@ var Setters = map[Key]Setter{
 
 // Getters is a map from the Key to a Getter for that Key
 var Getters = map[Key]Getter{
-	ConnectionKey: Connection,
-	IDKey:         ID,
-	OperationKey:  Operation,
-	OriginatorKey: Originator,
-	TenantKey:     Tenant,
-	URLKey:        URL,
-	UserKey:       User,
+	ConnectionKey:  Connection,
+	IDKey:          ID,
+	OperationKey:   Operation,
+	OriginatorKey:  Originator,
+	TenantKey:      Tenant,
+	URLKey:         URL,
+	UserKey:        User,
+	IntegrationKey: Integration,
 	TimestampKey: func(ctx Context) string {
 		if ts := Timestamp(ctx); !ts.IsZero() {
 			return ts.Format(time.RFC3339)
@@ -146,6 +151,21 @@ func Connection(ctx Context) string {
 // RequireConnection returns the request ID or an error if not set
 func RequireConnection(ctx Context) (string, error) {
 	return RequireValue[string](ctx, ConnectionKey, errors.Invalid)
+}
+
+// WithIntegration returns a new context with the given request integration
+func WithIntegration(parent context.Context, integration string) context.Context {
+	return WithValue(parent, IntegrationKey, integration)
+}
+
+// Integration returns the request ID or an empty string
+func Integration(ctx Context) string {
+	return Value[string](ctx, IntegrationKey)
+}
+
+// RequireIntegration returns the request ID or an error if not set
+func RequireIntegration(ctx Context) (string, error) {
+	return RequireValue[string](ctx, IntegrationKey, errors.Invalid)
 }
 
 // WithID returns a new context with the given request ID
