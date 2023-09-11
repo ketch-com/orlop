@@ -2,7 +2,7 @@ package log
 
 import (
 	"context"
-	"github.com/mitchellh/mapstructure"
+	"encoding/json"
 	"github.com/sirupsen/logrus"
 )
 
@@ -20,7 +20,13 @@ func (p *Publisher) PublishEvent(ctx context.Context, subject string, event any)
 	}
 
 	fields := make(logrus.Fields)
-	if err := mapstructure.Decode(event, &fields); err != nil {
+	b, err := json.Marshal(event)
+	if err != nil {
+		return err
+	}
+
+	err = json.Unmarshal(b, &fields)
+	if err != nil {
 		return err
 	}
 
