@@ -3,6 +3,7 @@ package cmd
 import (
 	"context"
 	"os"
+	"os/exec"
 	"testing"
 	"time"
 
@@ -147,4 +148,56 @@ func TestInit(t *testing.T) {
 	cmd.SetArgs([]string{"init"})
 	err := cmd.Execute()
 	require.NoError(t, err)
+}
+
+func TestOptions(t *testing.T) {
+	module := fx.Options(
+		fx.Invoke(
+			func(lifecycle fx.Lifecycle, s fx.Shutdowner) {
+				lifecycle.Append(
+					fx.Hook{
+						OnStart: func(_ context.Context) error {
+							return s.Shutdown()
+						},
+						OnStop: func(ctx context.Context) error {
+							time.Sleep(fx.DefaultTimeout + time.Second)
+							return nil
+						},
+					},
+				)
+			},
+		),
+	)
+
+	if os.Getenv("CRASH") == "0" {
+		testOptions(module, fx.StopTimeout(2*fx.DefaultTimeout))
+		return
+	} else if os.Getenv("CRASH") == "1" {
+		testOptions(module)
+		return
+	}
+
+	crashCmd := exec.Command(os.Args[0], "-test.run=TestOptions")
+	crashCmd.Env = append(os.Environ(), "CRASH=1")
+	err := crashCmd.Run()
+	assert.Error(t, err, "process did not return an error", err)
+	assert.IsType(t, &exec.ExitError{}, err, "process did not return an ExitError", err)
+
+	successCmd := exec.Command(os.Args[0], "-test.run=TestOptions")
+	successCmd.Env = append(os.Environ(), "CRASH=0")
+	err = successCmd.Run()
+	assert.NoError(t, err, "process returned error %v, want exit status 0", err)
+}
+
+func testOptions(module fx.Option, options ...fx.Option) error {
+	options = append(options, module)
+
+	var cmd = &cobra.Command{
+		Use:              "test",
+		TraverseChildren: true,
+	}
+
+	NewRunner("test").SetupRoot(cmd).Setup(cmd, options...)
+
+	return cmd.Execute()
 }
