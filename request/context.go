@@ -30,7 +30,7 @@ import (
 type Key string
 
 var (
-	ConnectionKey  Key = "connection"
+	ConnectionKey  Key = "connectionId"
 	IDKey          Key = "requestId"
 	OperationKey   Key = "operation"
 	OriginatorKey  Key = "requestOriginator"
