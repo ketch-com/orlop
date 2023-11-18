@@ -77,9 +77,9 @@ func (r *Runner) SetupRoot(cmd *cobra.Command) *Runner {
 }
 
 // Setup sets up the Command
-func (r *Runner) Setup(cmd *cobra.Command, module fx.Option) *Runner {
+func (r *Runner) Setup(cmd *cobra.Command, options ...fx.Option) *Runner {
 	if cmd.RunE == nil {
-		cmd.RunE = r.runE(module)
+		cmd.RunE = r.runE(options...)
 	}
 
 	cmd.AddCommand(&cobra.Command{
@@ -95,7 +95,7 @@ func (r *Runner) Setup(cmd *cobra.Command, module fx.Option) *Runner {
 				fx.Supply(service.Name(r.prefix)),
 				fx.Supply(logging.FatalLevel),
 				orlop.Module,
-				module,
+				fx.Options(options...),
 				fx.Populate(&cfgMgr),
 			)
 
@@ -154,7 +154,7 @@ func (r *Runner) preRunE(cmd *cobra.Command, args []string) error {
 	return r.prevPreRunE(cmd, args)
 }
 
-func (r *Runner) runE(module fx.Option) func(cmd *cobra.Command, args []string) error {
+func (r *Runner) runE(options ...fx.Option) func(cmd *cobra.Command, args []string) error {
 	return func(cmd *cobra.Command, args []string) error {
 		l := log.New()
 
@@ -170,7 +170,7 @@ func (r *Runner) runE(module fx.Option) func(cmd *cobra.Command, args []string) 
 			fx.Supply(service.Name(r.prefix)),
 			fx.Supply(logging.Level(loglevelFlag)),
 			orlop.Module,
-			module,
+			fx.Options(options...),
 		)
 
 		app.Run()
