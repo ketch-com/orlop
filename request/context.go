@@ -61,6 +61,26 @@ var LowCardinalityKeys = map[Key]bool{
 	TenantKey:     true,
 }
 
+var KeyMap = map[any]string{
+	ConnectionKey:  "Connection",
+	IDKey:          "Request-Id",
+	OperationKey:   "Operation",
+	OriginatorKey:  "Request-Originator",
+	TenantKey:      "Tenant",
+	TimestampKey:   "RequestTS",
+	URLKey:         "Request-Url",
+	UserKey:        "User-Id",
+	IntegrationKey: "Integration",
+}
+
+var MetricsKeyMap = map[any]string{
+	OperationKey:   "operation",
+	OriginatorKey:  "requestOriginator",
+	TenantKey:      "tenant",
+	ConnectionKey:  "connection",
+	IntegrationKey: "integration",
+}
+
 // Setter is a function that adds a string to the context
 type Setter func(ctx context.Context, v string) context.Context
 
