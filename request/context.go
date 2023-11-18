@@ -61,7 +61,7 @@ var LowCardinalityKeys = map[Key]bool{
 	TenantKey:     true,
 }
 
-var KeyMap = map[any]string{
+var KeyMap = map[Key]string{
 	ConnectionKey:  "Connection",
 	IDKey:          "Request-Id",
 	OperationKey:   "Operation",
@@ -73,7 +73,7 @@ var KeyMap = map[any]string{
 	IntegrationKey: "Integration",
 }
 
-var MetricsKeyMap = map[any]string{
+var MetricsKeyMap = map[Key]string{
 	OperationKey:   "operation",
 	OriginatorKey:  "requestOriginator",
 	TenantKey:      "tenant",
