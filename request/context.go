@@ -62,7 +62,7 @@ var LowCardinalityKeys = map[Key]bool{
 }
 
 var KeyMap = map[Key]string{
-	ConnectionKey:  "Connection",
+	ConnectionKey:  "Connection-Id",
 	IDKey:          "Request-Id",
 	OperationKey:   "Operation",
 	OriginatorKey:  "Request-Originator",

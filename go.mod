@@ -1,6 +1,6 @@
 module go.ketch.com/lib/orlop/v2
 
-go 1.20
+go 1.21
 
 require (
 	github.com/google/uuid v1.4.0
@@ -23,7 +23,6 @@ require (
 	go.uber.org/dig v1.17.1 // indirect
 	go.uber.org/multierr v1.11.0 // indirect
 	go.uber.org/zap v1.26.0 // indirect
-	golang.org/x/net v0.17.0 // indirect
 	golang.org/x/sys v0.14.0 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20231106174013-bbf56f31fb17 // indirect
 	google.golang.org/protobuf v1.31.0 // indirect
