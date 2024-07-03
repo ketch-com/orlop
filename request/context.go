@@ -30,7 +30,7 @@ import (
 type Key string
 
 var (
-	ConnectionKey  Key = "connection"
+	ConnectionKey  Key = "connectionId"
 	IDKey          Key = "requestId"
 	OperationKey   Key = "operation"
 	OriginatorKey  Key = "requestOriginator"
@@ -59,6 +59,26 @@ var LowCardinalityKeys = map[Key]bool{
 	OperationKey:  true,
 	OriginatorKey: true,
 	TenantKey:     true,
+}
+
+var KeyMap = map[Key]string{
+	ConnectionKey:  "Connection-Id",
+	IDKey:          "Request-Id",
+	OperationKey:   "Operation",
+	OriginatorKey:  "Request-Originator",
+	TenantKey:      "Tenant",
+	TimestampKey:   "RequestTS",
+	URLKey:         "Request-Url",
+	UserKey:        "User-Id",
+	IntegrationKey: "Integration",
+}
+
+var MetricsKeyMap = map[Key]string{
+	OperationKey:   "operation",
+	OriginatorKey:  "requestOriginator",
+	TenantKey:      "tenant",
+	ConnectionKey:  "connection",
+	IntegrationKey: "integration",
 }
 
 // Setter is a function that adds a string to the context
