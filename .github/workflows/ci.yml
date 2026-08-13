@@ -34,7 +34,7 @@ jobs:
         go-version: "1.22"
         cache: true
     - name: Build Go code
-      uses: conventional-actions/go-build@acdd2778f3c31b02f77ac743ec62406d561b2dc5 # v1
+      uses: conventional-actions/go-build@0e923d3891eac41b45a8e8e4b5cf5cdcbb3d3476 # v2.0.0
       with:
         package: ./...
         platforms: |
