@@ -25,7 +25,7 @@ jobs:
         fetch-depth: 0
     - name: Generate next version
       id: version
-      uses: conventional-actions/next-version@1b3e4803a0bdf7435ba7bb5ace077445ed54e82a # v1.1.8
+      uses: conventional-actions/next-version@e6adb7e8577b8e8f60dfdf508dcf892dc0eb078a # v2.0.0
     - name: Setup .netrc
       uses: conventional-actions/setup-netrc@4f85df605083085682fc078d17b5d15e439a924e # v1
     - name: Setup Go
