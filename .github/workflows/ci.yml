@@ -51,7 +51,7 @@ jobs:
       contents: write
     steps:
     - name: Create Release
-      uses: conventional-actions/create-release@c025b7306d14a25901b72486f97f3ebe7662a8ed # v1.0.31
+      uses: conventional-actions/create-release@15eff1cb943449e032e3d0c4b2a50010b0017f40 # v2.0.0
       with:
         tag_name: ${{ needs.build.outputs.version }}
 
