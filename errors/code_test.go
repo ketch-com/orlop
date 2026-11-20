@@ -79,3 +79,46 @@ func TestIsHelpers(t *testing.T) {
 		})
 	}
 }
+
+// Every *f constructor formats its message and tags the same code as its
+// non-formatted counterpart.
+func TestFormattedConstructors(t *testing.T) {
+	cases := map[string]struct {
+		fn   func(format string, args ...any) error
+		want string
+	}{
+		"Invalidf":       {Invalidf, EINVALID},
+		"Forbiddenf":     {Forbiddenf, EFORBIDDEN},
+		"Conflictf":      {Conflictf, ECONFLICT},
+		"Timeoutf":       {Timeoutf, ETIMEOUT},
+		"Canceledf":      {Canceledf, ECANCELED},
+		"Unavailablef":   {Unavailablef, EUNAVAILABLE},
+		"Unimplementedf": {Unimplementedf, EUNIMPLEMENTED},
+		"Configurationf": {Configurationf, ECONFIGURATION},
+	}
+	for name, tc := range cases {
+		t.Run(name, func(t *testing.T) {
+			err := tc.fn("bad value %d", 7)
+			if got := err.Error(); got != "bad value 7" {
+				t.Errorf("Error() = %q, want %q", got, "bad value 7")
+			}
+			if got := Code(err); got != tc.want {
+				t.Errorf("Code() = %q, want %q", got, tc.want)
+			}
+		})
+	}
+}
+
+// WithCode wraps nil and builds the message from StandardToMessage.
+func TestWithCodeWrapsNil(t *testing.T) {
+	err := WithCode(nil, ENOTFOUND)
+	if err == nil {
+		t.Fatal("WithCode(nil, ENOTFOUND) returned nil, want an error")
+	}
+	if got := err.Error(); got != "not found" {
+		t.Errorf("Error() = %q, want %q", got, "not found")
+	}
+	if got := Code(err); got != ENOTFOUND {
+		t.Errorf("Code() = %q, want %q", got, ENOTFOUND)
+	}
+}

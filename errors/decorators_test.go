@@ -1,6 +1,11 @@
 package errors
 
-import "testing"
+import (
+	"testing"
+
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
+)
 
 func TestUserMessage(t *testing.T) {
 	if got := UserMessage(nil); got != "" {
@@ -131,5 +136,40 @@ func TestTimeoutAndTemporaryFlags(t *testing.T) {
 	}
 	if readsTemporary(NotFound(base)) {
 		t.Errorf("NotFound(err).Temporary() = true, want false")
+	}
+}
+
+// Each decorator exposes Cause() for the legacy pkg/errors walk.
+func TestDecoratorCause(t *testing.T) {
+	base := New("boom")
+
+	for name, err := range map[string]error{
+		"source":      WithSource(base, "vault"),
+		"parameter":   WithParameter(base, "cardId"),
+		"userMessage": WithUserMessage(base, "declined"),
+	} {
+		t.Run(name, func(t *testing.T) {
+			if Cause(err) != base {
+				t.Errorf("Cause(decorated) != original base error")
+			}
+		})
+	}
+}
+
+// grpcMessageFake returns a gRPC message different from its error text, so
+// the test proves UserMessage took the gRPC fallback branch rather than
+// merely returning err.Error().
+type grpcMessageFake struct {
+	error
+}
+
+func (f grpcMessageFake) GRPCStatus() *status.Status {
+	return status.New(codes.Internal, "visible text")
+}
+
+func TestUserMessageGRPCFallback(t *testing.T) {
+	err := NotFound(grpcMessageFake{error: New("internal text")})
+	if got := UserMessage(err); got != "visible text" {
+		t.Errorf("UserMessage() = %q, want %q (gRPC fallback branch)", got, "visible text")
 	}
 }
